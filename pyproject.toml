@@ -1,0 +1,20 @@
+[project]
+name = "aip-chroma"
+version = "0.1.0"
+description = "A Membase AIP project for chroma"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+ "mcp>=1.1.2",
+ "chromadb>=0.6.0",
+ "ecdsa>=0.19.0",
+]
+[[project.authors]]
+name = "felix"
+
+[build-system]
+requires = [ "hatchling",]
+build-backend = "hatchling.build"
+
+[project.scripts]
+aip-chroma = "aip-chroma:main"
