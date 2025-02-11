@@ -1,5 +1,4 @@
 import base64
-import ecdsa
 import uvicorn
 import time
 
@@ -15,27 +14,24 @@ from starlette.types import Scope, Receive, Send
 from starlette.exceptions import HTTPException
 from contextlib import asynccontextmanager
 
+from aip_chroma.chroma import server
+from aip_chain.chain import membase_chain, membase_account, membase_id
+
 import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-from aip_chroma.chroma import server
-
-def verify_signature(message, signature, public_key):
-    try:
-        public_key.verify(signature, message.encode('utf-8'))
-        return True
-    except ecdsa.BadSignatureError:
-        return False
-
 def verify_auth(auth_header: dict[Any, Any]):
-    public_key_pem_b64 = auth_header.get(b'x-publickey')
+    agent_id = auth_header.get(b'x-agent')
     signature = auth_header.get(b'x-sign')
     timestamp = auth_header.get(b'x-timestamp')
-    logger.debug(f"auth: {timestamp} {public_key_pem_b64} {signature}")
+
+    logger.debug(f"auth time: {timestamp}, agent: {agent_id}, sign: {signature}")
    
-    if not signature or not timestamp:
+    if not signature or not timestamp or not agent_id:
         raise HTTPException(status_code=401, detail="Unauthorized")
+
+    agent_id = agent_id.decode('utf-8')
 
     try:
         timestamp = int(timestamp)
@@ -43,22 +39,22 @@ def verify_auth(auth_header: dict[Any, Any]):
         raise HTTPException(status_code=400, detail="Invalid timestamp")
             
     current_time = int(time.time())
-    if current_time - timestamp > 5: 
+    if current_time - timestamp > 30: 
+        logger.warning(f"{agent_id} has expired token")
         raise HTTPException(status_code=400, detail="Token expired")
 
+    if not membase_chain.get_auth(membase_id, agent_id):
+        logger.warning(f"{agent_id} is not auth on chain")
+        raise HTTPException(status_code=400, detail="No auth on chain")
+
+    agent_address = membase_chain.get_agent(agent_id)
+    signature = signature.decode('utf-8')
     verify_message = f"{timestamp}"
-    public_key_pem = base64.b64decode(public_key_pem_b64)
-    public_key = ecdsa.VerifyingKey.from_pem(public_key_pem)
-    #todo: public key is in whitelist
-    if not verify_signature(verify_message, bytes.fromhex(signature.decode('utf-8')), public_key):
+    if not membase_chain.valid_signature(verify_message, signature, agent_address):
+        logger.warning(f"{agent_id} has invalid signature")
         raise HTTPException(status_code=403, detail="Invalid signature")
-        
-    
 
 class BasicAuthTransport(SseServerTransport):
-    """
-    Example basic auth implementation of SSE server transport.
-    """
     def __init__(self, endpoint: str):
         super().__init__(endpoint)
 
@@ -103,11 +99,21 @@ def create_starlette_app(mcp_server: Server, *, debug: bool = False) -> Starlett
                 )
             )
 
+    from starlette.responses import JSONResponse
+    async def info(request):
+        agent_account = request.query_params.get('agent_account')
+        membase_chain.share_memory(membase_id, agent_account)
+        info_data = {
+            "uuid": membase_id,
+        }
+        return JSONResponse(info_data)
+
     return Starlette(
         debug=debug,
         routes=[
             Route("/sse", endpoint=handle_sse),
             Mount("/messages/", app=sse.handle_post_message),
+            Route("/info", endpoint=info)
         ],
     )
 
@@ -119,7 +125,10 @@ if __name__ == "__main__":
     parser.add_argument('--port', type=int, default=8080, help='Port to listen on')
     args = parser.parse_args()
 
+    membase_chain.register_memory(membase_id)
+
     # Bind SSE request handling to MCP server
     starlette_app = create_starlette_app(server, debug=True)
 
+    logger.info(f"start chomra memory with account: {membase_account} and id: {membase_id}")
     uvicorn.run(starlette_app, host=args.host, port=args.port)

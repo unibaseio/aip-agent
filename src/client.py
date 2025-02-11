@@ -9,47 +9,48 @@ from contextlib import AsyncExitStack
 
 from mcp import ClientSession
 from mcp.client.sse import sse_client
+    
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-from dotenv import load_dotenv
+from aip_chain.chain import membase_chain, membase_account, membase_id
 
-load_dotenv()  # load environment variables from .env
-
-key_path = './out/private_key.pem'
-if os.path.exists(key_path):
-    with open(key_path, 'rb') as f:
-        private_key_pem = f.read()
-        private_key = ecdsa.SigningKey.from_pem(private_key_pem)     
-else:
-    private_key = ecdsa.SigningKey.generate(curve=ecdsa.SECP256k1)
-    private_key_pem = private_key.to_pem()
-    with open(key_path, 'wb') as f:
-        f.write(private_key_pem)
-
-public_key_pem = private_key.get_verifying_key().to_pem()
-public_key_pem_b64 = base64.b64encode(public_key_pem).decode('utf-8')
-
-def sign_message(message, private_key):
-    return private_key.sign(message.encode('utf-8')).hex()
-
-class MCPClient:
+class AIPClient:
     def __init__(self):
         # Initialize session and client objects
         self.session: Optional[ClientSession] = None
         self.exit_stack = AsyncExitStack()
 
+    def get_auth_for_test(self, server_url: str):
+        logger.info(f"Get info for auth in test environment")
+        import requests
+        response = requests.get(server_url+"/info?agent_account="+membase_account, timeout=120)
+        response.raise_for_status()
+        res = response.json()
+        memory_id = res['uuid']
+        try:
+            if not membase_chain.get_auth(memory_id, membase_id):
+                logger.info(f"add agent: {membase_id} to memory: {memory_id}")
+                membase_chain.add_memory(memory_id, membase_id)
+        except Exception as e:
+            print(e)
+            exit(1)
+
     async def connect_to_sse_server(self, server_url: str):
-        """Connect to an MCP server running with SSE transport"""
+        """Connect to an AIP server running with SSE transport"""
         # Store the context managers so they stay alive
         timestamp = int(time.time())
         verify_message = f"{timestamp}"
-        token = sign_message(verify_message, private_key)
+        token = membase_chain.sign_message(verify_message)
 
         headers = {
-            'x-Publickey': public_key_pem_b64, 
+            'x-Agent': membase_id, 
             'x-Sign': token,
             'x-Timestamp': str(timestamp),
         }       
 
+        server_url = server_url + "/sse"
         self._streams_context = sse_client(url=server_url, headers=headers)
         streams = await self._streams_context.__aenter__()
 
@@ -60,11 +61,11 @@ class MCPClient:
         res = await self.session.initialize()
 
         # List available tools to verify connection
-        print(f"Initialized SSE client... {res}")
-        print("Listing tools...")
+        logger.info(f"Initialized SSE client... {res}")
+        logger.info("Listing tools...")
         response = await self.session.list_tools()
         tools = response.tools
-        print("\nConnected to server with tools:", [tool.name for tool in tools])
+        print("Connected to server with tools:", [tool.name for tool in tools])
 
         tool_args = {
             "memory_id": "test"+str(timestamp), 
@@ -101,9 +102,15 @@ async def main():
         print("Usage: uv run client.py <URL of SSE MCP server (i.e. http://localhost:8080/sse)>")
         sys.exit(1)
 
-    client = MCPClient()
+    membase_chain.register_agent(membase_id)
+    logger.info(f"start agent with account: {membase_account} and id: {membase_id}")
+
+    server_url = sys.argv[1]
+
+    client = AIPClient()
     try:
-        await client.connect_to_sse_server(server_url=sys.argv[1])
+        client.get_auth_for_test(server_url=server_url)
+        await client.connect_to_sse_server(server_url=server_url)
     finally:
         await client.cleanup()
 

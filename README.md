@@ -10,11 +10,16 @@ uv venv
 uv sync --dev --all-extras
 
 # server side:
-export MEMBASE_ACCOUNT="<your account>"
+export MEMBASE_ID="<memory uuid>"
+export MEMBASE_ACCOUNT="<memory account>"
+export MEMBASE_SECRET_KEY="<memory secret key>"
 uv run src/aip_chroma/server.py
 
 # client side usage example:
-uv run src/client.py http://0.0.0.0:8080/sse
+export MEMBASE_ID="<agent uuid>"
+export MEMBASE_ACCOUNT="<agent account>"
+export MEMBASE_SECRET_KEY="<agent secret key>"
+uv run src/client.py http://0.0.0.0:8080/
 ```
 
 ## Components

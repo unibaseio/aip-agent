@@ -8,16 +8,11 @@ import mcp.types as types
 from mcp.server import Server
 import functools
 
+from aip_chain.chain import membase_account
 from aip_chroma.hub import hub_client
 
-# Set up logging
 import logging
 logger = logging.getLogger(__name__)
-
-membase_account = os.getenv('MEMBASE_ACCOUNT')
-if not membase_account or membase_account == "":
-    print("'MEMBASE_ACCOUNT' is not set")
-    exit(1)
 
 # Constants
 MAX_RETRIES = 3

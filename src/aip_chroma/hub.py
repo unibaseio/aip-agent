@@ -111,5 +111,5 @@ class Client:
             logger.error(f"Error during download: {err}")
             return None
   
-he = os.getenv('HUB_ENDPOINT', 'http://54.151.130.2:8080')      
+he = os.getenv('MEMBASE_HUB', 'http://54.151.130.2:8080')      
 hub_client = Client(he)
