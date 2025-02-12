@@ -102,7 +102,8 @@ def create_starlette_app(mcp_server: Server, *, debug: bool = False) -> Starlett
     from starlette.responses import JSONResponse
     async def info(request):
         agent_account = request.query_params.get('agent_account')
-        membase_chain.share(membase_id, agent_account)
+        if membase_chain.get_share(membase_id, agent_account) == 0:
+            membase_chain.share(membase_id, agent_account)
         info_data = {
             "uuid": membase_id,
         }
