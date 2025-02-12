@@ -1,4 +1,4 @@
-# Chroma AIP Server
+# AIP Memory Server
 
 An Agent Interoperability Protocol (AIP) server implementation that provides memory management through Chroma. This server enables semantic memory search, metadata filtering, and memory management with persistent storage.
 
