@@ -9,7 +9,7 @@ from mcp.server import Server
 import functools
 
 from aip_chain.chain import membase_account
-from aip_chroma.hub import hub_client
+from aip_hub.hub import hub_client
 
 import logging
 logger = logging.getLogger(__name__)

@@ -33,7 +33,7 @@ uv run src/aip_chroma/server.py
 export MEMBASE_ID="<agent uuid>"
 export MEMBASE_ACCOUNT="<agent account>"
 export MEMBASE_SECRET_KEY="<agent secret key>"
-uv run examples/client.py http://0.0.0.0:8080/
+uv run src/examples/aip_chat_client.py http://0.0.0.0:8080
 ```
 
 ## Components
