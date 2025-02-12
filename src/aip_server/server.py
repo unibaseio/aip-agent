@@ -71,7 +71,7 @@ class BasicAuthTransport(SseServerTransport):
 def create_starlette_app(mcp_server: Server, *, debug: bool = False) -> Starlette:
     """Create a Starlette application that can server the provied mcp server with SSE."""
 
-    logger.info(f"start chomra memory with account: {membase_account} and id: {membase_id}")
+    logger.info(f"start with account: {membase_account} and id: {membase_id}")
     membase_chain.register(membase_id)
     
     sse = BasicAuthTransport("/messages/")

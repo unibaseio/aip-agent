@@ -246,6 +246,9 @@ Please use only the tools that are explicitly defined above."""
                         
                         final_response = self.llm_client.get_response(messages)
                         logging.info("\nFinal response: %s", final_response)
+
+                        await self.process_llm_response(final_response)
+
                         messages.append({"role": "assistant", "content": final_response})
                     else:
                         messages.append({"role": "assistant", "content": llm_response})

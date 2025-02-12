@@ -5,10 +5,11 @@ description = "A Membase AIP project for chroma"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
- "mcp>=1.1.2",
+ "mcp>=1.2.1",
  "chromadb>=0.6.0",
  "ecdsa>=0.19.0",
  "web3>=7.8.0",
+ "twikit>=2.3.3",
 ]
 [[project.authors]]
 name = "felix"
