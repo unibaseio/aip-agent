@@ -32,7 +32,7 @@ class AIPClient:
         try:
             if not membase_chain.get_auth(memory_id, membase_id):
                 logger.info(f"add agent: {membase_id} to memory: {memory_id}")
-                membase_chain.add_memory(memory_id, membase_id)
+                membase_chain.connect(memory_id, membase_id)
         except Exception as e:
             print(e)
             exit(1)
@@ -102,7 +102,7 @@ async def main():
         print("Usage: uv run client.py <URL of SSE MCP server (i.e. http://localhost:8080/sse)>")
         sys.exit(1)
 
-    membase_chain.register_agent(membase_id)
+    membase_chain.register(membase_id)
     logger.info(f"start agent with account: {membase_account} and id: {membase_id}")
 
     server_url = sys.argv[1]

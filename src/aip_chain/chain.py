@@ -23,7 +23,7 @@ class Client:
                  wallet_address: str, 
                  private_key: str, 
                  ep: str = "https://bsc-testnet-rpc.publicnode.com", 
-                 membase_contract: str = "0xA03060ac4132E76a9730A4c4EBd0994264ede55A"
+                 membase_contract: str = "0x4E61bfABBcfb096211AD518a2b1A3CEcfa558E49"
                  ):
         w3 = Web3(Web3.HTTPProvider(ep))
         if w3.is_connected():
@@ -51,7 +51,7 @@ class Client:
             return True
         return False
 
-    def register_agent(self, _uuid: str): 
+    def register(self, _uuid: str): 
         addr = self.membase.functions.getAgent(_uuid).call()
         if addr == self.wallet_address:
             return 
@@ -60,37 +60,24 @@ class Client:
             raise Exception(f"already register: {_uuid} by {addr}")
         
         return self._build_and_send_tx(
-            self.membase.functions.registerAgent(_uuid),
+            self.membase.functions.register(_uuid),
             self._get_tx_params(),
         )
 
-    def register_memory(self, _uuid: str): 
-        addr = self.membase.functions.getMemory(_uuid).call()
-        if addr == self.wallet_address:
-            return 
-        
-        if addr != ADDRESS_ZERO:
-            raise Exception(f"already register: {_uuid} by {addr}")
-
-        return self._build_and_send_tx(
-            self.membase.functions.registerMemory(_uuid),
-            self._get_tx_params(),
-        )
-
-    def share_memory(self, _uuid: str, wallet_address: str, permission: int=2): 
-        addr = self.membase.functions.getMemory(_uuid).call()
+    def share(self, _uuid: str, wallet_address: str, permission: int=2): 
+        addr = self.membase.functions.getAgent(_uuid).call()
         if addr != self.wallet_address:
             raise Exception(f"{_uuid} is owned by {addr}")
     
         wallet_address = Web3.to_checksum_address(wallet_address)
 
         return self._build_and_send_tx(
-            self.membase.functions.shareMemory(_uuid, wallet_address, permission),
+            self.membase.functions.shareTo(_uuid, wallet_address, permission),
             self._get_tx_params(),
         )
 
-    def add_memory(self, _uuid: str, _auuid: str): 
-        addr = self.membase.functions.getMemory(_uuid).call()
+    def connect(self, _uuid: str, _auuid: str): 
+        addr = self.membase.functions.getAgent(_uuid).call()
         if addr == self.wallet_address:
             return
     
@@ -99,15 +86,12 @@ class Client:
             raise Exception(f"{_uuid} is not shared to {self.wallet_address}")
 
         return self._build_and_send_tx(
-            self.membase.functions.addMemory(_uuid, _auuid),
+            self.membase.functions.connect(_uuid, _auuid),
             self._get_tx_params(),
         )
     
     def get_agent(self, _uuid: str) -> str: 
         return self.membase.functions.getAgent(_uuid).call()
-    
-    def get_memory(self, _uuid: str) -> str: 
-        return self.membase.functions.getMemory(_uuid).call()
     
     def get_share(self, _uuid: str, wallet_address: str) -> int: 
         wallet_address = Web3.to_checksum_address(wallet_address)
@@ -115,7 +99,7 @@ class Client:
 
     def get_auth(self, _muuid: str, _auuid: str) -> bool: 
         agent_address = self.membase.functions.getAgent(_auuid).call()
-        memory_address = self.membase.functions.getMemory(_muuid).call()
+        memory_address = self.membase.functions.getAgent(_muuid).call()
         if memory_address == ADDRESS_ZERO:
             return False
         if agent_address == memory_address:

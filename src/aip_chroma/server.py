@@ -102,7 +102,7 @@ def create_starlette_app(mcp_server: Server, *, debug: bool = False) -> Starlett
     from starlette.responses import JSONResponse
     async def info(request):
         agent_account = request.query_params.get('agent_account')
-        membase_chain.share_memory(membase_id, agent_account)
+        membase_chain.share(membase_id, agent_account)
         info_data = {
             "uuid": membase_id,
         }
@@ -125,7 +125,7 @@ if __name__ == "__main__":
     parser.add_argument('--port', type=int, default=8080, help='Port to listen on')
     args = parser.parse_args()
 
-    membase_chain.register_memory(membase_id)
+    membase_chain.register(membase_id)
 
     # Bind SSE request handling to MCP server
     starlette_app = create_starlette_app(server, debug=True)
