@@ -7,9 +7,19 @@ requires-python = ">=3.12"
 dependencies = [
  "mcp>=1.2.1",
  "chromadb>=0.6.0",
- "ecdsa>=0.19.0",
  "web3>=7.8.0",
  "twikit>=2.3.3",
+ "fastapi>=0.115.6",
+ "instructor>=1.7.0",
+ "opentelemetry-distro>=0.50b0",
+ "opentelemetry-exporter-otlp-proto-http>=1.29.0",
+ "pydantic-settings>=2.7.0",
+ "pydantic>=2.10.4",
+ "pyyaml>=6.0.2",
+ "rich>=13.9.4",
+ "typer>=0.15.1",
+ "numpy>=2.2.1",
+ "scikit-learn>=1.6.0",
 ]
 [[project.authors]]
 name = "felix"

@@ -46,3 +46,4 @@ log/
 Thumbs.db
 
 out
+mcp_agent.secrets.yaml

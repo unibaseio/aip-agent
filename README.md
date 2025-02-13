@@ -24,22 +24,26 @@ uv venv
 uv sync --dev --all-extras
 
 # server side:
+# each server has
 export MEMBASE_ID="<memory uuid>"
 export MEMBASE_ACCOUNT="<memory account>"
 export MEMBASE_SECRET_KEY="<memory secret key>"
 # memory
-uv run src/aip_chroma/server.py --port 8080
+uv run examples/aip_servers/chroma.py --port 8080
 # twitter
+# addtional env
 export TWITTER_USERNAME = "<your username>"
 export TWITTER_EMAIL = '<your email>'
 export TWITTER_PASSWORD = '<your password>'
-uv run src/examples/aip_twitter_server.py --port 8081
+uv run examples/aip_servers/twitter.py --port 8081
 
 # client side usage example:
 export MEMBASE_ID="<agent uuid>"
 export MEMBASE_ACCOUNT="<agent account>"
 export MEMBASE_SECRET_KEY="<agent secret key>"
-uv run src/examples/aip_chat_client.py http://0.0.0.0:8080 http://0.0.0.0:8081
+# modify mcp_agent.config.yaml
+cd examples/aip_agent_config
+uv run client.py
 ```
 
 ## Components

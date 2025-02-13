@@ -1,0 +1,6250 @@
+[
+  {
+    "name": "o1",
+    "description": "o1",
+    "provider": "Microsoft Azure",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 26.25,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 30790.0,
+        "tokens_per_second": 34.4
+      },
+      "intelligence": {
+        "quality_score": 90.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "o3-mini",
+    "description": "o3-mini",
+    "provider": "OpenAI",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 1.93,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 10480.0,
+        "tokens_per_second": 203.7
+      },
+      "intelligence": {
+        "quality_score": 89.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "o1-preview",
+    "description": "o1-preview",
+    "provider": "OpenAI",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 26.25,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 21730.0,
+        "tokens_per_second": 149.4
+      },
+      "intelligence": {
+        "quality_score": 85.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "o1-preview",
+    "description": "o1-preview",
+    "provider": "Microsoft Azure",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 28.88,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 29650.0,
+        "tokens_per_second": 37.4
+      },
+      "intelligence": {
+        "quality_score": 86.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "o1-mini",
+    "description": "o1-mini",
+    "provider": "OpenAI",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 5.25,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 11440.0,
+        "tokens_per_second": 198.3
+      },
+      "intelligence": {
+        "quality_score": 82.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "o1-mini",
+    "description": "o1-mini",
+    "provider": "Microsoft Azure",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 5.78,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 14630.0,
+        "tokens_per_second": 74.7
+      },
+      "intelligence": {
+        "quality_score": 84.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "gpt-4o-2024-08-06",
+    "description": "GPT-4o (Aug '24)",
+    "provider": "OpenAI",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 4.38,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 470.0,
+        "tokens_per_second": 63.5
+      },
+      "intelligence": {
+        "quality_score": 78.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "gpt-4o-2024-08-06",
+    "description": "GPT-4o (Aug '24)",
+    "provider": "Microsoft Azure",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 4.38,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 800.0,
+        "tokens_per_second": 113.9
+      },
+      "intelligence": {
+        "quality_score": 78.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "gpt-4o-2024-05-13",
+    "description": "GPT-4o (May '24)",
+    "provider": "OpenAI",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 7.5,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 480.0,
+        "tokens_per_second": 64.9
+      },
+      "intelligence": {
+        "quality_score": 78.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "gpt-4o-2024-05-13",
+    "description": "GPT-4o (May '24)",
+    "provider": "Microsoft Azure",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 7.5,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 830.0,
+        "tokens_per_second": 128.8
+      },
+      "intelligence": {
+        "quality_score": 78.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "gpt-4o",
+    "description": "GPT-4o (Nov '24)",
+    "provider": "OpenAI",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 4.38,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 410.0,
+        "tokens_per_second": 104.7
+      },
+      "intelligence": {
+        "quality_score": 73.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "gpt-4o",
+    "description": "GPT-4o (Nov '24)",
+    "provider": "Microsoft Azure",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 4.38,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 900.0,
+        "tokens_per_second": 144.4
+      },
+      "intelligence": {
+        "quality_score": 75.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "gpt-4o-mini",
+    "description": "GPT-4o mini",
+    "provider": "OpenAI",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.26,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 460.0,
+        "tokens_per_second": 78.0
+      },
+      "intelligence": {
+        "quality_score": 73.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "gpt-4o-mini",
+    "description": "GPT-4o mini",
+    "provider": "Microsoft Azure",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.26,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 790.0,
+        "tokens_per_second": 171.7
+      },
+      "intelligence": {
+        "quality_score": 73.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-3-instruct-70b",
+    "description": "Llama 3.3 70B",
+    "provider": "Cerebras",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.94,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 200.0,
+        "tokens_per_second": 2194.5
+      },
+      "intelligence": {
+        "quality_score": 74.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-3-instruct-70b",
+    "description": "Llama 3.3 70B",
+    "provider": "Hyperbolic",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.4,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 560.0,
+        "tokens_per_second": 23.7
+      },
+      "intelligence": {
+        "quality_score": 74.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-3-instruct-70b",
+    "description": "Llama 3.3 70B",
+    "provider": "Amazon Bedrock",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.71,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 930.0,
+        "tokens_per_second": 31.5
+      },
+      "intelligence": {
+        "quality_score": 74.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-3-instruct-70b",
+    "description": "Llama 3.3 70B Fast",
+    "provider": "Nebius Fast",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.38,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 600.0,
+        "tokens_per_second": 70.8
+      },
+      "intelligence": {
+        "quality_score": 74.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-3-instruct-70b",
+    "description": "Llama 3.3 70B Base",
+    "provider": "Nebius Base",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.2,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 630.0,
+        "tokens_per_second": 41.4
+      },
+      "intelligence": {
+        "quality_score": 74.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-3-instruct-70b",
+    "description": "Llama 3.3 70B",
+    "provider": "CentML",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.5,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 520.0,
+        "tokens_per_second": 124.1
+      },
+      "intelligence": {
+        "quality_score": 74.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-3-instruct-70b",
+    "description": "Llama 3.3 70B",
+    "provider": "Microsoft Azure",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.71,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 450.0,
+        "tokens_per_second": 52.5
+      },
+      "intelligence": {
+        "quality_score": 74.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-3-instruct-70b",
+    "description": "Llama 3.3 70B",
+    "provider": "Fireworks",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.9,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 600.0,
+        "tokens_per_second": 93.9
+      },
+      "intelligence": {
+        "quality_score": 74.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-3-instruct-70b",
+    "description": "Llama 3.3 70B (Turbo, FP8)",
+    "provider": "Deepinfra (Turbo, FP8)",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.2,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 440.0,
+        "tokens_per_second": 26.2
+      },
+      "intelligence": {
+        "quality_score": 74.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-3-instruct-70b",
+    "description": "Llama 3.3 70B",
+    "provider": "Deepinfra",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.27,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 460.0,
+        "tokens_per_second": 25.2
+      },
+      "intelligence": {
+        "quality_score": 74.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-3-instruct-70b",
+    "description": "Llama 3.3 70B",
+    "provider": "FriendliAI",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.6,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 340.0,
+        "tokens_per_second": 203.6
+      },
+      "intelligence": {
+        "quality_score": 74.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-3-instruct-70b",
+    "description": "Llama 3.3 70B",
+    "provider": "Novita",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.39,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 840.0,
+        "tokens_per_second": 65.2
+      },
+      "intelligence": {
+        "quality_score": 74.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-3-instruct-70b",
+    "description": "Llama 3.3 70B (Spec decoding)",
+    "provider": "Groq (Spec decoding)",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.69,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 360.0,
+        "tokens_per_second": 1793.3
+      },
+      "intelligence": {
+        "quality_score": 74.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-3-instruct-70b",
+    "description": "Llama 3.3 70B",
+    "provider": "Groq",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.64,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 370.0,
+        "tokens_per_second": 275.2
+      },
+      "intelligence": {
+        "quality_score": 74.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-3-instruct-70b",
+    "description": "Llama 3.3 70B",
+    "provider": "SambaNova",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.75,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 440.0,
+        "tokens_per_second": 359.5
+      },
+      "intelligence": {
+        "quality_score": 74.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-3-instruct-70b",
+    "description": "Llama 3.3 70B Turbo",
+    "provider": "Together.ai Turbo",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.88,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 390.0,
+        "tokens_per_second": 198.4
+      },
+      "intelligence": {
+        "quality_score": 75.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-instruct-405b",
+    "description": "Llama 3.1 405B",
+    "provider": "Replicate",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 9.5,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 400.0,
+        "tokens_per_second": 19.0
+      },
+      "intelligence": {
+        "quality_score": 74.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-instruct-405b",
+    "description": "Llama 3.1 405B",
+    "provider": "Hyperbolic",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 4.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 840.0,
+        "tokens_per_second": 7.3
+      },
+      "intelligence": {
+        "quality_score": 75.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-instruct-405b",
+    "description": "Llama 3.1 405B Standard",
+    "provider": "Amazon Bedrock Standard",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 2.4,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 1950.0,
+        "tokens_per_second": 30.3
+      },
+      "intelligence": {
+        "quality_score": 74.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-instruct-405b",
+    "description": "Llama 3.1 405B Latency Optimized",
+    "provider": "Amazon Bedrock Latency Optimized",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 3.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 800.0,
+        "tokens_per_second": 64.9
+      },
+      "intelligence": {
+        "quality_score": 74.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-instruct-405b",
+    "description": "Llama 3.1 405B Base",
+    "provider": "Nebius Base",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 1.5,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 720.0,
+        "tokens_per_second": 34.1
+      },
+      "intelligence": {
+        "quality_score": 74.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-instruct-405b",
+    "description": "Llama 3.1 405B Vertex",
+    "provider": "Google Vertex",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 7.75,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 400.0,
+        "tokens_per_second": 29.7
+      },
+      "intelligence": {
+        "quality_score": 74.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-instruct-405b",
+    "description": "Llama 3.1 405B",
+    "provider": "Microsoft Azure",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 8.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 520.0,
+        "tokens_per_second": 21.8
+      },
+      "intelligence": {
+        "quality_score": 74.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-instruct-405b",
+    "description": "Llama 3.1 405B",
+    "provider": "Fireworks",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 3.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 740.0,
+        "tokens_per_second": 64.1
+      },
+      "intelligence": {
+        "quality_score": 73.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-instruct-405b",
+    "description": "Llama 3.1 405B",
+    "provider": "Deepinfra",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.9,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 450.0,
+        "tokens_per_second": 21.7
+      },
+      "intelligence": {
+        "quality_score": 73.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-instruct-405b",
+    "description": "Llama 3.1 405B",
+    "provider": "SambaNova",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 6.25,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 690.0,
+        "tokens_per_second": 170.3
+      },
+      "intelligence": {
+        "quality_score": 74.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-instruct-405b",
+    "description": "Llama 3.1 405B",
+    "provider": "Databricks",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 7.5,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 730.0,
+        "tokens_per_second": 37.8
+      },
+      "intelligence": {
+        "quality_score": 72.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-instruct-405b",
+    "description": "Llama 3.1 405B Turbo",
+    "provider": "Together.ai Turbo",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 3.5,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 750.0,
+        "tokens_per_second": 86.9
+      },
+      "intelligence": {
+        "quality_score": 74.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-2-instruct-90b-vision",
+    "description": "Llama 3.2 90B (Vision)",
+    "provider": "Amazon Bedrock",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.72,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 500.0,
+        "tokens_per_second": 37.1
+      },
+      "intelligence": {
+        "quality_score": 67.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-2-instruct-90b-vision",
+    "description": "Llama 3.2 90B (Vision) Vertex",
+    "provider": "Google Vertex",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 190.0,
+        "tokens_per_second": 31.9
+      },
+      "intelligence": {
+        "quality_score": 68.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-2-instruct-90b-vision",
+    "description": "Llama 3.2 90B (Vision)",
+    "provider": "Fireworks",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.9,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 320.0,
+        "tokens_per_second": 68.2
+      },
+      "intelligence": {
+        "quality_score": 66.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-2-instruct-90b-vision",
+    "description": "Llama 3.2 90B (Vision)",
+    "provider": "Deepinfra",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.36,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 310.0,
+        "tokens_per_second": 39.8
+      },
+      "intelligence": {
+        "quality_score": 68.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-2-instruct-90b-vision",
+    "description": "Llama 3.2 90B (Vision)",
+    "provider": "Groq",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.9,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 540.0,
+        "tokens_per_second": 272.1
+      },
+      "intelligence": {
+        "quality_score": 67.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-2-instruct-90b-vision",
+    "description": "Llama 3.2 90B (Vision) Turbo",
+    "provider": "Together.ai Turbo",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 1.2,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 330.0,
+        "tokens_per_second": 55.2
+      },
+      "intelligence": {
+        "quality_score": 66.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-instruct-70b",
+    "description": "Llama 3.1 70B",
+    "provider": "Cerebras",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.6,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 230.0,
+        "tokens_per_second": 2172.6
+      },
+      "intelligence": {
+        "quality_score": 68.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-instruct-70b",
+    "description": "Llama 3.1 70B",
+    "provider": "Hyperbolic",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.4,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 660.0,
+        "tokens_per_second": 25.0
+      },
+      "intelligence": {
+        "quality_score": 69.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-instruct-70b",
+    "description": "Llama 3.1 70B Standard",
+    "provider": "Amazon Bedrock Standard",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.72,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 710.0,
+        "tokens_per_second": 31.4
+      },
+      "intelligence": {
+        "quality_score": 67.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-instruct-70b",
+    "description": "Llama 3.1 70B Latency Optimized",
+    "provider": "Amazon Bedrock Latency Optimized",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.9,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 380.0,
+        "tokens_per_second": 141.3
+      },
+      "intelligence": {
+        "quality_score": 67.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-instruct-70b",
+    "description": "Llama 3.1 70B Base",
+    "provider": "Nebius Base",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.2,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 630.0,
+        "tokens_per_second": 46.1
+      },
+      "intelligence": {
+        "quality_score": 66.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-instruct-70b",
+    "description": "Llama 3.1 70B Fast",
+    "provider": "Nebius Fast",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.38,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 580.0,
+        "tokens_per_second": 72.5
+      },
+      "intelligence": {
+        "quality_score": 66.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-instruct-70b",
+    "description": "Llama 3.1 70B Vertex",
+    "provider": "Google Vertex",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 280.0,
+        "tokens_per_second": 69.5
+      },
+      "intelligence": {
+        "quality_score": 67.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-instruct-70b",
+    "description": "Llama 3.1 70B",
+    "provider": "Microsoft Azure",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 2.9,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 440.0,
+        "tokens_per_second": 60.4
+      },
+      "intelligence": {
+        "quality_score": 67.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-instruct-70b",
+    "description": "Llama 3.1 70B",
+    "provider": "Fireworks",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.9,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 380.0,
+        "tokens_per_second": 131.6
+      },
+      "intelligence": {
+        "quality_score": 67.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-instruct-70b",
+    "description": "Llama 3.1 70B (Turbo, FP8)",
+    "provider": "Deepinfra (Turbo, FP8)",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.2,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 280.0,
+        "tokens_per_second": 41.8
+      },
+      "intelligence": {
+        "quality_score": 66.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-instruct-70b",
+    "description": "Llama 3.1 70B",
+    "provider": "Deepinfra",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.27,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 380.0,
+        "tokens_per_second": 40.3
+      },
+      "intelligence": {
+        "quality_score": 66.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-instruct-70b",
+    "description": "Llama 3.1 70B",
+    "provider": "FriendliAI",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.6,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 350.0,
+        "tokens_per_second": 215.4
+      },
+      "intelligence": {
+        "quality_score": 68.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-instruct-70b",
+    "description": "Llama 3.1 70B",
+    "provider": "Novita",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.35,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 1040.0,
+        "tokens_per_second": 63.7
+      },
+      "intelligence": {
+        "quality_score": 68.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-instruct-70b",
+    "description": "Llama 3.1 70B",
+    "provider": "SambaNova",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.75,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 410.0,
+        "tokens_per_second": 359.2
+      },
+      "intelligence": {
+        "quality_score": 65.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-instruct-70b",
+    "description": "Llama 3.1 70B",
+    "provider": "Databricks",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 1.5,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 460.0,
+        "tokens_per_second": 64.2
+      },
+      "intelligence": {
+        "quality_score": 43.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-instruct-70b",
+    "description": "Llama 3.1 70B Turbo",
+    "provider": "Together.ai Turbo",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.88,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 340.0,
+        "tokens_per_second": 217.1
+      },
+      "intelligence": {
+        "quality_score": 68.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-instruct-70b",
+    "description": "Llama 3.1 70B",
+    "provider": "Simplismart",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.9,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 350.0,
+        "tokens_per_second": 125.9
+      },
+      "intelligence": {
+        "quality_score": 62.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-2-instruct-11b-vision",
+    "description": "Llama 3.2 11B (Vision)",
+    "provider": "Amazon Bedrock",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.16,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 350.0,
+        "tokens_per_second": 140.7
+      },
+      "intelligence": {
+        "quality_score": 53.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-2-instruct-11b-vision",
+    "description": "Llama 3.2 11B (Vision)",
+    "provider": "Fireworks",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.2,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 260.0,
+        "tokens_per_second": 120.7
+      },
+      "intelligence": {
+        "quality_score": 54.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-2-instruct-11b-vision",
+    "description": "Llama 3.2 11B (Vision)",
+    "provider": "Deepinfra",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.06,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 220.0,
+        "tokens_per_second": 59.5
+      },
+      "intelligence": {
+        "quality_score": 54.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-2-instruct-11b-vision",
+    "description": "Llama 3.2 11B (Vision)",
+    "provider": "Groq",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.18,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 280.0,
+        "tokens_per_second": 750.7
+      },
+      "intelligence": {
+        "quality_score": 53.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-2-instruct-11b-vision",
+    "description": "Llama 3.2 11B (Vision) Turbo",
+    "provider": "Together.ai Turbo",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.18,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 280.0,
+        "tokens_per_second": 141.6
+      },
+      "intelligence": {
+        "quality_score": 54.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-instruct-8b",
+    "description": "Llama 3.1 8B",
+    "provider": "Cerebras",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.1,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 250.0,
+        "tokens_per_second": 2181.1
+      },
+      "intelligence": {
+        "quality_score": 54.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-instruct-8b",
+    "description": "Llama 3.1 8B",
+    "provider": "Hyperbolic",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.1,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 420.0,
+        "tokens_per_second": 114.8
+      },
+      "intelligence": {
+        "quality_score": 53.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-instruct-8b",
+    "description": "Llama 3.1 8B",
+    "provider": "Amazon Bedrock",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.22,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 380.0,
+        "tokens_per_second": 91.3
+      },
+      "intelligence": {
+        "quality_score": 54.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-instruct-8b",
+    "description": "Llama 3.1 8B Fast",
+    "provider": "Nebius Fast",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.04,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 510.0,
+        "tokens_per_second": 185.5
+      },
+      "intelligence": {
+        "quality_score": 54.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-instruct-8b",
+    "description": "Llama 3.1 8B Base",
+    "provider": "Nebius Base",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.03,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 1520.0,
+        "tokens_per_second": 25.1
+      },
+      "intelligence": {
+        "quality_score": 54.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-instruct-8b",
+    "description": "Llama 3.1 8B Vertex",
+    "provider": "Google Vertex",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 160.0,
+        "tokens_per_second": 120.0
+      },
+      "intelligence": {
+        "quality_score": 54.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-instruct-8b",
+    "description": "Llama 3.1 8B",
+    "provider": "Microsoft Azure",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.38,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 300.0,
+        "tokens_per_second": 162.1
+      },
+      "intelligence": {
+        "quality_score": 54.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-instruct-8b",
+    "description": "Llama 3.1 8B",
+    "provider": "Fireworks",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.2,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 240.0,
+        "tokens_per_second": 189.5
+      },
+      "intelligence": {
+        "quality_score": 53.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-instruct-8b",
+    "description": "Llama 3.1 8B",
+    "provider": "Deepinfra",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.04,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 250.0,
+        "tokens_per_second": 63.0
+      },
+      "intelligence": {
+        "quality_score": 54.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-instruct-8b",
+    "description": "Llama 3.1 8B",
+    "provider": "FriendliAI",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.1,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 310.0,
+        "tokens_per_second": 500.0
+      },
+      "intelligence": {
+        "quality_score": 54.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-instruct-8b",
+    "description": "Llama 3.1 8B",
+    "provider": "Novita",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.05,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 560.0,
+        "tokens_per_second": 74.5
+      },
+      "intelligence": {
+        "quality_score": 53.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-instruct-8b",
+    "description": "Llama 3.1 8B",
+    "provider": "Groq",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.06,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 270.0,
+        "tokens_per_second": 750.5
+      },
+      "intelligence": {
+        "quality_score": 53.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-instruct-8b",
+    "description": "Llama 3.1 8B",
+    "provider": "SambaNova",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.13,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 250.0,
+        "tokens_per_second": 1115.3
+      },
+      "intelligence": {
+        "quality_score": 52.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-instruct-8b",
+    "description": "Llama 3.1 8B Turbo",
+    "provider": "Together.ai Turbo",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.18,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 280.0,
+        "tokens_per_second": 307.7
+      },
+      "intelligence": {
+        "quality_score": 53.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-instruct-8b",
+    "description": "Llama 3.1 8B",
+    "provider": "Simplismart",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.15,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 270.0,
+        "tokens_per_second": 463.2
+      },
+      "intelligence": {
+        "quality_score": 52.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-2-instruct-3b",
+    "description": "Llama 3.2 3B",
+    "provider": "Hyperbolic",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.1,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 440.0,
+        "tokens_per_second": 200.0
+      },
+      "intelligence": {
+        "quality_score": 48.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-2-instruct-3b",
+    "description": "Llama 3.2 3B",
+    "provider": "Amazon Bedrock",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.15,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 360.0,
+        "tokens_per_second": 72.9
+      },
+      "intelligence": {
+        "quality_score": 49.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-2-instruct-3b",
+    "description": "Llama 3.2 3B Base",
+    "provider": "Nebius Base",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.01,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 530.0,
+        "tokens_per_second": 123.2
+      },
+      "intelligence": {
+        "quality_score": 49.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-2-instruct-3b",
+    "description": "Llama 3.2 3B",
+    "provider": "Fireworks",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.1,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 250.0,
+        "tokens_per_second": 271.0
+      },
+      "intelligence": {
+        "quality_score": 50.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-2-instruct-3b",
+    "description": "Llama 3.2 3B",
+    "provider": "Deepinfra",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.02,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 190.0,
+        "tokens_per_second": 147.9
+      },
+      "intelligence": {
+        "quality_score": 49.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-2-instruct-3b",
+    "description": "Llama 3.2 3B",
+    "provider": "Novita",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.04,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 600.0,
+        "tokens_per_second": 120.9
+      },
+      "intelligence": {
+        "quality_score": 48.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-2-instruct-3b",
+    "description": "Llama 3.2 3B",
+    "provider": "Groq",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.06,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 360.0,
+        "tokens_per_second": 1611.7
+      },
+      "intelligence": {
+        "quality_score": 49.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-2-instruct-3b",
+    "description": "Llama 3.2 3B",
+    "provider": "SambaNova",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.1,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 240.0,
+        "tokens_per_second": 1489.1
+      },
+      "intelligence": {
+        "quality_score": 49.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-2-instruct-3b",
+    "description": "Llama 3.2 3B Turbo",
+    "provider": "Together.ai Turbo",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.06,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 470.0,
+        "tokens_per_second": 62.0
+      },
+      "intelligence": {
+        "quality_score": 49.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-2-instruct-1b",
+    "description": "Llama 3.2 1B",
+    "provider": "Amazon Bedrock",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.1,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 330.0,
+        "tokens_per_second": 120.2
+      },
+      "intelligence": {
+        "quality_score": 26.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-2-instruct-1b",
+    "description": "Llama 3.2 1B Base",
+    "provider": "Nebius Base",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.01,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 490.0,
+        "tokens_per_second": 267.4
+      },
+      "intelligence": {
+        "quality_score": 26.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-2-instruct-1b",
+    "description": "Llama 3.2 1B",
+    "provider": "Deepinfra",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.01,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 240.0,
+        "tokens_per_second": 137.8
+      },
+      "intelligence": {
+        "quality_score": 26.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-2-instruct-1b",
+    "description": "Llama 3.2 1B",
+    "provider": "Groq",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.04,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 490.0,
+        "tokens_per_second": 3199.0
+      },
+      "intelligence": {
+        "quality_score": 26.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-2-instruct-1b",
+    "description": "Llama 3.2 1B",
+    "provider": "SambaNova",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.05,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 250.0,
+        "tokens_per_second": 2084.3
+      },
+      "intelligence": {
+        "quality_score": 26.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "gemini-2-0-flash-experimental",
+    "description": "Gemini 2.0 Flash (exp) (AI Studio)",
+    "provider": "Google (AI Studio)",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 490.0,
+        "tokens_per_second": 168.1
+      },
+      "intelligence": {
+        "quality_score": 82.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "gemini-1-5-pro",
+    "description": "Gemini 1.5 Pro (Sep) (Vertex)",
+    "provider": "Google (Vertex)",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 2.19,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 410.0,
+        "tokens_per_second": 59.3
+      },
+      "intelligence": {
+        "quality_score": 80.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "gemini-1-5-pro",
+    "description": "Gemini 1.5 Pro (Sep) (AI Studio)",
+    "provider": "Google (AI Studio)",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 2.19,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 750.0,
+        "tokens_per_second": 63.6
+      },
+      "intelligence": {
+        "quality_score": 80.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "gemini-1-5-flash",
+    "description": "Gemini 1.5 Flash (Sep) (Vertex)",
+    "provider": "Google (Vertex)",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.13,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 220.0,
+        "tokens_per_second": 188.6
+      },
+      "intelligence": {
+        "quality_score": 74.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "gemini-1-5-flash",
+    "description": "Gemini 1.5 Flash (Sep) (AI Studio)",
+    "provider": "Google (AI Studio)",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.13,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 400.0,
+        "tokens_per_second": 168.8
+      },
+      "intelligence": {
+        "quality_score": 74.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "gemini-1-5-pro-may-2024",
+    "description": "Gemini 1.5 Pro (May) (Vertex)",
+    "provider": "Google (Vertex)",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 2.19,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 420.0,
+        "tokens_per_second": 65.1
+      },
+      "intelligence": {
+        "quality_score": 72.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "gemini-1-5-pro-may-2024",
+    "description": "Gemini 1.5 Pro (May) (AI Studio)",
+    "provider": "Google (AI Studio)",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 2.19,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 790.0,
+        "tokens_per_second": 66.5
+      },
+      "intelligence": {
+        "quality_score": 72.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "gemma-2-27b",
+    "description": "Gemma 2 27B",
+    "provider": "Together.ai",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.8,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 370.0,
+        "tokens_per_second": 65.4
+      },
+      "intelligence": {
+        "quality_score": 61.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "gemma-2-9b",
+    "description": "Gemma 2 9B Fast",
+    "provider": "Nebius Fast",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.04,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 500.0,
+        "tokens_per_second": 179.6
+      },
+      "intelligence": {
+        "quality_score": 55.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "gemma-2-9b",
+    "description": "Gemma 2 9B Base",
+    "provider": "Nebius Base",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.03,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 510.0,
+        "tokens_per_second": 169.2
+      },
+      "intelligence": {
+        "quality_score": 55.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "gemma-2-9b",
+    "description": "Gemma 2 9B",
+    "provider": "Deepinfra",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.04,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 330.0,
+        "tokens_per_second": 50.6
+      },
+      "intelligence": {
+        "quality_score": 54.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "gemma-2-9b",
+    "description": "Gemma 2 9B",
+    "provider": "Groq",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.2,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 240.0,
+        "tokens_per_second": 653.7
+      },
+      "intelligence": {
+        "quality_score": 55.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "gemma-2-9b",
+    "description": "Gemma 2 9B",
+    "provider": "Together.ai",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.3,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 330.0,
+        "tokens_per_second": 131.4
+      },
+      "intelligence": {
+        "quality_score": 55.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "gemini-1-5-flash-8b",
+    "description": "Gemini 1.5 Flash-8B AI Studio",
+    "provider": "Google AI Studio",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.07,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 300.0,
+        "tokens_per_second": 284.4
+      },
+      "intelligence": {
+        "quality_score": 47.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "gemini-1-5-flash-may-2024",
+    "description": "Gemini 1.5 Flash (May) (Vertex)",
+    "provider": "Google (Vertex)",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.13,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 280.0,
+        "tokens_per_second": 302.2
+      },
+      "intelligence": {
+        "quality_score": 60.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "gemini-1-5-flash-may-2024",
+    "description": "Gemini 1.5 Flash (May) (AI Studio)",
+    "provider": "Google (AI Studio)",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.13,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 280.0,
+        "tokens_per_second": 308.9
+      },
+      "intelligence": {
+        "quality_score": 60.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "gemini-experimental-dec-2024",
+    "description": "Gemini Experimental (Nov) (AI Studio)",
+    "provider": "Google (AI Studio)",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 850.0,
+        "tokens_per_second": 54.5
+      },
+      "intelligence": {
+        "quality_score": 0.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "claude-35-sonnet",
+    "description": "Claude 3.5 Sonnet (Oct)",
+    "provider": "Amazon Bedrock",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 6.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 1050.0,
+        "tokens_per_second": 43.0
+      },
+      "intelligence": {
+        "quality_score": 80.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "claude-35-sonnet",
+    "description": "Claude 3.5 Sonnet (Oct) Vertex",
+    "provider": "Google Vertex",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 6.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 930.0,
+        "tokens_per_second": 73.2
+      },
+      "intelligence": {
+        "quality_score": 80.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "claude-35-sonnet",
+    "description": "Claude 3.5 Sonnet (Oct)",
+    "provider": "Anthropic",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 6.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 1060.0,
+        "tokens_per_second": 80.5
+      },
+      "intelligence": {
+        "quality_score": 80.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "claude-35-sonnet-june-24",
+    "description": "Claude 3.5 Sonnet (June)",
+    "provider": "Amazon Bedrock",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 6.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 970.0,
+        "tokens_per_second": 47.1
+      },
+      "intelligence": {
+        "quality_score": 76.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "claude-35-sonnet-june-24",
+    "description": "Claude 3.5 Sonnet (June) Vertex",
+    "provider": "Google Vertex",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 6.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 920.0,
+        "tokens_per_second": 73.7
+      },
+      "intelligence": {
+        "quality_score": 76.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "claude-35-sonnet-june-24",
+    "description": "Claude 3.5 Sonnet (June)",
+    "provider": "Anthropic",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 6.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 930.0,
+        "tokens_per_second": 84.8
+      },
+      "intelligence": {
+        "quality_score": 76.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "claude-3-opus",
+    "description": "Claude 3 Opus",
+    "provider": "Amazon Bedrock",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 30.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 1360.0,
+        "tokens_per_second": 25.9
+      },
+      "intelligence": {
+        "quality_score": 70.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "claude-3-opus",
+    "description": "Claude 3 Opus Vertex",
+    "provider": "Google Vertex",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 30.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 1130.0,
+        "tokens_per_second": 27.6
+      },
+      "intelligence": {
+        "quality_score": 70.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "claude-3-opus",
+    "description": "Claude 3 Opus",
+    "provider": "Anthropic",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 30.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 1870.0,
+        "tokens_per_second": 27.4
+      },
+      "intelligence": {
+        "quality_score": 70.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "claude-3-5-haiku",
+    "description": "Claude 3.5 Haiku Standard",
+    "provider": "Amazon Bedrock Standard",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 1.6,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 850.0,
+        "tokens_per_second": 52.4
+      },
+      "intelligence": {
+        "quality_score": 68.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "claude-3-5-haiku",
+    "description": "Claude 3.5 Haiku Latency Optimized",
+    "provider": "Amazon Bedrock Latency Optimized",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 2.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 570.0,
+        "tokens_per_second": 100.3
+      },
+      "intelligence": {
+        "quality_score": 68.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "claude-3-5-haiku",
+    "description": "Claude 3.5 Haiku Vertex",
+    "provider": "Google Vertex",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 1.6,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 940.0,
+        "tokens_per_second": 65.0
+      },
+      "intelligence": {
+        "quality_score": 68.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "claude-3-5-haiku",
+    "description": "Claude 3.5 Haiku",
+    "provider": "Anthropic",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 1.6,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 920.0,
+        "tokens_per_second": 64.7
+      },
+      "intelligence": {
+        "quality_score": 68.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "claude-3-haiku",
+    "description": "Claude 3 Haiku",
+    "provider": "Amazon Bedrock",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.5,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 790.0,
+        "tokens_per_second": 102.7
+      },
+      "intelligence": {
+        "quality_score": 55.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "claude-3-haiku",
+    "description": "Claude 3 Haiku",
+    "provider": "Anthropic",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.5,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 400.0,
+        "tokens_per_second": 135.9
+      },
+      "intelligence": {
+        "quality_score": 55.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "pixtral-large-2411",
+    "description": "Pixtral Large",
+    "provider": "Mistral",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 3.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 370.0,
+        "tokens_per_second": 41.9
+      },
+      "intelligence": {
+        "quality_score": 74.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "mistral-large-2",
+    "description": "Mistral Large 2 (Nov '24)",
+    "provider": "Mistral",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 3.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 360.0,
+        "tokens_per_second": 47.4
+      },
+      "intelligence": {
+        "quality_score": 74.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "mistral-large-2",
+    "description": "Mistral Large 2 (Nov '24)",
+    "provider": "Microsoft Azure",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 3.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 530.0,
+        "tokens_per_second": 34.6
+      },
+      "intelligence": {
+        "quality_score": 74.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "mistral-large-2407",
+    "description": "Mistral Large 2 (Jul '24)",
+    "provider": "Mistral",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 3.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 380.0,
+        "tokens_per_second": 30.9
+      },
+      "intelligence": {
+        "quality_score": 74.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "mistral-large-2407",
+    "description": "Mistral Large 2 (Jul '24)",
+    "provider": "Amazon Bedrock",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 3.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 470.0,
+        "tokens_per_second": 34.1
+      },
+      "intelligence": {
+        "quality_score": 74.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "mistral-large-2407",
+    "description": "Mistral Large 2 (Jul '24)",
+    "provider": "Microsoft Azure",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 3.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 540.0,
+        "tokens_per_second": 35.8
+      },
+      "intelligence": {
+        "quality_score": 74.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "mistral-small-3",
+    "description": "Mistral Small 3",
+    "provider": "Mistral",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.15,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 270.0,
+        "tokens_per_second": 166.2
+      },
+      "intelligence": {
+        "quality_score": 72.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "mistral-small-3",
+    "description": "Mistral Small 3",
+    "provider": "Fireworks",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.9,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 360.0,
+        "tokens_per_second": 68.3
+      },
+      "intelligence": {
+        "quality_score": 72.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "mistral-small-3",
+    "description": "Mistral Small 3",
+    "provider": "Together.ai",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.8,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 260.0,
+        "tokens_per_second": 98.2
+      },
+      "intelligence": {
+        "quality_score": 72.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "mistral-small",
+    "description": "Mistral Small (Sep '24)",
+    "provider": "Mistral",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.3,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 340.0,
+        "tokens_per_second": 61.6
+      },
+      "intelligence": {
+        "quality_score": 61.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "mistral-8x22b-instruct",
+    "description": "Mixtral 8x22B",
+    "provider": "Mistral",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 3.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 290.0,
+        "tokens_per_second": 79.5
+      },
+      "intelligence": {
+        "quality_score": 62.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "mistral-8x22b-instruct",
+    "description": "Mixtral 8x22B Base",
+    "provider": "Nebius Base",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.6,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 610.0,
+        "tokens_per_second": 87.8
+      },
+      "intelligence": {
+        "quality_score": 60.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "mistral-8x22b-instruct",
+    "description": "Mixtral 8x22B Fast",
+    "provider": "Nebius Fast",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 1.05,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 640.0,
+        "tokens_per_second": 102.2
+      },
+      "intelligence": {
+        "quality_score": 60.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "mistral-8x22b-instruct",
+    "description": "Mixtral 8x22B",
+    "provider": "Fireworks",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 1.2,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 320.0,
+        "tokens_per_second": 68.7
+      },
+      "intelligence": {
+        "quality_score": 61.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "mistral-8x22b-instruct",
+    "description": "Mixtral 8x22B",
+    "provider": "Together.ai",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 1.2,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 590.0,
+        "tokens_per_second": 67.6
+      },
+      "intelligence": {
+        "quality_score": 55.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "pixtral",
+    "description": "Pixtral 12B",
+    "provider": "Mistral",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.15,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 300.0,
+        "tokens_per_second": 101.4
+      },
+      "intelligence": {
+        "quality_score": 56.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "pixtral",
+    "description": "Pixtral 12B",
+    "provider": "Hyperbolic",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.1,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 440.0,
+        "tokens_per_second": 76.3
+      },
+      "intelligence": {
+        "quality_score": 57.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "ministral-8b",
+    "description": "Ministral 8B",
+    "provider": "Mistral",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.1,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 270.0,
+        "tokens_per_second": 140.3
+      },
+      "intelligence": {
+        "quality_score": 56.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "mistral-nemo",
+    "description": "Mistral NeMo",
+    "provider": "Mistral",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.15,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 270.0,
+        "tokens_per_second": 115.2
+      },
+      "intelligence": {
+        "quality_score": 53.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "mistral-nemo",
+    "description": "Mistral NeMo Fast",
+    "provider": "Nebius Fast",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.12,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 530.0,
+        "tokens_per_second": 157.5
+      },
+      "intelligence": {
+        "quality_score": 53.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "mistral-nemo",
+    "description": "Mistral NeMo Base",
+    "provider": "Nebius Base",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.06,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 640.0,
+        "tokens_per_second": 51.9
+      },
+      "intelligence": {
+        "quality_score": 53.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "mistral-nemo",
+    "description": "Mistral NeMo",
+    "provider": "Deepinfra",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.06,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 230.0,
+        "tokens_per_second": 63.0
+      },
+      "intelligence": {
+        "quality_score": 54.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "ministral-3b",
+    "description": "Ministral 3B",
+    "provider": "Mistral",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.04,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 260.0,
+        "tokens_per_second": 217.7
+      },
+      "intelligence": {
+        "quality_score": 53.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "mixtral-8x7b-instruct",
+    "description": "Mixtral 8x7B",
+    "provider": "Mistral",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.7,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 280.0,
+        "tokens_per_second": 101.5
+      },
+      "intelligence": {
+        "quality_score": 42.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "mixtral-8x7b-instruct",
+    "description": "Mixtral 8x7B",
+    "provider": "Amazon Bedrock",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.51,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 350.0,
+        "tokens_per_second": 54.9
+      },
+      "intelligence": {
+        "quality_score": 41.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "mixtral-8x7b-instruct",
+    "description": "Mixtral 8x7B Fast",
+    "provider": "Nebius Fast",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.23,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 530.0,
+        "tokens_per_second": 162.4
+      },
+      "intelligence": {
+        "quality_score": 40.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "mixtral-8x7b-instruct",
+    "description": "Mixtral 8x7B Base",
+    "provider": "Nebius Base",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.12,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 530.0,
+        "tokens_per_second": 133.9
+      },
+      "intelligence": {
+        "quality_score": 40.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "mixtral-8x7b-instruct",
+    "description": "Mixtral 8x7B",
+    "provider": "Fireworks",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.5,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 230.0,
+        "tokens_per_second": 157.0
+      },
+      "intelligence": {
+        "quality_score": 43.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "mixtral-8x7b-instruct",
+    "description": "Mixtral 8x7B",
+    "provider": "Deepinfra",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.24,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 210.0,
+        "tokens_per_second": 92.2
+      },
+      "intelligence": {
+        "quality_score": 40.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "mixtral-8x7b-instruct",
+    "description": "Mixtral 8x7B",
+    "provider": "Groq",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.24,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 280.0,
+        "tokens_per_second": 567.2
+      },
+      "intelligence": {
+        "quality_score": 42.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "mixtral-8x7b-instruct",
+    "description": "Mixtral 8x7B",
+    "provider": "Databricks",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.63,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 370.0,
+        "tokens_per_second": 92.2
+      },
+      "intelligence": {
+        "quality_score": 42.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "mixtral-8x7b-instruct",
+    "description": "Mixtral 8x7B",
+    "provider": "Together.ai",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.6,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 280.0,
+        "tokens_per_second": 94.4
+      },
+      "intelligence": {
+        "quality_score": 35.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "codestral-mamba",
+    "description": "Codestral-Mamba",
+    "provider": "Mistral",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.25,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 430.0,
+        "tokens_per_second": 94.8
+      },
+      "intelligence": {
+        "quality_score": 33.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "codestral",
+    "description": "Codestral (Jan '25)",
+    "provider": "Mistral",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.45,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 250.0,
+        "tokens_per_second": 208.2
+      },
+      "intelligence": {
+        "quality_score": 0.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "codestral",
+    "description": "Codestral (Jan '25) Vertex",
+    "provider": "Google Vertex",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.45,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 6540.0,
+        "tokens_per_second": 43993.5
+      },
+      "intelligence": {
+        "quality_score": 0.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "command-r-plus",
+    "description": "Command-R+",
+    "provider": "Amazon Bedrock",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 6.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 510.0,
+        "tokens_per_second": 47.3
+      },
+      "intelligence": {
+        "quality_score": 55.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "command-r-plus",
+    "description": "Command-R+",
+    "provider": "Cohere",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 4.38,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 230.0,
+        "tokens_per_second": 74.6
+      },
+      "intelligence": {
+        "quality_score": 55.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "command-r-plus-04-2024",
+    "description": "Command-R+ (Apr '24)",
+    "provider": "Amazon Bedrock",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 6.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 520.0,
+        "tokens_per_second": 47.2
+      },
+      "intelligence": {
+        "quality_score": 45.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "command-r-plus-04-2024",
+    "description": "Command-R+ (Apr '24)",
+    "provider": "Cohere",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 6.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 250.0,
+        "tokens_per_second": 77.6
+      },
+      "intelligence": {
+        "quality_score": 47.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "command-r-plus-04-2024",
+    "description": "Command-R+ (Apr '24)",
+    "provider": "Microsoft Azure",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 6.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 580.0,
+        "tokens_per_second": 48.3
+      },
+      "intelligence": {
+        "quality_score": 44.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "command-r-03-2024",
+    "description": "Command-R (Mar '24)",
+    "provider": "Amazon Bedrock",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.75,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 360.0,
+        "tokens_per_second": 108.1
+      },
+      "intelligence": {
+        "quality_score": 36.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "command-r-03-2024",
+    "description": "Command-R (Mar '24)",
+    "provider": "Cohere",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.75,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 160.0,
+        "tokens_per_second": 172.6
+      },
+      "intelligence": {
+        "quality_score": 37.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "command-r-03-2024",
+    "description": "Command-R (Mar '24)",
+    "provider": "Microsoft Azure",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.75,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 460.0,
+        "tokens_per_second": 78.5
+      },
+      "intelligence": {
+        "quality_score": 36.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "command-r",
+    "description": "Command-R",
+    "provider": "Amazon Bedrock",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.75,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 360.0,
+        "tokens_per_second": 108.1
+      },
+      "intelligence": {
+        "quality_score": 0.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "command-r",
+    "description": "Command-R",
+    "provider": "Cohere",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.26,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 170.0,
+        "tokens_per_second": 115.7
+      },
+      "intelligence": {
+        "quality_score": 51.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "aya-expanse-32b",
+    "description": "Aya Expanse 32B",
+    "provider": "Cohere",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.75,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 170.0,
+        "tokens_per_second": 121.4
+      },
+      "intelligence": {
+        "quality_score": 0.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "aya-expanse-8b",
+    "description": "Aya Expanse 8B",
+    "provider": "Cohere",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.75,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 150.0,
+        "tokens_per_second": 166.9
+      },
+      "intelligence": {
+        "quality_score": 0.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "grok-beta",
+    "description": "Grok Beta",
+    "provider": "xAI",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 7.5,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 350.0,
+        "tokens_per_second": 66.8
+      },
+      "intelligence": {
+        "quality_score": 72.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "nova-pro",
+    "description": "Nova Pro",
+    "provider": "Amazon Bedrock",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 1.4,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 370.0,
+        "tokens_per_second": 88.1
+      },
+      "intelligence": {
+        "quality_score": 75.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "nova-lite",
+    "description": "Nova Lite",
+    "provider": "Amazon Bedrock",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.1,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 310.0,
+        "tokens_per_second": 146.2
+      },
+      "intelligence": {
+        "quality_score": 70.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "nova-micro",
+    "description": "Nova Micro",
+    "provider": "Amazon Bedrock",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.06,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 310.0,
+        "tokens_per_second": 196.4
+      },
+      "intelligence": {
+        "quality_score": 65.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "phi-4",
+    "description": "Phi-4",
+    "provider": "Nebius",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.15,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 550.0,
+        "tokens_per_second": 120.9
+      },
+      "intelligence": {
+        "quality_score": 76.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "phi-4",
+    "description": "Phi-4",
+    "provider": "Deepinfra",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.09,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 280.0,
+        "tokens_per_second": 58.7
+      },
+      "intelligence": {
+        "quality_score": 76.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "phi-3-medium",
+    "description": "Phi-3 Medium 14B",
+    "provider": "Microsoft Azure",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.3,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 430.0,
+        "tokens_per_second": 38.0
+      },
+      "intelligence": {
+        "quality_score": 0.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "dbrx",
+    "description": "DBRX",
+    "provider": "Databricks",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 1.13,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 470.0,
+        "tokens_per_second": 68.4
+      },
+      "intelligence": {
+        "quality_score": 50.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "dbrx",
+    "description": "DBRX",
+    "provider": "Together.ai",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 1.2,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 350.0,
+        "tokens_per_second": 83.2
+      },
+      "intelligence": {
+        "quality_score": 44.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-nemotron-instruct-70b",
+    "description": "Llama 3.1 Nemotron 70B Base",
+    "provider": "Nebius Base",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.2,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 630.0,
+        "tokens_per_second": 47.9
+      },
+      "intelligence": {
+        "quality_score": 72.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-nemotron-instruct-70b",
+    "description": "Llama 3.1 Nemotron 70B Fast",
+    "provider": "Nebius Fast",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.38,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 600.0,
+        "tokens_per_second": 70.8
+      },
+      "intelligence": {
+        "quality_score": 72.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-1-nemotron-instruct-70b",
+    "description": "Llama 3.1 Nemotron 70B",
+    "provider": "Deepinfra",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.27,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 360.0,
+        "tokens_per_second": 29.2
+      },
+      "intelligence": {
+        "quality_score": 72.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "jamba-1-5-large",
+    "description": "Jamba 1.5 Large",
+    "provider": "AI21 Labs",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 3.5,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 520.0,
+        "tokens_per_second": 56.4
+      },
+      "intelligence": {
+        "quality_score": 64.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "jamba-1-5-large",
+    "description": "Jamba 1.5 Large",
+    "provider": "Microsoft Azure",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 3.5,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 690.0,
+        "tokens_per_second": 50.9
+      },
+      "intelligence": {
+        "quality_score": 64.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "jamba-1-5-mini",
+    "description": "Jamba 1.5 Mini",
+    "provider": "AI21 Labs",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.25,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 320.0,
+        "tokens_per_second": 179.1
+      },
+      "intelligence": {
+        "quality_score": 46.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "jamba-1-5-mini",
+    "description": "Jamba 1.5 Mini",
+    "provider": "Microsoft Azure",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.25,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 480.0,
+        "tokens_per_second": 82.3
+      },
+      "intelligence": {
+        "quality_score": 0.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "deepseek-r1",
+    "description": "DeepSeek R1",
+    "provider": "DeepSeek",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.96,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 34620.0,
+        "tokens_per_second": 58.9
+      },
+      "intelligence": {
+        "quality_score": 89.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "deepseek-r1",
+    "description": "DeepSeek R1",
+    "provider": "Hyperbolic",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 2.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 104270.0,
+        "tokens_per_second": 13.7
+      },
+      "intelligence": {
+        "quality_score": 89.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "deepseek-r1",
+    "description": "DeepSeek R1",
+    "provider": "Nebius",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 1.2,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 182090.0,
+        "tokens_per_second": 6.7
+      },
+      "intelligence": {
+        "quality_score": 89.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "deepseek-r1",
+    "description": "DeepSeek R1",
+    "provider": "CentML",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 6.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 85740.0,
+        "tokens_per_second": 20.9
+      },
+      "intelligence": {
+        "quality_score": 89.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "deepseek-r1",
+    "description": "DeepSeek R1",
+    "provider": "Fireworks",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 8.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 54230.0,
+        "tokens_per_second": 27.8
+      },
+      "intelligence": {
+        "quality_score": 89.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "deepseek-r1",
+    "description": "DeepSeek R1",
+    "provider": "Deepinfra",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 1.16,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 68870.0,
+        "tokens_per_second": 8.3
+      },
+      "intelligence": {
+        "quality_score": 89.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "deepseek-r1",
+    "description": "DeepSeek R1",
+    "provider": "Novita",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 4.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 78300.0,
+        "tokens_per_second": 16.6
+      },
+      "intelligence": {
+        "quality_score": 89.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "deepseek-r1",
+    "description": "DeepSeek R1",
+    "provider": "Together.ai",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 7.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 100530.0,
+        "tokens_per_second": 15.4
+      },
+      "intelligence": {
+        "quality_score": 89.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "deepseek-v3",
+    "description": "DeepSeek V3",
+    "provider": "DeepSeek",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.48,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 1470.0,
+        "tokens_per_second": 47.2
+      },
+      "intelligence": {
+        "quality_score": 80.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "deepseek-v3",
+    "description": "DeepSeek V3 (FP8)",
+    "provider": "Hyperbolic (FP8)",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.25,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 1160.0,
+        "tokens_per_second": 6.1
+      },
+      "intelligence": {
+        "quality_score": 79.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "deepseek-v3",
+    "description": "DeepSeek V3",
+    "provider": "Nebius",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.75,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 950.0,
+        "tokens_per_second": 16.3
+      },
+      "intelligence": {
+        "quality_score": 79.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "deepseek-v3",
+    "description": "DeepSeek V3",
+    "provider": "Fireworks",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.9,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 1070.0,
+        "tokens_per_second": 20.1
+      },
+      "intelligence": {
+        "quality_score": 79.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "deepseek-v3",
+    "description": "DeepSeek V3",
+    "provider": "Deepinfra",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 1.25,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 750.0,
+        "tokens_per_second": 8.6
+      },
+      "intelligence": {
+        "quality_score": 79.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "deepseek-v3",
+    "description": "DeepSeek V3",
+    "provider": "Novita",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.89,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 870.0,
+        "tokens_per_second": 9.4
+      },
+      "intelligence": {
+        "quality_score": 79.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "deepseek-v3",
+    "description": "DeepSeek V3 (FP8)",
+    "provider": "Together.ai (FP8)",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 1.25,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 610.0,
+        "tokens_per_second": 14.2
+      },
+      "intelligence": {
+        "quality_score": 79.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "deepseek-llm-67b-chat",
+    "description": "DeepSeek LLM 67B (V1)",
+    "provider": "Together.ai",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.9,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 560.0,
+        "tokens_per_second": 28.3
+      },
+      "intelligence": {
+        "quality_score": 47.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "deepseek-r1-distill-llama-70b",
+    "description": "DeepSeek R1 Distill Llama 70B",
+    "provider": "Cerebras",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.94,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 1010.0,
+        "tokens_per_second": 1500.7
+      },
+      "intelligence": {
+        "quality_score": 0.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "deepseek-r1-distill-llama-70b",
+    "description": "DeepSeek R1 Distill Llama 70B",
+    "provider": "Deepinfra",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.34,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 21070.0,
+        "tokens_per_second": 33.4
+      },
+      "intelligence": {
+        "quality_score": 0.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "deepseek-r1-distill-llama-70b",
+    "description": "DeepSeek R1 Distill Llama 70B",
+    "provider": "Novita",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.39,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 37590.0,
+        "tokens_per_second": 15.4
+      },
+      "intelligence": {
+        "quality_score": 0.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "deepseek-r1-distill-llama-70b",
+    "description": "DeepSeek R1 Distill Llama 70B",
+    "provider": "Groq",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.81,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 3450.0,
+        "tokens_per_second": 254.7
+      },
+      "intelligence": {
+        "quality_score": 0.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "deepseek-v2-5-sep-2024",
+    "description": "DeepSeek-V2.5",
+    "provider": "Hyperbolic",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 2.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 790.0,
+        "tokens_per_second": 7.5
+      },
+      "intelligence": {
+        "quality_score": 0.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "qwen-2-5-max",
+    "description": "Qwen2.5 Max",
+    "provider": "Alibaba Cloud",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 2.8,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 1330.0,
+        "tokens_per_second": 34.8
+      },
+      "intelligence": {
+        "quality_score": 79.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "qwen2-5-72b-instruct",
+    "description": "Qwen2.5 72B",
+    "provider": "Hyperbolic",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.4,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 580.0,
+        "tokens_per_second": 29.5
+      },
+      "intelligence": {
+        "quality_score": 77.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "qwen2-5-72b-instruct",
+    "description": "Qwen2.5 72B",
+    "provider": "Nebius",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.2,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 630.0,
+        "tokens_per_second": 45.8
+      },
+      "intelligence": {
+        "quality_score": 77.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "qwen2-5-72b-instruct",
+    "description": "Qwen2.5 72B Fast",
+    "provider": "Nebius Fast",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.38,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 610.0,
+        "tokens_per_second": 67.9
+      },
+      "intelligence": {
+        "quality_score": 77.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "qwen2-5-72b-instruct",
+    "description": "Qwen2.5 72B",
+    "provider": "Fireworks",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.9,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 330.0,
+        "tokens_per_second": 79.2
+      },
+      "intelligence": {
+        "quality_score": 77.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "qwen2-5-72b-instruct",
+    "description": "Qwen2.5 72B",
+    "provider": "Deepinfra",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.27,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 310.0,
+        "tokens_per_second": 36.7
+      },
+      "intelligence": {
+        "quality_score": 78.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "qwen2-5-72b-instruct",
+    "description": "Qwen2.5 72B",
+    "provider": "SambaNova",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 2.5,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 400.0,
+        "tokens_per_second": 224.2
+      },
+      "intelligence": {
+        "quality_score": 77.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "qwen2-5-72b-instruct",
+    "description": "Qwen2.5 72B Turbo",
+    "provider": "Together.ai Turbo",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 1.2,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 420.0,
+        "tokens_per_second": 93.1
+      },
+      "intelligence": {
+        "quality_score": 77.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "qwen2-5-72b-instruct",
+    "description": "Qwen2.5 72B",
+    "provider": "Alibaba Cloud",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 1160.0,
+        "tokens_per_second": 60.0
+      },
+      "intelligence": {
+        "quality_score": 77.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "qwen2-5-coder-32b-instruct",
+    "description": "Qwen2.5 Coder 32B",
+    "provider": "Hyperbolic",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.2,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 480.0,
+        "tokens_per_second": 36.9
+      },
+      "intelligence": {
+        "quality_score": 72.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "qwen2-5-coder-32b-instruct",
+    "description": "Qwen2.5 Coder 32B",
+    "provider": "Fireworks",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.9,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 310.0,
+        "tokens_per_second": 97.8
+      },
+      "intelligence": {
+        "quality_score": 72.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "qwen2-5-coder-32b-instruct",
+    "description": "Qwen2.5 Coder 32B",
+    "provider": "Deepinfra",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.1,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 260.0,
+        "tokens_per_second": 46.6
+      },
+      "intelligence": {
+        "quality_score": 71.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "qwen2-5-coder-32b-instruct",
+    "description": "Qwen2.5 Coder 32B",
+    "provider": "SambaNova",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 1.88,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 340.0,
+        "tokens_per_second": 314.8
+      },
+      "intelligence": {
+        "quality_score": 72.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "qwen2-5-coder-32b-instruct",
+    "description": "Qwen2.5 Coder 32B",
+    "provider": "Together.ai",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.8,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 550.0,
+        "tokens_per_second": 83.1
+      },
+      "intelligence": {
+        "quality_score": 72.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "qwen-turbo",
+    "description": "Qwen Turbo",
+    "provider": "Alibaba Cloud",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.09,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 1200.0,
+        "tokens_per_second": 87.8
+      },
+      "intelligence": {
+        "quality_score": 71.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "qwen2-72b-instruct",
+    "description": "Qwen2 72B",
+    "provider": "Together.ai",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.9,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 350.0,
+        "tokens_per_second": 64.8
+      },
+      "intelligence": {
+        "quality_score": 68.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "QwQ-32B-Preview",
+    "description": "QwQ 32B-Preview",
+    "provider": "Hyperbolic",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.2,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 500.0,
+        "tokens_per_second": 36.0
+      },
+      "intelligence": {
+        "quality_score": 0.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "QwQ-32B-Preview",
+    "description": "QwQ 32B-Preview",
+    "provider": "Nebius",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.14,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 570.0,
+        "tokens_per_second": 80.2
+      },
+      "intelligence": {
+        "quality_score": 0.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "QwQ-32B-Preview",
+    "description": "QwQ 32B-Preview",
+    "provider": "Fireworks",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.9,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 320.0,
+        "tokens_per_second": 103.3
+      },
+      "intelligence": {
+        "quality_score": 0.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "QwQ-32B-Preview",
+    "description": "QwQ 32B-Preview",
+    "provider": "Deepinfra",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.26,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 280.0,
+        "tokens_per_second": 52.7
+      },
+      "intelligence": {
+        "quality_score": 0.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "QwQ-32B-Preview",
+    "description": "QwQ 32B-Preview",
+    "provider": "SambaNova",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.13,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 450.0,
+        "tokens_per_second": 307.1
+      },
+      "intelligence": {
+        "quality_score": 0.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "QwQ-32B-Preview",
+    "description": "QwQ 32B-Preview",
+    "provider": "Together.ai",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 1.2,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 400.0,
+        "tokens_per_second": 64.6
+      },
+      "intelligence": {
+        "quality_score": 0.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "qwen2.5-32b-instruct",
+    "description": "Qwen2.5 Instruct 32B Fast",
+    "provider": "Nebius Fast",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 570.0,
+        "tokens_per_second": 82.5
+      },
+      "intelligence": {
+        "quality_score": 0.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "qwen2.5-32b-instruct",
+    "description": "Qwen2.5 Instruct 32B Base",
+    "provider": "Nebius Base",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 600.0,
+        "tokens_per_second": 60.8
+      },
+      "intelligence": {
+        "quality_score": 0.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "yi-large",
+    "description": "Yi-Large",
+    "provider": "Fireworks",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 3.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 390.0,
+        "tokens_per_second": 66.6
+      },
+      "intelligence": {
+        "quality_score": 62.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "gpt-4-turbo",
+    "description": "GPT-4 Turbo",
+    "provider": "OpenAI",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 15.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 630.0,
+        "tokens_per_second": 36.1
+      },
+      "intelligence": {
+        "quality_score": 75.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "gpt-4-turbo",
+    "description": "GPT-4 Turbo",
+    "provider": "Microsoft Azure",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 15.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 1500.0,
+        "tokens_per_second": 47.3
+      },
+      "intelligence": {
+        "quality_score": 75.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "gpt-4",
+    "description": "GPT-4",
+    "provider": "OpenAI",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 37.5,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 750.0,
+        "tokens_per_second": 27.1
+      },
+      "intelligence": {
+        "quality_score": 0.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-instruct-70b",
+    "description": "Llama 3 70B",
+    "provider": "Replicate",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 1.18,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 370.0,
+        "tokens_per_second": 47.6
+      },
+      "intelligence": {
+        "quality_score": 47.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-instruct-70b",
+    "description": "Llama 3 70B",
+    "provider": "Hyperbolic",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.4,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 600.0,
+        "tokens_per_second": 32.8
+      },
+      "intelligence": {
+        "quality_score": 62.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-instruct-70b",
+    "description": "Llama 3 70B",
+    "provider": "Amazon Bedrock",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 2.86,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 450.0,
+        "tokens_per_second": 45.5
+      },
+      "intelligence": {
+        "quality_score": 48.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-instruct-70b",
+    "description": "Llama 3 70B",
+    "provider": "Fireworks",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.9,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 300.0,
+        "tokens_per_second": 121.1
+      },
+      "intelligence": {
+        "quality_score": 46.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-instruct-70b",
+    "description": "Llama 3 70B",
+    "provider": "Deepinfra",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.27,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 300.0,
+        "tokens_per_second": 46.3
+      },
+      "intelligence": {
+        "quality_score": 48.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-instruct-70b",
+    "description": "Llama 3 70B",
+    "provider": "Novita",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.57,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 1340.0,
+        "tokens_per_second": 23.2
+      },
+      "intelligence": {
+        "quality_score": 62.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-instruct-70b",
+    "description": "Llama 3 70B",
+    "provider": "Groq",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.64,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 250.0,
+        "tokens_per_second": 342.0
+      },
+      "intelligence": {
+        "quality_score": 48.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-instruct-70b",
+    "description": "Llama 3 70B (Reference, FP16)",
+    "provider": "Together.ai (Reference, FP16)",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.9,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 340.0,
+        "tokens_per_second": 175.0
+      },
+      "intelligence": {
+        "quality_score": 48.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-instruct-70b",
+    "description": "Llama 3 70B (Turbo, FP8)",
+    "provider": "Together.ai (Turbo, FP8)",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.88,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 350.0,
+        "tokens_per_second": 23.5
+      },
+      "intelligence": {
+        "quality_score": 48.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-instruct-8b",
+    "description": "Llama 3 8B",
+    "provider": "Replicate",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.1,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 380.0,
+        "tokens_per_second": 71.9
+      },
+      "intelligence": {
+        "quality_score": 44.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-instruct-8b",
+    "description": "Llama 3 8B",
+    "provider": "Amazon Bedrock",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.38,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 330.0,
+        "tokens_per_second": 103.4
+      },
+      "intelligence": {
+        "quality_score": 45.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-instruct-8b",
+    "description": "Llama 3 8B",
+    "provider": "Microsoft Azure",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.38,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 380.0,
+        "tokens_per_second": 73.9
+      },
+      "intelligence": {
+        "quality_score": 45.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-instruct-8b",
+    "description": "Llama 3 8B",
+    "provider": "Fireworks",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.2,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 250.0,
+        "tokens_per_second": 188.9
+      },
+      "intelligence": {
+        "quality_score": 45.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-instruct-8b",
+    "description": "Llama 3 8B",
+    "provider": "Deepinfra",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.04,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 210.0,
+        "tokens_per_second": 109.0
+      },
+      "intelligence": {
+        "quality_score": 45.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-instruct-8b",
+    "description": "Llama 3 8B",
+    "provider": "Novita",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.04,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 560.0,
+        "tokens_per_second": 71.4
+      },
+      "intelligence": {
+        "quality_score": 53.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-instruct-8b",
+    "description": "Llama 3 8B",
+    "provider": "Groq",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.06,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 340.0,
+        "tokens_per_second": 1200.8
+      },
+      "intelligence": {
+        "quality_score": 45.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-3-instruct-8b",
+    "description": "Llama 3 8B",
+    "provider": "Together.ai",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.2,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 350.0,
+        "tokens_per_second": 214.9
+      },
+      "intelligence": {
+        "quality_score": 46.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "llama-2-chat-7b",
+    "description": "Llama 2 Chat 7B",
+    "provider": "Replicate",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.1,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 370.0,
+        "tokens_per_second": 123.8
+      },
+      "intelligence": {
+        "quality_score": 0.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "gemini-pro",
+    "description": "Gemini 1.0 Pro (AI Studio)",
+    "provider": "Google (AI Studio)",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.75,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 1230.0,
+        "tokens_per_second": 102.2
+      },
+      "intelligence": {
+        "quality_score": 0.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "claude-3-sonnet",
+    "description": "Claude 3 Sonnet",
+    "provider": "Amazon Bedrock",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 6.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 850.0,
+        "tokens_per_second": 42.6
+      },
+      "intelligence": {
+        "quality_score": 57.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "claude-3-sonnet",
+    "description": "Claude 3 Sonnet",
+    "provider": "Anthropic",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 6.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 860.0,
+        "tokens_per_second": 83.4
+      },
+      "intelligence": {
+        "quality_score": 57.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "claude-21",
+    "description": "Claude 2.1",
+    "provider": "Amazon Bedrock",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 12.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 1840.0,
+        "tokens_per_second": 28.9
+      },
+      "intelligence": {
+        "quality_score": 0.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "claude-21",
+    "description": "Claude 2.1",
+    "provider": "Anthropic",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 12.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 820.0,
+        "tokens_per_second": 13.4
+      },
+      "intelligence": {
+        "quality_score": 0.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "claude-2",
+    "description": "Claude 2.0",
+    "provider": "Anthropic",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 12.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 810.0,
+        "tokens_per_second": 29.6
+      },
+      "intelligence": {
+        "quality_score": 0.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "mistral-small-2402",
+    "description": "Mistral Small (Feb '24)",
+    "provider": "Mistral",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 1.5,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 310.0,
+        "tokens_per_second": 69.9
+      },
+      "intelligence": {
+        "quality_score": 59.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "mistral-small-2402",
+    "description": "Mistral Small (Feb '24)",
+    "provider": "Microsoft Azure",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 1.5,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 370.0,
+        "tokens_per_second": 53.8
+      },
+      "intelligence": {
+        "quality_score": 59.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "mistral-large",
+    "description": "Mistral Large (Feb '24)",
+    "provider": "Mistral",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 6.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 370.0,
+        "tokens_per_second": 37.3
+      },
+      "intelligence": {
+        "quality_score": 57.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "mistral-large",
+    "description": "Mistral Large (Feb '24)",
+    "provider": "Amazon Bedrock",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 6.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 410.0,
+        "tokens_per_second": 42.9
+      },
+      "intelligence": {
+        "quality_score": 56.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "mistral-large",
+    "description": "Mistral Large (Feb '24)",
+    "provider": "Microsoft Azure",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 6.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 510.0,
+        "tokens_per_second": 39.5
+      },
+      "intelligence": {
+        "quality_score": 55.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "mistral-7b-instruct",
+    "description": "Mistral 7B",
+    "provider": "Mistral",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.25,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 260.0,
+        "tokens_per_second": 131.4
+      },
+      "intelligence": {
+        "quality_score": 24.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "mistral-7b-instruct",
+    "description": "Mistral 7B",
+    "provider": "Amazon Bedrock",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.16,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 330.0,
+        "tokens_per_second": 92.9
+      },
+      "intelligence": {
+        "quality_score": 28.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "mistral-7b-instruct",
+    "description": "Mistral 7B",
+    "provider": "Deepinfra",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.04,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 220.0,
+        "tokens_per_second": 106.6
+      },
+      "intelligence": {
+        "quality_score": 28.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "mistral-7b-instruct",
+    "description": "Mistral 7B",
+    "provider": "Novita",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.06,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 970.0,
+        "tokens_per_second": 98.1
+      },
+      "intelligence": {
+        "quality_score": 33.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "mistral-7b-instruct",
+    "description": "Mistral 7B",
+    "provider": "Together.ai",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.2,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 230.0,
+        "tokens_per_second": 180.3
+      },
+      "intelligence": {
+        "quality_score": 28.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "codestral-2405",
+    "description": "Codestral (May '24)",
+    "provider": "Mistral",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.3,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 280.0,
+        "tokens_per_second": 85.1
+      },
+      "intelligence": {
+        "quality_score": 0.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "mistral-medium",
+    "description": "Mistral Medium",
+    "provider": "Mistral",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 4.09,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 350.0,
+        "tokens_per_second": 43.4
+      },
+      "intelligence": {
+        "quality_score": 0.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "sonar-3-1-small-chat",
+    "description": "Sonar 3.1 Small",
+    "provider": "Perplexity",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.2,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 310.0,
+        "tokens_per_second": 190.5
+      },
+      "intelligence": {
+        "quality_score": 0.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "sonar-3-1-large-chat",
+    "description": "Sonar 3.1 Large",
+    "provider": "Perplexity",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 1.0,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 310.0,
+        "tokens_per_second": 50.0
+      },
+      "intelligence": {
+        "quality_score": 0.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "openchat-35",
+    "description": "OpenChat 3.5",
+    "provider": "Deepinfra",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.06,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 300.0,
+        "tokens_per_second": 75.8
+      },
+      "intelligence": {
+        "quality_score": 44.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "jamba-instruct",
+    "description": "Jamba Instruct",
+    "provider": "AI21 Labs",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.55,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 320.0,
+        "tokens_per_second": 179.0
+      },
+      "intelligence": {
+        "quality_score": 0.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  },
+  {
+    "name": "jamba-instruct",
+    "description": "Jamba Instruct",
+    "provider": "Microsoft Azure",
+    "metrics": {
+      "cost": {
+        "blended_cost_per_1m": 0.55,
+        "input_cost_per_1m": null,
+        "output_cost_per_1m": null
+      },
+      "speed": {
+        "time_to_first_token_ms": 520.0,
+        "tokens_per_second": 75.0
+      },
+      "intelligence": {
+        "quality_score": 28.0,
+        "mmlu_score": null,
+        "gsm8k_score": null,
+        "bbh_score": null
+      }
+    }
+  }
+]
