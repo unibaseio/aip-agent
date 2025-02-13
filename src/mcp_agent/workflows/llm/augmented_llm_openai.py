@@ -59,7 +59,7 @@ class OpenAIAugmentedLLM(
             intelligencePriority=0.3,
         )
         self.default_request_params = self.default_request_params or RequestParams(
-            model="qwen-max",
+            model="gpt-4o",
             modelPreferences=self.model_preferences,
             maxTokens=2048,
             systemPrompt=self.instruction,
@@ -67,6 +67,8 @@ class OpenAIAugmentedLLM(
             max_iterations=10,
             use_history=True,
         )
+        if self.context.config.openai.model_name:
+            self.default_request_params.model = self.context.config.openai.model_name
 
     @classmethod
     def convert_message_to_message_param(
@@ -93,6 +95,7 @@ class OpenAIAugmentedLLM(
             api_key=config.openai.api_key, base_url=config.openai.base_url
         )
         messages: List[ChatCompletionMessageParam] = []
+
         params = self.get_request_params(request_params)
 
         system_prompt = self.instruction or params.systemPrompt

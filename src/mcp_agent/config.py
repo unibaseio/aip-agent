@@ -89,6 +89,8 @@ class OpenAISettings(BaseModel):
 
     base_url: str | None = None
 
+    model_name: str | None = None
+
     model_config = ConfigDict(extra="allow", arbitrary_types_allowed=True)
 
 

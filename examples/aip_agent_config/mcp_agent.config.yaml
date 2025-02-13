@@ -26,3 +26,4 @@ mcp:
 openai:
   # Secrets (API keys, etc.) are stored in an mcp_agent.secrets.yaml file which can be gitignored
   base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
+  model_name: qwen-max
