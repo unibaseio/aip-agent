@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 app = MCPApp(name="mcp_agent")
 
-agg = MCPAggregator(server_names=["chroma"], connection_persistence=True)
+agg = MCPAggregator(server_names=["agent_hub"], connection_persistence=True)
 
 async def list_servers():
     res = await agg.list_servers()
@@ -48,9 +48,8 @@ async def add_server(server_name: str, url: str):
 agent = Agent(
             name="agent",
             instruction="you are an assistant",
-            server_names=["chroma"],
             mcp_aggregator=agg,
-            functions=[list_servers, list_all_tools,list_tools_of_server, add_server]
+            functions=[list_servers, list_all_tools, list_tools_of_server, add_server]
         )
 
 class MCPClient:

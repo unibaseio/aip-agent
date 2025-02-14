@@ -238,9 +238,9 @@ class MCPConnectionManager:
                     res = response.json()
                     memory_id = res['uuid']
                     try:
-                        if not membase_chain.get_auth(memory_id, membase_id):
+                        if not membase_chain.has_auth(memory_id, membase_id):
                             logger.info(f"add agent: {membase_id} to memory: {memory_id}")
-                            membase_chain.connect(memory_id, membase_id)
+                            membase_chain.buy(memory_id, membase_id)
                     except Exception as e:
                         print(e)
                         raise

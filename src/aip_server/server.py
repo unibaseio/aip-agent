@@ -42,7 +42,7 @@ def verify_auth(auth_header: dict[Any, Any]):
         logger.warning(f"{agent_id} has expired token")
         raise HTTPException(status_code=400, detail="Token expired")
 
-    if not membase_chain.get_auth(membase_id, agent_id):
+    if not membase_chain.has_auth(membase_id, agent_id):
         logger.warning(f"{agent_id} is not auth on chain")
         raise HTTPException(status_code=400, detail="No auth on chain")
 
@@ -92,7 +92,7 @@ def create_starlette_app(mcp_server: Server, *, debug: bool = False) -> Starlett
                 read_stream,
                 write_stream,
                 InitializationOptions(
-                server_name="chroma",
+                server_name=membase_id,
                 server_version="0.1.0",
                 capabilities=mcp_server.get_capabilities(
                     notification_options=NotificationOptions(),
@@ -103,9 +103,6 @@ def create_starlette_app(mcp_server: Server, *, debug: bool = False) -> Starlett
 
     from starlette.responses import JSONResponse
     async def info(request):
-        agent_account = request.query_params.get('agent_account')
-        if membase_chain.get_share(membase_id, agent_account) == 0:
-            membase_chain.share(membase_id, agent_account)
         info_data = {
             "uuid": membase_id,
         }

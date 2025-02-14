@@ -23,7 +23,7 @@ class Client:
                  wallet_address: str, 
                  private_key: str, 
                  ep: str = "https://bsc-testnet-rpc.publicnode.com", 
-                 membase_contract: str = "0x4E61bfABBcfb096211AD518a2b1A3CEcfa558E49"
+                 membase_contract: str = "0x06084345b09eC4aEf03BA81E66E339a73449556b"
                  ):
         w3 = Web3(Web3.HTTPProvider(ep))
         if w3.is_connected():
@@ -76,38 +76,30 @@ class Client:
             self._get_tx_params(),
         )
 
-    def connect(self, _uuid: str, _auuid: str): 
+    def buy(self, _uuid: str, _auuid: str): 
         addr = self.membase.functions.getAgent(_uuid).call()
         if addr == self.wallet_address:
             return
     
-        per = self.membase.functions.getShare(_uuid, self.wallet_address).call()
-        if per == 0:
-            raise Exception(f"{_uuid} is not shared to {self.wallet_address}")
+        if self.membase.functions.getPermission(_uuid, _auuid).call():
+            return 
 
         return self._build_and_send_tx(
-            self.membase.functions.connect(_uuid, _auuid),
+            self.membase.functions.buy(_uuid, _auuid),
             self._get_tx_params(),
         )
     
     def get_agent(self, _uuid: str) -> str: 
         return self.membase.functions.getAgent(_uuid).call()
-    
-    def get_share(self, _uuid: str, wallet_address: str) -> int: 
-        wallet_address = Web3.to_checksum_address(wallet_address)
-        return self.membase.functions.getShare(_uuid, wallet_address).call()
 
-    def get_auth(self, _muuid: str, _auuid: str) -> bool: 
-        agent_address = self.membase.functions.getAgent(_auuid).call()
-        memory_address = self.membase.functions.getAgent(_muuid).call()
-        if memory_address == ADDRESS_ZERO:
-            return False
-        if agent_address == memory_address:
+    def has_auth(self, _uuid: str, _auuid: str) -> bool: 
+        agent_address = self.membase.functions.getAgent(_uuid).call()
+        if agent_address == ADDRESS_ZERO:
+            raise Exception(f"{_uuid} is not registered")
+        
+        if agent_address == self.wallet_address:
             return True
-        per = self.membase.functions.getAuth(_muuid, _auuid).call()
-        if per > 0:
-            return True
-        return False
+        return self.membase.functions.getPermission(_uuid, _auuid).call()
 
     def _display_cause(self, tx_hash: str):
         print(f"check: {tx_hash.hex()}")

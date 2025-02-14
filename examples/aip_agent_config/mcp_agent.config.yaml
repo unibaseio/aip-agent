@@ -13,15 +13,9 @@ logger:
 
 mcp:
   servers:
-    mcp_agent:
-      command: "uv"
-      args: ["run", "server.py"]
-    chroma:
+    agent_hub:
       transport: "aip-sse"
       url: "http://0.0.0.0:8080"
-    twitter:
-      transport: "aip-sse"
-      url: "http://0.0.0.0:8081"
 
 openai:
   # Secrets (API keys, etc.) are stored in an mcp_agent.secrets.yaml file which can be gitignored
