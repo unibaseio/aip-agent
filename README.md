@@ -1,20 +1,36 @@
-# AIP Memory Server
-
-An Agent Interoperability Protocol (AIP) server implementation that provides memory management through Chroma. This server enables semantic memory search, metadata filtering, and memory management with persistent storage.
+# AIP Agent
 
 ## design
 
-The Agent Interoperability Protocol (AIP) is a sophisticated system designed to facilitate the seamless integration and interaction of AI agents within blockchain networks. AIP consists of three key modules that enable the efficient and secure operation of AI services.
+The Agent System is an innovative framework that stands at the intersection of distributed systems, blockchain technology, and artificial intelligence. It is designed to facilitate a structured and secure method of interaction among autonomous entities known as agents. The system's core is defined by three principal components: an agent interaction protocol, blockchain-based authorization, and direct invocation by Large Language Models (LLMs). Here is an in-depth look at these core aspects and their respective modules:
 
-1. AIP Chain:
-   - This module is the interface between the AIP system and the blockchain network. It enables real-time interaction and communication, allowing the AIP system to register entities, execute transactions, and access data stored on the blockchain. The Chain Interaction component ensures that all operations are recorded and verified on the blockchain, maintaining transparency and security.
-   - This module is responsible for the authentication and authorization of entities within the AIP system. It leverages cryptographic proofs to verify the identity of AIP Agents and AIP Servers, ensuring that only authorized entities can access and interact with the system. This module is crucial for maintaining the integrity and security of the AIP ecosystem.
-2. AIP Chroma (An Instance of AIP Server):
-   - AIP Chroma is an exemplar of an AIP Server that is specifically designed for memory management. Upon startup, AIP Chroma registers itself on the blockchain, making its services discoverable and accessible to AIP Agents. It manages the memory resources required for AI processing and ensures that the system operates efficiently.
-3. AIP Agent (As an LLM Agent):
-   - The AIP Agent, acting as an LLM (Large Language Model) Agent, is a key component that registers itself on the blockchain, obtains the necessary authorization, and links with an AIP Server like AIP Chroma. Once connected, the AIP Agent can utilize the tools and capabilities provided by the AIP Server to perform tasks such as natural language processing, generation, and other AI-driven functionalities. The AIP Agent's registration and authorization process ensure that it is a trusted entity within the AIP ecosystem.
+### 1. Agent Interaction Protocol
 
-Together, these modules form the AIP system, which enables the secure and efficient interoperability of AI agents within blockchain networks, promoting a new era of decentralized and intelligent applications.
+The Agent Interaction Protocol is the backbone of the system, enabling seamless communication and collaboration between agents. It standardizes the way agents exchange information and perform tasks, ensuring consistency and predictability in their interactions.
+
+- **Agent Hub**: Serves as the central hub for agent coordination and control.
+  - **Permission Management**: Utilizes blockchain to authenticate and authorize agent access, ensuring secure interactions.
+  - **Configuration Management**: Manages agent configurations for efficient operation and query handling.
+  - **Memory Management**: Provides a global memory space for storing agent configurations, dialogue history, and prompt information.
+  - **Data Storage**: Facilitates decentralized data backup to protect against data loss.
+
+### 2. Blockchain-Based Authorization
+
+The system leverages blockchain technology to implement a robust and transparent authorization mechanism.
+
+- **Agent Identity Management**: Agents are registered on the blockchain with a unique UUID, linking them to specific addresses and granting them a verifiable identity.
+  - **Chain-based Contract**: Records agent account information, token details, and permission settings, including read/write access and timeouts.
+  - **Permission Verification**: Ensures that only authorized agents can read from or write to the shared memory, as dictated by blockchain records.
+
+### 3. Direct Invocation by LLMs
+
+The system is architected to be directly callable by LLMs, enhancing the capabilities of these models and enabling them to perform complex tasks through agent interactions.
+
+- **Agent Tools Integration**: Agents are designed to be accessible as tools for LLMs, allowing these models to leverage the agents' functionalities for a wide range of applications.
+- **Storage**: The storage module is crucial for the integrity of the system, providing the following services:
+  - **Data Backup**: Uploads memory data to a secure storage system, ensuring data reliability and persistence.
+  - **Data Recovery**: Offers the ability to retrieve data from storage in the event of loss or system migration, maintaining the system's resilience.
+    In essence, the Agent System is built on a triad of foundational elements: a standardized interaction protocol for agents, a secure and transparent authorization process via blockchain, and seamless integration with LLMs for advanced functionality. This combination creates a powerful and versatile platform capable of driving complex, AI-assisted operations.
 
 ## Usage
 
@@ -35,6 +51,7 @@ uv run examples/aip_servers/chroma.py --port 8080
 export TWITTER_USERNAME = "<your username>"
 export TWITTER_EMAIL = '<your email>'
 export TWITTER_PASSWORD = '<your password>'
+export MEMBASE_URL='http://0.0.0.0:8081'
 uv run examples/aip_servers/twitter.py --port 8081
 
 # client side usage example:
@@ -44,6 +61,9 @@ export MEMBASE_SECRET_KEY="<agent secret key>"
 # modify mcp_agent.config.yaml
 cd examples/aip_agent_config
 uv run client.py
+# query twitter server in llm chat
+# connect twitter server in llm chat
+# use tools of twitter server in llm chat
 ```
 
 ## Components
