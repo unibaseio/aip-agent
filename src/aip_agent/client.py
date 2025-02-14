@@ -6,6 +6,7 @@ from typing import Dict, List, Optional, Any
 from contextlib import AsyncExitStack
 
 from mcp import ClientSession
+from mcp.types import TextContent
 from mcp.client.sse import sse_client
     
 import logging
@@ -21,6 +22,7 @@ class AIPClient:
         self.exit_stack = AsyncExitStack()
         self._cleanup_lock: asyncio.Lock = asyncio.Lock()
         self.server_url = server_url
+        self._session_context = None
     
     async def initialize(self) -> None:
         self.get_auth_for_test()
@@ -76,6 +78,43 @@ class AIPClient:
         response = await self.session.list_tools()
         tools = response.tools
         print("Connected to server with tools:", [tool.name for tool in tools])
+
+    async def register(self, desc: str):
+        membase_url = os.getenv('MEMBASE_URL')
+        if not membase_url or membase_url == "":
+            raise Exception("'MEMBASE_URL' is not set")
+
+        register_args = {
+            "memory_id": membase_id,
+            "content": desc,
+            "metadata": {
+                "url": membase_url,
+                "transport": "aip-sse",
+                "time": str(time.time()),
+                "owner": membase_account,
+            }
+        }
+
+        try: 
+            tool_args = {"memory_id": membase_id}
+            res = await self.execute_tool("read_memory", tool_args)
+            print(f"res: {res}")
+            contains_not_found = any(
+                isinstance(item, TextContent) and 'not found' in item.text
+                for item in res.content
+                )
+            print(contains_not_found)
+            if contains_not_found:
+                res = await self.execute_tool("create_memory", register_args)
+                print(f"create res: {res}")
+            else:
+                res = await self.execute_tool("update_memory", register_args)
+                print(f"update res: {res}")
+        except Exception as e:
+            print(f"create exc: {e}")
+            raise 
+
+
 
     async def list_tools(self) -> List[Any]:
         """List available tools from the server.

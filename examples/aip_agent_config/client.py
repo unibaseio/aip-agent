@@ -23,34 +23,30 @@ agg = MCPAggregator(server_names=["agent_hub"], connection_persistence=True)
 
 async def list_servers():
     res = await agg.list_servers()
-    print(res)
     return res
 
 async def list_tools_of_server(server_name: str):
     res = await agg.list_tool(server_name)
-    print(res)
     return res
 
 async def list_all_tools():
     res = await agg.list_tools()
-    print(res)
     return res
 
 async def add_server(server_name: str, url: str):
     try:
         res = await agg.load_server(server_name, url)
-        print(res)
     except Exception as e:
         print(e)
         raise
     return res
 
 agent = Agent(
-            name="agent",
-            instruction="you are an assistant",
-            mcp_aggregator=agg,
-            functions=[list_servers, list_all_tools, list_tools_of_server, add_server]
-        )
+    name="agent",
+    instruction="you are an assistant",
+    mcp_aggregator=agg,
+    functions=[list_servers, list_all_tools, list_tools_of_server, add_server]
+)
 
 class MCPClient:
     def __init__(self):

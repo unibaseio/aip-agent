@@ -38,7 +38,7 @@ def verify_auth(auth_header: dict[Any, Any]):
         raise HTTPException(status_code=400, detail="Invalid timestamp")
             
     current_time = int(time.time())
-    if current_time - timestamp > 30: 
+    if current_time - timestamp > 300: 
         logger.warning(f"{agent_id} has expired token")
         raise HTTPException(status_code=400, detail="Token expired")
 

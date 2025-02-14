@@ -545,6 +545,8 @@ async def handle_list_memory(arguments: dict) -> list[types.TextContent]:
     limit = arguments.get("limit", 10)
     offset = arguments.get("offset", 0)
 
+    logger.info(f"List memory: {offset} {limit}")
+
     try:
         # Get all documents
         results = collection.get(
@@ -590,6 +592,8 @@ async def handle_search_similar(arguments: dict) -> list[types.TextContent]:
 
     if not query:
         raise DocumentOperationError("Missing query")
+
+    logger.info(f"Query memory: {query} {metadata_filter} {content_filter} {num_results}")
 
     try:
         # Build query parameters
