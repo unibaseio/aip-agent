@@ -2,9 +2,9 @@ import asyncio
 from typing import Optional
 from contextlib import AsyncExitStack
 
-from mcp import ClientSession, StdioServerParameters
-from mcp.client.stdio import stdio_client
+from mcp import ClientSession
 from mcp_agent.app import MCPApp
+from mcp_agent.mcp.mcp_aggregator import MCPAggregator
 from mcp_agent.agents.agent import Agent
 from mcp_agent.workflows.llm.augmented_llm_openai import OpenAIAugmentedLLM
 
@@ -17,6 +17,42 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+app = MCPApp(name="mcp_agent")
+
+agg = MCPAggregator(server_names=["chroma"], connection_persistence=True)
+
+async def list_servers():
+    res = await agg.list_servers()
+    print(res)
+    return res
+
+async def list_tools_of_server(server_name: str):
+    res = await agg.list_tool(server_name)
+    print(res)
+    return res
+
+async def list_all_tools():
+    res = await agg.list_tools()
+    print(res)
+    return res
+
+async def add_server(server_name: str, url: str):
+    try:
+        res = await agg.load_server(server_name, url)
+        print(res)
+    except Exception as e:
+        print(e)
+        raise
+    return res
+
+agent = Agent(
+            name="agent",
+            instruction="you are an assistant",
+            server_names=["chroma"],
+            mcp_aggregator=agg,
+            functions=[list_servers, list_all_tools,list_tools_of_server, add_server]
+        )
+
 class MCPClient:
     def __init__(self):
         # Initialize session and client objects
@@ -24,15 +60,20 @@ class MCPClient:
         self.exit_stack = AsyncExitStack()
 
     async def initialize(self):
-        self.app = MCPApp(name="mcp_agent")
+        
+        self.app = app
         await self.app.initialize()
 
-        self.agent = Agent(
-            name="agent",
-            instruction="you are an assistant",
-            server_names=["chroma", "twitter"],
-        )
+        self.agent = agent
         await self.agent.initialize()
+
+        #await add_server("twitter", "http://0.0.0.0:8081")
+
+        #tools = await list_all_tools()
+        #print(tools)
+
+        #tools = await list_tools_of_server("chroma")
+        #print(tools)
 
         self.llm = await self.agent.attach_llm(OpenAIAugmentedLLM)
 

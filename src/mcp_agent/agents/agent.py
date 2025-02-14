@@ -10,6 +10,7 @@ from mcp.types import (
     Tool,
 )
 
+from mcp_agent.context_dependent import ContextDependent
 from mcp_agent.mcp.mcp_aggregator import MCPAggregator
 from mcp_agent.human_input.types import (
     HumanInputCallback,
@@ -31,7 +32,7 @@ LLM = TypeVar("LLM", bound=AugmentedLLM)
 HUMAN_INPUT_TOOL_NAME = "__human_input__"
 
 
-class Agent(MCPAggregator):
+class Agent(ContextDependent):
     """
     An Agent is an entity that has access to a set of MCP servers and can interact with them.
     Each agent should have a purpose defined by its instruction.
@@ -46,18 +47,27 @@ class Agent(MCPAggregator):
         connection_persistence: bool = True,
         human_input_callback: HumanInputCallback = None,
         context: Optional["Context"] = None,
+        mcp_aggregator: MCPAggregator = None,
         **kwargs,
     ):
         super().__init__(
             context=context,
-            server_names=server_names or [],
-            connection_persistence=connection_persistence,
             **kwargs,
         )
+
+        if not mcp_aggregator:
+            mcp_aggregator = MCPAggregator(
+                context=self.context,
+                server_names=server_names or [],
+                connection_persistence=connection_persistence,
+                **kwargs,
+            )
+        self.mcp_aggregator = mcp_aggregator
 
         self.name = name
         self.instruction = instruction
         self.functions = functions or []
+       
         self.executor = self.context.executor
 
         # Map function names to tools
@@ -74,7 +84,7 @@ class Agent(MCPAggregator):
         NOTE: This method is called automatically when the agent is used as an async context manager.
         """
         await (
-            self.__aenter__()
+            self.mcp_aggregator.__aenter__()
         )  # This initializes the connection manager and loads the servers
 
         for function in self.functions:
@@ -100,7 +110,7 @@ class Agent(MCPAggregator):
         Shutdown the agent and close all MCP server connections.
         NOTE: This method is called automatically when the agent is used as an async context manager.
         """
-        await super().close()
+        await self.mcp_aggregator.close()
 
     async def request_human_input(
         self,
@@ -155,10 +165,10 @@ class Agent(MCPAggregator):
         return result
 
     async def list_tools(self) -> ListToolsResult:
-        if not self.initialized:
+        if not self.mcp_aggregator.initialized:
             await self.initialize()
 
-        result = await super().list_tools()
+        result = await self.mcp_aggregator.list_tools()
 
         # Add function tools
         for tool in self._function_tool_map.values():
@@ -199,7 +209,7 @@ class Agent(MCPAggregator):
             result = await tool.run(arguments)
             return CallToolResult(content=[TextContent(type="text", text=str(result))])
         else:
-            return await super().call_tool(name, arguments)
+            return await self.mcp_aggregator.call_tool(name, arguments)
 
     async def _call_human_input_tool(
         self, arguments: dict | None = None

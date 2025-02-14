@@ -14,6 +14,7 @@ from mcp.types import (
 from mcp_agent.logging.logger import get_logger
 from mcp_agent.mcp.gen_client import gen_client
 
+from mcp_agent.config import MCPServerSettings
 from mcp_agent.context_dependent import ContextDependent
 from mcp_agent.mcp.mcp_agent_client_session import MCPAgentClientSession
 from mcp_agent.mcp.mcp_connection_manager import MCPConnectionManager
@@ -65,6 +66,7 @@ class MCPAggregator(ContextDependent):
             )
             await self._persistent_connection_manager.__aenter__()
 
+        logger.info("Loading servers in aenter...")
         await self.load_servers()
 
         return self
@@ -136,7 +138,7 @@ class MCPAggregator(ContextDependent):
         try:
             await instance.__aenter__()
 
-            logger.debug("Loading servers...")
+            logger.info("Loading servers...")
             await instance.load_servers()
 
             logger.debug("MCPAggregator created and initialized.")
@@ -159,6 +161,7 @@ class MCPAggregator(ContextDependent):
 
         for server_name in self.server_names:
             if self.connection_persistence:
+                logger.info(f"Loading server: {server_name}")
                 await self._persistent_connection_manager.get_server(
                     server_name, client_session_factory=MCPAgentClientSession
                 )
@@ -180,6 +183,7 @@ class MCPAggregator(ContextDependent):
                     )
                 )
                 tools = await fetch_tools(server_connection.session)
+                
             else:
                 async with gen_client(
                     server_name, server_registry=self.context.server_registry
@@ -201,6 +205,7 @@ class MCPAggregator(ContextDependent):
 
             self._server_to_tool_map[server_name] = []
             for tool in tools:
+                logger.info(f"{server_name} has tool: {tool}")
                 namespaced_tool_name = f"{server_name}{SEP}{tool.name}"
                 namespaced_tool = NamespacedTool(
                     tool=tool,
@@ -212,6 +217,55 @@ class MCPAggregator(ContextDependent):
                 self._server_to_tool_map[server_name].append(namespaced_tool)
 
         self.initialized = True
+
+    async def load_server(self, server_name: str, url: str):
+        self.context.config.mcp.servers[server_name] = MCPServerSettings(
+            name=server_name,
+            transport='aip-sse',
+            url=url
+        )
+
+        logger.info(f"Loading server: {server_name}")
+        await self._persistent_connection_manager.get_server(
+                server_name, client_session_factory=MCPAgentClientSession
+        )
+
+        async def fetch_tools(client: ClientSession):
+            try:
+                result: ListToolsResult = await client.list_tools()
+                return result.tools or []
+            except Exception as e:
+                logger.error(f"Error loading tools from server '{server_name}'", data=e)
+                return []
+
+        async def load_server_tool():
+            tools: List[Tool] = []
+            server_connection = (
+            await self._persistent_connection_manager.get_server(
+                        server_name, client_session_factory=MCPAgentClientSession
+                    )
+                )
+            tools = await fetch_tools(server_connection.session)
+
+            return tools
+
+        # Gather tools from all servers concurrently
+        tools = await load_server_tool()
+
+        self._server_to_tool_map[server_name] = []
+        for tool in tools:
+            logger.info(f"{server_name} has tool: {tool}")
+            namespaced_tool_name = f"{server_name}{SEP}{tool.name}"
+            namespaced_tool = NamespacedTool(
+                tool=tool,
+                server_name=server_name,
+                namespaced_tool_name=namespaced_tool_name,
+            )
+            self._namespaced_tool_map[namespaced_tool_name] = namespaced_tool
+            self._server_to_tool_map[server_name].append(namespaced_tool)
+
+        self.server_names.append(server_name)
+        return server_name
 
     async def list_servers(self) -> List[str]:
         """Return the list of server names aggregated by this agent."""
@@ -231,6 +285,20 @@ class MCPAggregator(ContextDependent):
             tools=[
                 namespaced_tool.tool.model_copy(update={"name": namespaced_tool_name})
                 for namespaced_tool_name, namespaced_tool in self._namespaced_tool_map.items()
+            ]
+        )
+
+    async def list_tool(self, server_name: str) -> ListToolsResult:
+        """
+        :return: Tools of server_name, and renamed to be dot-namespaced by server name.
+        """
+        if not self.initialized:
+            await self.load_servers()
+
+        return ListToolsResult(
+            tools=[
+                namespaced_tool.tool.model_copy(update={"name": namespaced_tool.namespaced_tool_name})
+                for namespaced_tool in self._server_to_tool_map[server_name]
             ]
         )
 
