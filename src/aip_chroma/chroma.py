@@ -262,6 +262,7 @@ async def handle_call_tool(
     name: str, arguments: dict | None
 ) -> list[types.TextContent]:
     """Handle memory operations."""
+    print(f"handle tool: {name} {arguments}")
     if not arguments:
         arguments = {}
 

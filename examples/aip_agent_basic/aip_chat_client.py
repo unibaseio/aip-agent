@@ -1,8 +1,8 @@
 import asyncio
     
-from aip_agent.client import AIPClient
+from aip_agent_basic.client import AIPClient
 from aip_chain.chain import membase_chain, membase_account, membase_id
-from aip_agent.agent import Configuration, LLMClient, ChatSession
+from aip_agent_basic.agent import Configuration, LLMClient, ChatSession
 
 async def main():
     if len(sys.argv) < 2:

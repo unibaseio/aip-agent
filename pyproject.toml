@@ -1,5 +1,5 @@
 [project]
-name = "aip-chroma"
+name = "aip-agent"
 version = "0.1.0"
 description = "A Membase AIP project for chroma"
 readme = "README.md"
@@ -20,6 +20,7 @@ dependencies = [
  "typer>=0.15.1",
  "numpy>=2.2.1",
  "scikit-learn>=1.6.0",
+ "gradio>=5.16.0",
 ]
 [[project.authors]]
 name = "felix"
@@ -29,4 +30,4 @@ requires = [ "hatchling",]
 build-backend = "hatchling.build"
 
 [project.scripts]
-aip-chroma = "aip-chroma:main"
+aip-agent = "agent:main"

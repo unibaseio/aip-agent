@@ -46,4 +46,4 @@ log/
 Thumbs.db
 
 out
-mcp_agent.secrets.yaml
+aip_agent.secrets.yaml

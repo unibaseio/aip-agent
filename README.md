@@ -58,7 +58,7 @@ uv run examples/aip_servers/twitter.py --port 8081
 export MEMBASE_ID="<agent uuid>"
 export MEMBASE_ACCOUNT="<agent account>"
 export MEMBASE_SECRET_KEY="<agent secret key>"
-# modify mcp_agent.config.yaml
+# modify aip_agent.config.yaml
 cd examples/aip_agent_config
 uv run client.py
 # query twitter server in llm chat

@@ -3,10 +3,10 @@ from typing import Optional
 from contextlib import AsyncExitStack
 
 from mcp import ClientSession
-from mcp_agent.app import MCPApp
-from mcp_agent.mcp.mcp_aggregator import MCPAggregator
-from mcp_agent.agents.agent import Agent
-from mcp_agent.workflows.llm.augmented_llm_openai import OpenAIAugmentedLLM
+from aip_agent.app import MCPApp
+from aip_agent.mcp.mcp_aggregator import MCPAggregator
+from aip_agent.agents.agent import Agent
+from aip_agent.workflows.llm.augmented_llm_openai import OpenAIAugmentedLLM
 
 from dotenv import load_dotenv
 
@@ -17,36 +17,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = MCPApp(name="mcp_agent")
 
-agg = MCPAggregator(server_names=["agent_hub"], connection_persistence=True)
-
-async def list_servers():
-    res = await agg.list_servers()
-    return res
-
-async def list_tools_of_server(server_name: str):
-    res = await agg.list_tool(server_name)
-    return res
-
-async def list_all_tools():
-    res = await agg.list_tools()
-    return res
-
-async def add_server(server_name: str, url: str):
-    try:
-        res = await agg.load_server(server_name, url)
-    except Exception as e:
-        print(e)
-        raise
-    return res
-
-agent = Agent(
-    name="agent",
-    instruction="you are an assistant",
-    mcp_aggregator=agg,
-    functions=[list_servers, list_all_tools, list_tools_of_server, add_server]
-)
 
 class MCPClient:
     def __init__(self):
@@ -55,6 +26,13 @@ class MCPClient:
         self.exit_stack = AsyncExitStack()
 
     async def initialize(self):
+        app = MCPApp(name="aip_app")
+
+        agent = Agent(
+            name="aip_agent",
+            instruction="you are an assistant",
+            server_names=["agent_hub"],
+        )
         
         self.app = app
         await self.app.initialize()

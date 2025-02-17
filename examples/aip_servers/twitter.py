@@ -7,11 +7,10 @@ logger = logging.getLogger(__name__)
 
 from aip_twikit.twitter import mcp
 from aip_server.server import create_starlette_app
-from aip_agent.client import AIPClient
+from aip_agent_basic.client import AIPClient
 
 
 async def register():
-    print("register begin")
     aipc = AIPClient("agent_hub", "http://0.0.0.0:8080")
 
     try:
