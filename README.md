@@ -51,20 +51,30 @@ uv run examples/aip_servers/chroma.py --port 8080
 export TWITTER_USERNAME = "<your username>"
 export TWITTER_EMAIL = '<your email>'
 export TWITTER_PASSWORD = '<your password>'
-export MEMBASE_URL='http://0.0.0.0:8081'
-uv run examples/aip_servers/twitter.py --port 8081
+export MEMBASE_URL='http://0.0.0.0:8082'
+uv run examples/aip_servers/twitter.py --port 8082
 
 # client side usage example:
 export MEMBASE_ID="<agent uuid>"
 export MEMBASE_ACCOUNT="<agent account>"
 export MEMBASE_SECRET_KEY="<agent secret key>"
 # modify aip_agent.config.yaml
+# visit http://localhost:7680
 cd examples/aip_agent_config
-uv run client.py
-# query twitter server in llm chat
-# connect twitter server in llm chat
-# use tools of twitter server in llm chat
+uv run agent_gradio.py
 ```
+
+- query twitter server in llm chat
+
+![Alt text](./img/find.png?raw=true "query twitter server in llm chat")
+
+- connect twitter server in llm chat
+
+![Alt text](./img/connect.png?raw=true "connect twitter server in llm chat")
+
+- use tools in llm chat
+
+![Alt text](./img/usetool.png?raw=true "use tools in llm chat")
 
 ## Components
 
@@ -158,3 +168,7 @@ The server provides clear error messages for common scenarios:
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+```
+
+```

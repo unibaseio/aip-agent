@@ -14,58 +14,43 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-class ChatUI:
-    def __init__(self):
-        self.agent = None
-        self.llm = None
-        
-    async def initialize(self):
-        await app.initialize()
-        self.agent = Agent(
-            name="aip_agent",
-            instruction="you are an assistant",
-            server_names=["agent_hub"],
-        )
-        await self.agent.initialize()
-        self.llm = await self.agent.attach_llm(OpenAIAugmentedLLM)
+async def initialize_agent():
+    await app.initialize()
+    agent = Agent(
+        name="aip_agent",
+        instruction="you are an assistant",
+        server_names=["agent_hub"],
+    )
+    await agent.initialize()
+    llm = await agent.attach_llm(OpenAIAugmentedLLM)
+    return agent, llm
 
-    async def respond(self, message, chat_history):
-        if not self.llm:
-            await self.initialize()
-            
-        response = await self.llm.generate_str(
-            message=message,
-            request_params=RequestParams(use_history=True, history=chat_history)
-        )
-        chat_history.append((message, response))
-        return "", chat_history
+async def get_response(message, history, llm):
+    response = ""
+    response = await llm.generate_str(
+        message=message, request_params=RequestParams(use_history=True, history=history)
+    )
+    return response
+
+async def chatbot_interface(prompt, history):
+    if not hasattr(chatbot_interface, "agent"):
+        chatbot_interface.agent, chatbot_interface.llm = await initialize_agent()
+
+    response = await get_response(prompt, history, chatbot_interface.llm)
+    return response
 
 async def main():
-    chat_ui = ChatUI()
-    await chat_ui.initialize()
+    from aip_chain.chain import membase_chain, membase_account, membase_id
+    membase_chain.register(membase_id)
+    print(f"start agent with account: {membase_account} and id: {membase_id}")
     
-    with gr.Blocks(title="💬 AIP Agent Chatbot") as demo:
-        gr.Markdown("# 💬 IAP Agent Chatbot")
-        gr.Markdown("A continuous conversation interface powered by iap-agent")
-        
-        chatbot = gr.Chatbot(height=500)
-        msg = gr.Textbox(label="Your Message")
-        clear_btn = gr.Button("Clear History")
-        
-        msg.submit(
-            chat_ui.respond,
-            [msg, chatbot],
-            [msg, chatbot],
-            queue=False
-        )
-        clear_btn.click(
-            lambda: [],
-            None,
-            chatbot,
-            queue=False
-        )
-    
-    demo.launch()
+    interface = gr.ChatInterface(
+        fn=chatbot_interface,
+        type='messages',
+        title="💬 AIP Agent Chatbot",
+        description="A Gradio chatbot powered by aip-agent"
+    )
+    interface.launch()
 
 if __name__ == "__main__":
     app = MCPApp(name="aip_app")

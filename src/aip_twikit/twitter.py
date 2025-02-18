@@ -12,6 +12,10 @@ logger = logging.getLogger(__name__)
 httpx_logger = logging.getLogger("httpx")
 httpx_logger.setLevel(logging.WARNING)
 
+from dotenv import load_dotenv
+
+load_dotenv() 
+
 USERNAME = os.getenv('TWITTER_USERNAME')
 EMAIL = os.getenv('TWITTER_EMAIL')
 PASSWORD = os.getenv('TWITTER_PASSWORD')
@@ -40,7 +44,6 @@ async def get_twitter_client() -> twikit.Client:
             raise
         COOKIES_PATH.parent.mkdir(parents=True, exist_ok=True)
         client.save_cookies(COOKIES_PATH)
-    
     return client
 
 def check_rate_limit(endpoint: str) -> bool:

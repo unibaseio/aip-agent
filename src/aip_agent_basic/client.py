@@ -37,7 +37,7 @@ class AIPClient:
         memory_id = res['uuid']
         try:
             if not membase_chain.has_auth(memory_id, membase_id):
-                logger.info(f"add agent: {membase_id} to memory: {memory_id}")
+                logger.info(f"add agent: {membase_id} to hub memory: {memory_id}")
                 membase_chain.buy(memory_id, membase_id)
         except Exception as e:
             print(e)
