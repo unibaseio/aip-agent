@@ -16,7 +16,10 @@ class OpenAIEmbeddingModel(EmbeddingModel):
         self, model: str = "text-embedding-3-small", context: Optional["Context"] = None
     ):
         super().__init__(context=context)
-        self.client = OpenAI(api_key=self.context.config.openai.api_key)
+        self.client = OpenAI(
+            api_key=self.context.config.openai.api_key,
+            base_url=self.context.config.openai.base_url
+            )
         self.model = model
         # Cache the dimension since it's fixed per model
         self._embedding_dim = {

@@ -277,7 +277,10 @@ class OpenAIAugmentedLLM(
 
         # Next we pass the text through instructor to extract structured data
         client = instructor.from_openai(
-            OpenAI(api_key=self.context.config.openai.api_key),
+            OpenAI(
+                api_key=self.context.config.openai.api_key,
+                base_url=self.context.config.openai.base_url,
+                ),
             mode=instructor.Mode.TOOLS_STRICT,
         )
 
@@ -484,6 +487,13 @@ class MCPOpenAITypeConverter(
 def mcp_content_to_openai_content(
     content: TextContent | ImageContent | EmbeddedResource,
 ) -> ChatCompletionContentPartTextParam:
+    if isinstance(content, list):
+        # Handle list of content items
+        return ChatCompletionContentPartTextParam(
+            type="text",
+            text="\n".join(mcp_content_to_openai_content(c) for c in content),
+        )
+    
     if isinstance(content, TextContent):
         return ChatCompletionContentPartTextParam(type="text", text=content.text)
     elif isinstance(content, ImageContent):
