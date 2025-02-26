@@ -34,23 +34,27 @@ The system is architected to be directly callable by LLMs, enhancing the capabil
 
 ## Usage
 
+- MEMBASE_ID is different with each other
+- MEMBASE_ACCOUNT have balance in bnb testnet
+
 ```shell
 # install dependencies
 uv venv
 uv sync --dev --all-extras
 
 # server side:
-# each server has
-export MEMBASE_ID="<memory uuid>"
-export MEMBASE_ACCOUNT="<memory account>"
-export MEMBASE_SECRET_KEY="<memory secret key>"
-# memory
+# each server has env
+export MEMBASE_ID="<membase uuid>"
+export MEMBASE_ACCOUNT="<membase account>"
+export MEMBASE_SECRET_KEY="<membase secret key>"
+# membase
 uv run examples/aip_servers/chroma.py --port 8080
 # twitter
 # addtional env
 export TWITTER_USERNAME = "<your username>"
 export TWITTER_EMAIL = '<your email>'
 export TWITTER_PASSWORD = '<your password>'
+# change 8082 to your desired port
 export MEMBASE_URL='http://0.0.0.0:8082'
 uv run examples/aip_servers/twitter.py --port 8082
 
@@ -80,7 +84,7 @@ uv run agent_gradio.py
 
 ### Authorization
 
-The Authorization Module is responsible for managing access control in a system where agent clients interact with a memory server. The module ensures that the identity of the client is verified and that they possess the necessary permissions to perform specific actions or access certain data.
+The Authorization Module is responsible for managing access control in a system where agent clients interact with a membase server. The module ensures that the identity of the client is verified and that they possess the necessary permissions to perform specific actions or access certain data.
 
 Client-Side:
 
@@ -96,7 +100,7 @@ Server-Side:
 
 ### Resources
 
-The server provides memory storage and retrieval through Chroma's vector database:
+The server provides membase storage and retrieval through Chroma's vector database:
 
 - Stores memory with content and metadata
 - Persists data in `src/aip_chroma/data` directory
