@@ -2,9 +2,13 @@
 
 ## task
 
+- bnb testnet
+
+```shell
 export MEMBASE_ID="<agent uuid>"
 export MEMBASE_ACCOUNT="<agent account>"
 export MEMBASE_SECRET_KEY="<agent secret key>"
+```
 
 ```python
 
