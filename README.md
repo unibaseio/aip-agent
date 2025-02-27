@@ -65,7 +65,7 @@ export MEMBASE_SECRET_KEY="<agent secret key>"
 # modify aip_agent.config.yaml
 # visit http://localhost:7680
 cd examples/aip_agent_config
-uv run agent_gradio.py
+uv run client_gradio.py
 ```
 
 - query twitter server in llm chat

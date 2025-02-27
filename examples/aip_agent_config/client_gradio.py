@@ -6,6 +6,11 @@ from aip_agent.agents.agent import Agent
 from aip_agent.workflows.llm.augmented_llm_openai import OpenAIAugmentedLLM
 from aip_agent.workflows.llm.augmented_llm import RequestParams
 
+from aip_memory.message import Message
+from aip_memory.buffered_memory import BufferedMemory
+
+from aip_chain.chain import membase_chain, membase_account, membase_id
+
 from dotenv import load_dotenv
 
 load_dotenv()  # load environment variables from .env
@@ -23,7 +28,8 @@ async def initialize_agent():
     )
     await agent.initialize()
     llm = await agent.attach_llm(OpenAIAugmentedLLM)
-    return agent, llm
+    memory = BufferedMemory(persistence_in_remote=True)
+    return agent, llm, memory
 
 async def get_response(message, history, llm):
     response = ""
@@ -34,13 +40,16 @@ async def get_response(message, history, llm):
 
 async def chatbot_interface(prompt, history):
     if not hasattr(chatbot_interface, "agent"):
-        chatbot_interface.agent, chatbot_interface.llm = await initialize_agent()
+        chatbot_interface.agent, chatbot_interface.llm, chatbot_interface.memory = await initialize_agent()
 
+    msg = Message(membase_id, prompt, role="user")
+    chatbot_interface.memory.add(msg)
     response = await get_response(prompt, history, chatbot_interface.llm)
+    msg = Message(membase_id, response, role="user")
+    chatbot_interface.memory.add(msg)
     return response
 
 async def main():
-    from aip_chain.chain import membase_chain, membase_account, membase_id
     membase_chain.register(membase_id)
     print(f"start agent with account: {membase_account} and id: {membase_id}")
     

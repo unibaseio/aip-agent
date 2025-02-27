@@ -4,9 +4,11 @@ from contextlib import AsyncExitStack
 
 from mcp import ClientSession
 from aip_agent.app import MCPApp
-from aip_agent.mcp.mcp_aggregator import MCPAggregator
 from aip_agent.agents.agent import Agent
 from aip_agent.workflows.llm.augmented_llm_openai import OpenAIAugmentedLLM
+
+from aip_memory.message import Message
+from aip_memory.buffered_memory import BufferedMemory
 
 from dotenv import load_dotenv
 
@@ -17,13 +19,16 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
+from aip_chain.chain import membase_chain, membase_account, membase_id
+membase_chain.register(membase_id)
+print(f"start agent with account: {membase_account} and id: {membase_id}")
 
 class MCPClient:
     def __init__(self):
         # Initialize session and client objects
         self.session: Optional[ClientSession] = None
         self.exit_stack = AsyncExitStack()
+        self.memory = BufferedMemory(persistence_in_remote=True)
 
     async def initialize(self):
         app = MCPApp(name="aip_app")
@@ -52,7 +57,11 @@ class MCPClient:
 
     async def process_query(self, query: str) -> str:
         """Process a query"""
+        msg = Message(membase_id, query, role="user")
+        self.memory.add(msg)
         response = await self.llm.generate_str(message=query)
+        msg = Message(membase_id, response, role="user")
+        self.memory.add(msg)
         return response
 
     async def chat_loop(self):
@@ -77,9 +86,7 @@ class MCPClient:
         """Clean up resources"""
         await self.exit_stack.aclose()
 
-from aip_chain.chain import membase_chain, membase_account, membase_id
-membase_chain.register(membase_id)
-print(f"start agent with account: {membase_account} and id: {membase_id}")
+
 
 async def main():
     client = MCPClient()

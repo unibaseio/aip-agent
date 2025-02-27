@@ -21,6 +21,7 @@ dependencies = [
  "numpy>=2.2.1",
  "scikit-learn>=1.6.0",
  "gradio>=5.16.0",
+ "loguru>=0.7.3",
 ]
 [[project.authors]]
 name = "felix"
