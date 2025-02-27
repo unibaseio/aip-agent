@@ -23,7 +23,7 @@ class Client:
                  wallet_address: str, 
                  private_key: str, 
                  ep: str = "https://bsc-testnet-rpc.publicnode.com", 
-                 membase_contract: str = "0x06084345b09eC4aEf03BA81E66E339a73449556b"
+                 membase_contract: str = "0x100E3F8c5285df46A8B9edF6b38B8f90F1C32B7b"
                  ):
         w3 = Web3(Web3.HTTPProvider(ep))
         if w3.is_connected():
@@ -63,18 +63,54 @@ class Client:
             self.membase.functions.register(_uuid),
             self._get_tx_params(),
         )
-
-    def share(self, _uuid: str, wallet_address: str, permission: int=2): 
-        addr = self.membase.functions.getAgent(_uuid).call()
-        if addr != self.wallet_address:
-            raise Exception(f"{_uuid} is owned by {addr}")
     
-        wallet_address = Web3.to_checksum_address(wallet_address)
-
+    def createTask(self, _taskid: str, _price: int): 
+        fin, owner, price, value, winner = self.membase.functions.getTask(_taskid).call()
+        print(f"task: ", fin, owner, price, value, winner)
+        if owner == self.wallet_address:
+            return 
+        
+        if owner != ADDRESS_ZERO:
+            raise Exception(f"already register: {_taskid} by {owner}")
+        
         return self._build_and_send_tx(
-            self.membase.functions.shareTo(_uuid, wallet_address, permission),
+            self.membase.functions.createTask(_taskid, _price),
             self._get_tx_params(),
         )
+
+
+    def joinTask(self, _taskid: str, _uuid: str): 
+        if self.membase.functions.getPermission(_taskid, _uuid).call():
+            print(f"already join task: {_taskid}")
+            return 
+
+        fin, owner, price, value ,winner= self.membase.functions.getTask(_taskid).call()
+        print(f"task: ", fin, owner, price, value, winner)
+        
+        if fin:
+            raise Exception(f"{_taskid} already finish, winner is {winner}")
+        
+        return self._build_and_send_tx(
+            self.membase.functions.joinTask(_taskid, _uuid),
+            self._get_tx_params(value=Wei(price)),
+        )
+
+    def finishTask(self, _taskid: str, _uuid: str): 
+        fin, owner, price, value, winner = self.membase.functions.getTask(_taskid).call()
+        print(f"task: ", fin, owner, winner, price, value, winner)
+        
+        if fin:
+            raise Exception(f"{_taskid} already finish, winner is {winner}")
+        
+        return self._build_and_send_tx(
+            self.membase.functions.finishTask(_taskid, _uuid),
+            self._get_tx_params(),
+        )
+
+    def getTask(self, _taskid: str): 
+        fin, owner, price, value, winner = self.membase.functions.getTask(_taskid).call()
+        print(f"task: ", fin, owner, price, value, winner)
+        return fin, owner, price, value, winner
 
     def buy(self, _uuid: str, _auuid: str): 
         addr = self.membase.functions.getAgent(_uuid).call()
