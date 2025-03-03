@@ -80,6 +80,22 @@ uv run client_gradio.py
 
 ![Alt text](./img/usetool.png?raw=true "use tools in llm chat")
 
+### chat memory
+
+```python
+from aip_memory.message import Message
+from aip_memory.buffered_memory import BufferedMemory
+
+memory = BufferedMemory(persistence_in_remote=True)
+msg = Message(
+            "agent",
+            "Hello! How can I help you?",
+            role="assistant",
+            metadata="md"
+        )
+memory.add(msg)
+```
+
 ## Components
 
 ### Authorization
