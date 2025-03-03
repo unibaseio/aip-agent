@@ -39,7 +39,7 @@ The system is architected to be directly callable by LLMs, enhancing the capabil
 
 ### install
 
-````shell
+```shell
 pip install git+https://github.com/unibaseio/aip-agent.git
 # or clone into local
 git clone https://github.com/unibaseio/aip-agent.git
@@ -78,7 +78,7 @@ export MEMBASE_SECRET_KEY="<agent secret key>"
 # visit http://localhost:7680
 cd examples/aip_agent_config
 uv run client_gradio.py
-````
+```
 
 - query twitter server in llm chat
 
