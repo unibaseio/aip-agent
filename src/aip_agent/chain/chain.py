@@ -113,10 +113,6 @@ class Client:
         return fin, owner, price, value, winner
 
     def buy(self, _uuid: str, _auuid: str): 
-        addr = self.membase.functions.getAgent(_uuid).call()
-        if addr == self.wallet_address:
-            return
-    
         if self.membase.functions.getPermission(_uuid, _auuid).call():
             return 
 
@@ -129,13 +125,15 @@ class Client:
         return self.membase.functions.getAgent(_uuid).call()
 
     def has_auth(self, _uuid: str, _auuid: str) -> bool: 
-        agent_address = self.membase.functions.getAgent(_uuid).call()
-        if agent_address == ADDRESS_ZERO:
-            raise Exception(f"{_uuid} is not registered")
-        
-        if agent_address == self.wallet_address:
+        if self.membase.functions.getPermission(_uuid, _auuid).call():
             return True
-        return self.membase.functions.getPermission(_uuid, _auuid).call()
+        
+        fin, owner, price, value, winner = self.membase.functions.getTask(_uuid).call()
+        if owner == ADDRESS_ZERO:
+            return False
+        agent_address = self.membase.functions.getAgent(_auuid).call()
+        if owner == agent_address:
+            return True
 
     def _display_cause(self, tx_hash: str):
         print(f"check: {tx_hash.hex()}")
