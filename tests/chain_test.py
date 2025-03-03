@@ -1,4 +1,4 @@
-from aip_chain.chain import membase_chain
+from aip_agent.chain.chain import membase_chain
 
 
 task_id = "task02271"

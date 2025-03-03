@@ -83,8 +83,8 @@ uv run client_gradio.py
 ### chat memory
 
 ```python
-from aip_memory.message import Message
-from aip_memory.buffered_memory import BufferedMemory
+from aip_agent.memory.message import Message
+from aip_agent.memory.buffered_memory import BufferedMemory
 
 memory = BufferedMemory(persistence_in_remote=True)
 msg = Message(

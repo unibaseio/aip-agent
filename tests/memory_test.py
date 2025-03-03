@@ -7,9 +7,9 @@ import os
 import unittest
 from unittest.mock import patch, MagicMock
 
-from aip_memory.message import Message
-from aip_memory.buffered_memory import BufferedMemory
-from aip_memory.serialize import serialize
+from aip_agent.memory.message import Message
+from aip_agent.memory.buffered_memory import BufferedMemory
+from aip_agent.memory.serialize import serialize
 
 
 class BufferedMemoryTest(unittest.TestCase):

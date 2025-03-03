@@ -14,7 +14,7 @@ from .memory import MemoryBase
 from .serialize import serialize, deserialize
 from .message import Message
 
-from aip_hub.hub import hub_client
+from aip_agent.hub.hub import hub_client
 
 class BufferedMemory(MemoryBase):
     """

@@ -7,8 +7,8 @@ from aip_agent.app import MCPApp
 from aip_agent.agents.agent import Agent
 from aip_agent.workflows.llm.augmented_llm_openai import OpenAIAugmentedLLM
 
-from aip_memory.message import Message
-from aip_memory.buffered_memory import BufferedMemory
+from aip_agent.memory.message import Message
+from aip_agent.memory.buffered_memory import BufferedMemory
 
 from dotenv import load_dotenv
 
@@ -19,7 +19,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-from aip_chain.chain import membase_chain, membase_account, membase_id
+from aip_agent.chain.chain import membase_chain, membase_account, membase_id
 membase_chain.register(membase_id)
 print(f"start agent with account: {membase_account} and id: {membase_id}")
 

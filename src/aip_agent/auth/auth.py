@@ -3,7 +3,7 @@ import time
 import logging
 logger = logging.getLogger(__name__)
 
-from aip_chain.chain import membase_chain, membase_id
+from aip_agent.chain.chain import membase_chain, membase_id
 
 def buy_auth_onchain(memory_id):
     try:

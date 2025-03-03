@@ -1,7 +1,7 @@
 import asyncio
     
 from aip_agent_basic.client import AIPClient
-from aip_chain.chain import membase_chain, membase_account, membase_id
+from aip_agent.chain.chain import membase_chain, membase_account, membase_id
 from aip_agent_basic.agent import Configuration, LLMClient, ChatSession
 
 async def main():

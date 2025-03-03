@@ -10,7 +10,7 @@ def _default_serialize(obj: Any) -> Any:
     if hasattr(obj, "__module__") and hasattr(obj, "__class__"):
         # To avoid circular import, we hard code the module name here
         if (
-            obj.__module__ == "aip_memory.message"
+            obj.__module__ == "aip_agent.memory.message"
             and obj.__class__.__name__ == "Message"
         ):
             return obj.to_dict()

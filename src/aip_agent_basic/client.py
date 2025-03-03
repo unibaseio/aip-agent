@@ -12,7 +12,7 @@ from mcp.client.sse import sse_client
 import logging
 logger = logging.getLogger(__name__)
 
-from aip_chain.chain import membase_chain, membase_account, membase_id
+from aip_agent.chain.chain import membase_chain, membase_account, membase_id
 
 class AIPClient:
     def __init__(self, name: str,server_url: str):

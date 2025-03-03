@@ -36,7 +36,7 @@ class Client:
         self.wallet_address = Web3.to_checksum_address(wallet_address)
         self.private_key = private_key
 
-        contract_json = json.loads(pkgutil.get_data('aip_chain', 'solc/Membase.json').decode())
+        contract_json = json.loads(pkgutil.get_data('aip_agent.chain', 'solc/Membase.json').decode())
         self.membase = self.w3.eth.contract(address=membase_contract, abi=contract_json['abi'])
     
     def sign_message(self, message: str)-> str: 
