@@ -37,6 +37,18 @@ The system is architected to be directly callable by LLMs, enhancing the capabil
 - MEMBASE_ID is different with each other
 - MEMBASE_ACCOUNT have balance in bnb testnet
 
+### install
+
+````shell
+pip install git+https://github.com/unibaseio/aip-agent.git
+# or clone into local
+git clone https://github.com/unibaseio/aip-agent.git
+cd aip-agent
+pip insrall -e .
+```
+
+### example
+
 ```shell
 # install dependencies
 uv venv
@@ -66,7 +78,7 @@ export MEMBASE_SECRET_KEY="<agent secret key>"
 # visit http://localhost:7680
 cd examples/aip_agent_config
 uv run client_gradio.py
-```
+````
 
 - query twitter server in llm chat
 
@@ -94,6 +106,43 @@ msg = Message(
             metadata="md"
         )
 memory.add(msg)
+```
+
+### agent
+
+```python
+from mcp import ClientSession
+from aip_agent.app import MCPApp
+from aip_agent.agents.agent import Agent
+from aip_agent.workflows.llm.augmented_llm_openai import OpenAIAugmentedLLM
+
+from aip_agent.memory.message import Message
+from aip_agent.memory.buffered_memory import BufferedMemory
+
+app = MCPApp(name="aip_app")
+
+agent = Agent(
+  name="aip_agent",
+  instruction="you are an assistant",
+  server_names=[],
+)
+await app.initialize()
+
+await agent.initialize()
+
+llm = await agent.attach_llm(OpenAIAugmentedLLM)
+
+# init memory
+memory = BufferedMemory(persistence_in_remote=True)
+
+async def process_query(query: str) -> str:
+  """Process a query"""
+  msg = Message(membase_id, query, role="user")
+  memory.add(msg)
+  response = await self.llm.generate_str(message=query)
+  msg = Message(membase_id, response, role="user")
+  memory.add(msg)
+  return response
 ```
 
 ## Components
