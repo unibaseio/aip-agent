@@ -161,9 +161,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.verbose:
         logging.basicConfig(level=logging.WARNING)
-        logging.getLogger("grpc").setLevel(logging.DEBUG)
+        logging.getLogger("autogen_core").setLevel(logging.DEBUG)
         file_name = "agent.log"
         handler = logging.FileHandler(file_name)
-        logging.getLogger("grpc").addHandler(handler)
+        logging.getLogger("autogen_core").addHandler(handler)
 
     asyncio.run(main(args.tool))

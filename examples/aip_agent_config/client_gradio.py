@@ -6,8 +6,8 @@ from aip_agent.agents.agent import Agent
 from aip_agent.workflows.llm.augmented_llm_openai import OpenAIAugmentedLLM
 from aip_agent.workflows.llm.augmented_llm import RequestParams
 
-from aip_agent.memory.message import Message
-from aip_agent.memory.buffered_memory import BufferedMemory
+from membase.memory.message import Message
+from membase.memory.buffered_memory import BufferedMemory
 
 from membase.chain.chain import membase_chain, membase_account, membase_id
 
