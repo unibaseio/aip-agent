@@ -9,7 +9,7 @@ from aip_agent.workflows.llm.augmented_llm import RequestParams
 from aip_agent.memory.message import Message
 from aip_agent.memory.buffered_memory import BufferedMemory
 
-from aip_agent.chain.chain import membase_chain, membase_account, membase_id
+from membase.chain.chain import membase_chain, membase_account, membase_id
 
 from dotenv import load_dotenv
 

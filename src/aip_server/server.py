@@ -14,7 +14,7 @@ from starlette.types import Scope, Receive, Send
 from starlette.exceptions import HTTPException
 from contextlib import asynccontextmanager
 
-from aip_agent.chain.chain import membase_chain, membase_account, membase_id
+from membase.chain.chain import membase_chain, membase_account, membase_id
 
 import logging
 logging.basicConfig(level=logging.INFO)

@@ -154,7 +154,7 @@ export MEMBASE_SECRET_KEY="<agent secret key>"
 ```
 
 ```python
-from aip_agent.chain.chain import membase_chain
+from membase.chain.chain import membase_chain
 
 # register task with id and price<minimal staking>
 # as task owner

@@ -8,7 +8,7 @@ import mcp.types as types
 from mcp.server import Server
 import functools
 
-from aip_agent.chain.chain import membase_account
+from membase.chain.chain import membase_account
 from aip_agent.hub.hub import hub_client
 
 import logging

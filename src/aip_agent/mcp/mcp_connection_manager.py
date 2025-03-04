@@ -228,7 +228,7 @@ class MCPConnectionManager:
 
                 import time
                 import requests
-                from aip_agent.chain.chain import membase_chain, membase_account, membase_id
+                from membase.chain.chain import membase_chain, membase_account, membase_id
 
                 def get_auth_for_test():
                     logger.info(f"Get info for auth in test environment")

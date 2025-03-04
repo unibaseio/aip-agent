@@ -19,7 +19,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-from aip_agent.chain.chain import membase_chain, membase_account, membase_id
+from membase.chain.chain import membase_chain, membase_account, membase_id
 membase_chain.register(membase_id)
 print(f"start agent with account: {membase_account} and id: {membase_id}")
 
