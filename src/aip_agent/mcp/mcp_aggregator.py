@@ -1,5 +1,7 @@
 from asyncio import Lock, gather
+import json
 from typing import List, Dict, Optional, TYPE_CHECKING
+import uuid
 
 from pydantic import BaseModel, ConfigDict
 from mcp.client.session import ClientSession
@@ -9,6 +11,7 @@ from mcp.types import (
     CallToolResult,
     ListToolsResult,
     Tool,
+    TextContent,
 )
 
 from aip_agent.logging.logger import get_logger
@@ -18,6 +21,13 @@ from aip_agent.config import MCPServerSettings
 from aip_agent.context_dependent import ContextDependent
 from aip_agent.mcp.mcp_agent_client_session import MCPAgentClientSession
 from aip_agent.mcp.mcp_connection_manager import MCPConnectionManager
+
+from aip_agent.tool_agent._tool_agent import FunctionCall
+from aip_agent.message.message import InteractionMessage
+
+from autogen_core import AgentId
+from autogen_core import AgentRuntime
+from autogen_core.models import FunctionExecutionResult
 
 if TYPE_CHECKING:
     from aip_agent.context import Context
@@ -76,13 +86,18 @@ class MCPAggregator(ContextDependent):
 
     def __init__(
         self,
+        name: str,
         server_names: List[str],
+        runtime: AgentRuntime,
         connection_persistence: bool = False,
         context: Optional["Context"] = None,
         **kwargs,
     ):
         """
         :param server_names: A list of server names to connect to.
+        :param runtime: The agent runtime to use
+        :param connection_persistence: Whether to maintain persistent connections
+        :param context: Optional context for dependency injection
         Note: The server names must be resolvable by the gen_client function, and specified in the server registry.
         """
         super().__init__(
@@ -100,6 +115,10 @@ class MCPAggregator(ContextDependent):
         # Maps server_name -> list of tools
         self._server_to_tool_map: Dict[str, List[NamespacedTool]] = {}
         self._tool_map_lock = Lock()
+
+        self._name = name
+        self._grpc_runtime: AgentRuntime = runtime
+        self._grpc_server_map: Dict[str, str] = {}
 
         # TODO: saqadri - add resources and prompt maps as well
 
@@ -152,14 +171,27 @@ class MCPAggregator(ContextDependent):
         Discover tools from each server in parallel and build an index of namespaced tool names.
         """
         if self.initialized:
-            logger.debug("MCPAggregator already initialized.")
+            logger.warning("MCPAggregator already initialized.")
             return
 
+        print("====load_servers")
         async with self._tool_map_lock:
             self._namespaced_tool_map.clear()
             self._server_to_tool_map.clear()
 
+        server_names = []
         for server_name in self.server_names:
+            if server_name in self._grpc_server_map:
+                continue
+            if server_name in self.context.config.mcp.servers:
+                if self.context.config.mcp.servers[server_name].transport == "aip-grpc":
+                    await self.load_grpc_server(server_name)
+                else:
+                    server_names.append(server_name)
+            else:
+                logger.warning(f"Server {server_name} not found in config")
+
+        for server_name in server_names:
             if self.connection_persistence:
                 logger.info(f"Loading server: {server_name}")
                 await self._persistent_connection_manager.get_server(
@@ -218,15 +250,82 @@ class MCPAggregator(ContextDependent):
 
         self.initialized = True
 
+    async def load_grpc_server(self, server_name):
+        response = await self._grpc_runtime.send_message(InteractionMessage(
+            action="list_tools",
+            content=""
+        ), AgentId(server_name, "default"), sender=AgentId(self._name, "default"))
+        
+        try:
+            if not isinstance(response.content, dict):
+                logger.error(f"Invalid response format from server {server_name}: content is not a dictionary")
+                return server_name
+                
+            tools_data = response.content.get("tools", [])
+            if not isinstance(tools_data, list):
+                logger.error(f"Invalid tools format from server {server_name}: tools is not a list")
+                return server_name
+                
+            if not tools_data:
+                logger.warning(f"No tools returned from server {server_name}")
+                return server_name
+                
+        except Exception as e:
+            logger.error(f"Error processing tools from server {server_name}: {str(e)}")
+            return server_name
+            
+        self._server_to_tool_map[server_name] = []
+        for tool_data in tools_data:
+            try:
+                if not isinstance(tool_data, dict):
+                    logger.error(f"Invalid tool format from server {server_name}: tool is not a dictionary")
+                    continue
+    
+                tool = Tool(
+                    name=tool_data.get("name", ""),
+                    description=tool_data.get("description"),
+                    inputSchema=tool_data.get("inputSchema", {
+                        "type": "object",
+                        "properties": {},
+                        "required": []
+                    })
+                )
+                
+                logger.info(f"{server_name} has tool: {tool}")
+                namespaced_tool_name = f"{server_name}{SEP}{tool.name}"
+                namespaced_tool = NamespacedTool(
+                    tool=tool,
+                    server_name=server_name,
+                    namespaced_tool_name=namespaced_tool_name,
+                )
+                self._namespaced_tool_map[namespaced_tool_name] = namespaced_tool
+                self._server_to_tool_map[server_name].append(namespaced_tool)
+            except Exception as e:
+                logger.error(f"Error processing tool from server {server_name}: {str(e)}")
+                continue
+
+        self.server_names.append(server_name)
+        self._grpc_server_map[server_name] = server_name
+        return server_name
+
     async def load_server(self, server_name: str, url: str):
         """
-        connect server with url over aip-sse
+        connect server with url over aip-sse or aip-grpc
         """
-
         if server_name in self._server_to_tool_map:
             print(f"already has server: {server_name}")
             return server_name
         
+        # use runtime(grpc implementation) to connect to server
+        if "grpc" in url:
+            self.context.config.mcp.servers[server_name] = MCPServerSettings(
+                name=server_name,
+                transport='aip-grpc'
+            )
+            await self.load_grpc_server(server_name)
+            return server_name
+
+        # use aip-sse to connect to server
         self.context.config.mcp.servers[server_name] = MCPServerSettings(
             name=server_name,
             transport='aip-sse',
@@ -310,6 +409,59 @@ class MCPAggregator(ContextDependent):
             ]
         )
 
+    async def send_message(self, server_name: str, content: str):
+        """
+        Send a message to a server
+        """
+        res = await self._grpc_runtime.send_message(InteractionMessage(
+            action="ask",
+            content=content,
+            source=self._name
+        ), AgentId(server_name, "default"), sender=AgentId(self._name, "default"))
+        return res
+        
+
+    async def call_grpc_tool(
+        self, server_name: str, tool_name: str, arguments: dict | None = None
+    ) -> CallToolResult:
+        """
+        Call a tool using grpc implementation
+        """
+        
+        response = await self._grpc_runtime.send_message(
+            FunctionCall(
+                id=str(uuid.uuid4()),
+                name=tool_name,
+                arguments=json.dumps(arguments)
+            ),
+            AgentId(server_name, "default"),
+            sender=AgentId(self._name, "default")
+        )
+        
+        try:
+            if not isinstance(response, FunctionExecutionResult):
+                logger.error(f"Invalid response format from server {server_name}: content is not a FunctionExecutionResult")
+                return CallToolResult(isError=True, content=[TextContent(type="text", text="Invalid response format")])
+                
+            if response.is_error:
+                return CallToolResult(
+                    isError=True,
+                    content=[TextContent(type="text", text=response.content or "Tool execution failed")]
+                )
+                
+            content = [TextContent(type="text", text=response.content)]
+            return CallToolResult(
+                isError=False,
+                content=content
+            )
+            
+        except Exception as e:
+            logger.error(f"Error processing tool execution result from server {server_name}: {str(e)}")
+            return CallToolResult(
+                isError=True,
+                content=[TextContent(type="text", text=f"Error processing tool execution result: {str(e)}")]
+            )
+
     async def call_tool(
         self, name: str, arguments: dict | None = None
     ) -> CallToolResult:
@@ -335,20 +487,28 @@ class MCPAggregator(ContextDependent):
                         break
 
             if server_name is None or local_tool_name is None:
-                logger.error(f"Error: Tool '{name}' not found")
-                return CallToolResult(isError=True, message=f"Tool '{name}' not found")
+                error_message = f"Tool '{name}' not found"
+                logger.error(error_message)
+                return CallToolResult(
+                    isError=True,
+                    content=[TextContent(text=error_message)]
+                )
 
         logger.info(
             f"MCPServerAggregator: Requesting tool call '{name}'. Calling tool '{local_tool_name}' on server '{server_name}'"
         )
 
+        if server_name in self._grpc_server_map:
+            return await self.call_grpc_tool(server_name, local_tool_name, arguments)
+
         async def try_call_tool(client: ClientSession):
             try:
                 return await client.call_tool(name=local_tool_name, arguments=arguments)
             except Exception as e:
+                error_message = f"Failed to call tool '{local_tool_name}' on server '{server_name}': {e}"
                 return CallToolResult(
                     isError=True,
-                    message=f"Failed to call tool '{local_tool_name}' on server '{server_name}': {e}",
+                    content=[TextContent(text=error_message)]
                 )
 
         if self.connection_persistence:

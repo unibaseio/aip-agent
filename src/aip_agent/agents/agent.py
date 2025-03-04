@@ -10,6 +10,8 @@ from mcp.types import (
     Tool,
 )
 
+from autogen_core import AgentRuntime
+
 from aip_agent.mcp.mcp_aggregator import MCPAggregator
 from aip_agent.human_input.types import (
     HumanInputCallback,
@@ -40,6 +42,7 @@ class Agent(MCPAggregator):
     def __init__(
         self,
         name: str,
+        runtime: AgentRuntime, 
         instruction: str | Callable[[Dict], str] = "You are a helpful agent.",
         server_names: List[str] = None,
         functions: List[Callable] = None,
@@ -49,7 +52,9 @@ class Agent(MCPAggregator):
         **kwargs,
     ):
         super().__init__(
+            name=name,
             context=context,
+            runtime=runtime,
             server_names=server_names or [],
             connection_persistence=connection_persistence,
             **kwargs,
@@ -63,6 +68,7 @@ class Agent(MCPAggregator):
         self.functions.append(super().list_tool)
         self.functions.append(super().list_servers)
         self.functions.append(super().load_server)
+        self.functions.append(super().send_message)
        
         self.executor = self.context.executor
 

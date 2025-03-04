@@ -22,6 +22,9 @@ dependencies = [
  "scikit-learn>=1.6.0",
  "gradio>=5.16.0",
  "loguru>=0.7.3",
+ "autogen-core==0.4.8",
+ "grpcio==1.70.0",
+ "membase>=0.1.0",
 ]
 [[project.authors]]
 name = "felix"
@@ -29,6 +32,9 @@ name = "felix"
 [build-system]
 requires = [ "hatchling",]
 build-backend = "hatchling.build"
+
+[tool.uv.sources]
+membase = { git = "https://github.com/unibaseio/membase.git" }
 
 [project.scripts]
 aip-agent = "agent:main"

@@ -9,7 +9,7 @@ from mcp.server import Server
 import functools
 
 from membase.chain.chain import membase_account
-from aip_agent.hub.hub import hub_client
+from membase.hub import hub_client
 
 import logging
 logger = logging.getLogger(__name__)
