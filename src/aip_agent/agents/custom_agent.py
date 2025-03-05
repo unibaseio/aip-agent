@@ -10,7 +10,7 @@ from aip_agent.message.message import InteractionMessage
 from membase.memory.message import Message
 from membase.memory.memory import MemoryBase
 
-class CustomAgent(RoutedAgent):
+class CallbackAgent(RoutedAgent):
     def __init__(
         self,
         description: str,

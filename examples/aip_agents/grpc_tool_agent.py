@@ -39,7 +39,7 @@ def get_weather(
 def get_board() -> Annotated[str, "The current board state"]:
     return "board is " + random.choice(["empty", "white", "black"])
 
-async def main() -> None:
+async def main(address: str) -> None:
     local_tools: List[Tool] = [
         FunctionTool(
             get_legal_moves,
@@ -62,6 +62,7 @@ async def main() -> None:
     tool_agent = ToolAgentWrapper(
         name=os.getenv("MEMBASE_ID"),
         tools=local_tools,
+        host_address=address,
     )
     await tool_agent.initialize()
     await tool_agent.stop_when_signal()
@@ -70,7 +71,7 @@ async def main() -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run a chess game between two agents.")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging.")
-
+    parser.add_argument("--address", type=str, help="Address to connect to", default="localhost:50060")
     args = parser.parse_args()
     if args.verbose:
         logging.basicConfig(level=logging.WARNING)
@@ -79,4 +80,4 @@ if __name__ == "__main__":
         handler = logging.FileHandler(file_name)
         logging.getLogger("autogen_core").addHandler(handler)
 
-    asyncio.run(main())
+    asyncio.run(main(args.address))

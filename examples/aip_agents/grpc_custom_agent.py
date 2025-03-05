@@ -60,14 +60,14 @@ async def async_input(prompt: str) -> str:
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(None, lambda: input(prompt).strip())
 
-async def main(tool_id: str) -> None:
+async def main(address: str, target_id: str) -> None:
     """Main Entrypoint."""
 
     membase_chain.register(membase_id)
     print(f"{membase_id} is register onchain")
     time.sleep(5)
 
-    runtime = GrpcWorkerAgentRuntime('localhost:50060')
+    runtime = GrpcWorkerAgentRuntime(address)
     runtime.add_message_serializer(try_get_known_serializers_for_type(FunctionCall))
     runtime.add_message_serializer(try_get_known_serializers_for_type(FunctionExecutionResult))
     runtime.add_message_serializer(try_get_known_serializers_for_type(InteractionMessage))
@@ -77,7 +77,7 @@ async def main(tool_id: str) -> None:
         InteractionMessage(
             action="list_tools",
         ),
-        AgentId(tool_id, "default"),
+        AgentId(target_id, "default"),
         sender=AgentId(membase_id, "default"))
     print(f"response: {response.content}")
 
@@ -87,7 +87,7 @@ async def main(tool_id: str) -> None:
             arguments=json.dumps({}),
             id="1"
         ),
-        AgentId(tool_id, "default"),
+        AgentId(target_id, "default"),
         sender=AgentId(membase_id, "default")
     )
     print(f"response: {response}")
@@ -103,7 +103,7 @@ async def main(tool_id: str) -> None:
     await app.initialize()
     await agent.initialize()
     
-    await agent.load_server(server_name = tool_id, url="aip-grpc")
+    await agent.load_server(server_name = target_id, url="aip-grpc")
 
     servers = await agent.list_servers()
     print(f"servers: {servers}")
@@ -150,7 +150,8 @@ async def main(tool_id: str) -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run a chess game between two agents.")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging.")
-    parser.add_argument("--tool", type=str, help="Tool ID")
+    
+    parser.add_argument("--target-id", type=str, help="Target Agent ID")
 
     args = parser.parse_args()
     if args.verbose:
@@ -160,4 +161,4 @@ if __name__ == "__main__":
         handler = logging.FileHandler(file_name)
         logging.getLogger("autogen_core").addHandler(handler)
 
-    asyncio.run(main(args.tool))
+    asyncio.run(main(args.address, args.target_id))

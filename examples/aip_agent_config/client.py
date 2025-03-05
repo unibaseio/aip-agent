@@ -1,6 +1,6 @@
 import asyncio
 from aip_agent.agents.full_agent import FullAgentWrapper
-from aip_agent.agents.custom_agent import CustomAgent
+from aip_agent.agents.custom_agent import CallbackAgent
 
 from membase.memory.message import Message
 
@@ -16,7 +16,7 @@ class MCPClient:
     def __init__(self):
         # Initialize session and client objects
         self.full_agent = FullAgentWrapper(
-            agent_cls=CustomAgent,
+            agent_cls=CallbackAgent,
             name=membase_id,
             description="you are an assistant",
         )

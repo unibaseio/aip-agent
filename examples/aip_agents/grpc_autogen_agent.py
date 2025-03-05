@@ -53,14 +53,14 @@ class PlayerAgent(RoutedAgent):
             source=self.id.type
         )
 
-async def main(target_id: str, model_config: Dict[str, Any]) -> None:
+async def main(address: str, target_id: str, model_config: Dict[str, Any]) -> None:
     """Main Entrypoint."""
 
     membase_chain.register(membase_id)
     print(f"{membase_id} is register onchain")
     time.sleep(5)
 
-    runtime = GrpcWorkerAgentRuntime('localhost:50060')
+    runtime = GrpcWorkerAgentRuntime(address)
     runtime.add_message_serializer(try_get_known_serializers_for_type(FunctionCall))
     runtime.add_message_serializer(try_get_known_serializers_for_type(FunctionExecutionResult))
     runtime.add_message_serializer(try_get_known_serializers_for_type(InteractionMessage))
@@ -98,7 +98,7 @@ async def main(target_id: str, model_config: Dict[str, Any]) -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run a chess game between two agents.")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging.")
-
+    parser.add_argument("--address", type=str, help="Address to connect to", default="localhost:50060")
     parser.add_argument(
         "--model-config", type=str, help="Path to the model configuration file.", default="model_config.yml"
     )
@@ -117,4 +117,4 @@ if __name__ == "__main__":
     with open(args.model_config, "r") as f:
         model_config = yaml.safe_load(f)
 
-    asyncio.run(main(args.target_id, model_config))
+    asyncio.run(main(args.address, args.target_id, model_config))
