@@ -172,6 +172,7 @@ class CustomAgent(RoutedAgent):
 
     @message_handler
     async def handle_message(self, message: InteractionMessage, ctx: MessageContext) -> InteractionMessage:
+        print(f"{message.source} {ctx.sender}")
         self._memory.add(Message(content=message.content, name=message.source, role="user"))
         try:
             response = await self._llm.generate_str(message.content)

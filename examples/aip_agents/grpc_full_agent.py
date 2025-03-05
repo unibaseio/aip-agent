@@ -25,7 +25,6 @@ async def main(tool_id: str) -> None:
         agent_cls=CustomAgent,
         name=membase_id,
         description="You are an assistant",
-        tool_id=tool_id,
     )
     await full_agent.initialize()
 

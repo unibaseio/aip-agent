@@ -260,7 +260,7 @@ class GrpcWorkerAgentRuntime(AgentRuntime):
         self._running = False
         self._pending_requests: Dict[str, Future[Any]] = {}
         self._pending_requests_lock = asyncio.Lock()
-        self._next_request_id = int(uuid.uuid4().hex[:8], 16) # Use first 8 hex digits of UUID
+        self._next_request_id = int(uuid.uuid4().hex[:12], 16) # Use first 12 hex digits of UUID
         logger.info(f"Generated request ID: {self._next_request_id}")
         self._host_connection: HostConnection | None = None
         self._background_tasks: Set[Task[Any]] = set()
@@ -577,8 +577,7 @@ class GrpcWorkerAgentRuntime(AgentRuntime):
             # Send the error response.
             await self._host_connection.send(response_message)
             return
-
-        logger.info("_process_request4: %s", rec_agent.id)
+        
         # Serialize the result.
         result_type = self._serialization_registry.type_name(result)
         serialized_result = self._serialization_registry.serialize(
@@ -597,7 +596,6 @@ class GrpcWorkerAgentRuntime(AgentRuntime):
                 metadata=get_telemetry_grpc_metadata(),
             )
         )
-        logger.info("_process_request5: %s", rec_agent.id)
         # Send the response.
         await self._host_connection.send(response_message)
 

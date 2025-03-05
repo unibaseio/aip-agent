@@ -87,7 +87,7 @@ async def main(model_config: Dict[str, Any]) -> None:
             content="hello",
             source=membase_id
         ),
-        AgentId("test", "default"),
+        AgentId("agent_full", "default"),
         sender=AgentId(membase_id, "default")
     )
     print(f"res: {res}")
