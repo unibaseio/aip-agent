@@ -3,8 +3,6 @@ import asyncio
 import json
 import logging
 import time
-import yaml
-from typing import Annotated, Any, Dict, List, Literal
 
 from autogen_core import (
     AgentId,
@@ -25,11 +23,8 @@ from aip_agent.grpc import GrpcWorkerAgentRuntime
 from aip_agent.workflows.llm.augmented_llm import AugmentedLLM
 from aip_agent.workflows.llm.augmented_llm_openai import OpenAIAugmentedLLM
 
-from pydantic import BaseModel
-
-
 from aip_agent.tool_agent import InteractionMessage
-from membase.chain.chain import membase_chain, membase_id
+from membase.chain.chain import membase_chain, membase_id, membase_account
 from membase.memory.buffered_memory import BufferedMemory
 from membase.memory.message import Message
 from membase.memory.memory import MemoryBase
@@ -53,7 +48,6 @@ class PlayerAgent(RoutedAgent):
         try:
             response = await self._model_client.generate_str(message.content)
         except Exception as e:
-            print(f"Error: {e}")
             response = "I'm sorry, I couldn't generate a response to that message."
         self._memory.add(Message(content=response, name=self.id, role="assistant"))
         return InteractionMessage(
@@ -83,8 +77,8 @@ async def main(tool_id: str) -> None:
         InteractionMessage(
             action="list_tools",
         ),
-        AgentId(tool_id, "tool"),
-        sender=AgentId(membase_id, "tool"))
+        AgentId(tool_id, "default"),
+        sender=AgentId(membase_id, "default"))
     print(f"response: {response.content}")
 
     response = await runtime.send_message(
@@ -93,8 +87,8 @@ async def main(tool_id: str) -> None:
             arguments=json.dumps({}),
             id="1"
         ),
-        AgentId(tool_id, "tool"),
-        sender=AgentId(membase_id, "tool")
+        AgentId(tool_id, "default"),
+        sender=AgentId(membase_id, "default")
     )
     print(f"response: {response}")
 
@@ -123,7 +117,7 @@ async def main(tool_id: str) -> None:
 
     llm = await agent.attach_llm(OpenAIAugmentedLLM)
 
-    memory = BufferedMemory(persistence_in_remote=True)
+    memory = BufferedMemory(membase_account=membase_account, auto_upload_to_hub=True)
 
     await PlayerAgent.register(
         runtime,

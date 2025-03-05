@@ -213,12 +213,32 @@ class GrpcWorkerAgentRuntimeHostServicer(agent_worker_pb2_grpc.AgentRpcServicer)
                 self._background_tasks.add(task)
                 task.add_done_callback(self._raise_on_exception)
                 task.add_done_callback(self._background_tasks.discard)
+                # upload the request to membase storage hub
+                from membase.storage.hub import hub_client
+                from google.protobuf import json_format
+                request_str = json_format.MessageToJson(request, preserving_proto_field_name=True)
+                hub_client.upload_hub(
+                    "membase_hub",
+                    request.request_id + "_request",
+                    request_str,
+                    wait=False
+                )
             case "response":
                 response: agent_worker_pb2.RpcResponse = message.response
                 task = asyncio.create_task(self._process_response(response, client_id))
                 self._background_tasks.add(task)
                 task.add_done_callback(self._raise_on_exception)
                 task.add_done_callback(self._background_tasks.discard)
+                from membase.storage.hub import hub_client
+                from google.protobuf import json_format
+                import json
+                response_dict = json_format.MessageToDict(response, preserving_proto_field_name=True)
+                hub_client.upload_hub(
+                    "membase_hub",
+                    response.request_id + "_response",
+                    json.dumps(response_dict),
+                    wait=False
+                )
             case "cloudEvent":
                 task = asyncio.create_task(self._process_event(message.cloudEvent))
                 self._background_tasks.add(task)

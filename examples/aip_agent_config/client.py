@@ -28,7 +28,7 @@ class MCPClient:
         # Initialize session and client objects
         self.session: Optional[ClientSession] = None
         self.exit_stack = AsyncExitStack()
-        self.memory = BufferedMemory(persistence_in_remote=True)
+        self.memory = BufferedMemory(membase_account=membase_account, auto_upload_to_hub=True)
 
     async def initialize(self):
         app = MCPApp(name="aip_app")

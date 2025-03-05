@@ -1,6 +1,7 @@
 import argparse
 import asyncio
 import logging
+import random
 import time
 import yaml
 from typing import Annotated, Any, Dict, List, Literal
@@ -24,49 +25,22 @@ from aip_agent.tool_agent import ToolAgent
 from aip_agent.message.message import InteractionMessage
 from membase.chain.chain import membase_chain, membase_id
 
-async def board_tool(runtime: AgentRuntime) -> None:  # type: ignore
-    def get_legal_moves(role_type: Annotated[str, "Role type: white or black"]) -> str:
-        return role_type
 
-    def make_move(
-        role_type: Annotated[str, "Role type: white or black"],
-        move: Annotated[str, "A move in UCI format"],
-    ) -> str:
-        return role_type+move
+def get_legal_moves(role_type: Annotated[str, "Role type: white or black"]) -> str:
+    movers = random.choice(["pawn", "knight", "bishop", "rook", "queen", "king"])
+    return movers + " moves to " + random.choice(["a1", "b2", "c3", "d4", "e5", "f6", "g7", "h8"])
 
-    def get_board() -> Annotated[str, "The current board state"]:
-        return "board"
+def get_weather(
+    city: Annotated[str, "The city name"],
+    date: Annotated[str, "The date"],
+) -> str:
+    weather = random.choice(["sunny", "cloudy", "rainy", "snowy"])
+    return weather + " in " + city + " on " + date
 
-    chess_tools: List[Tool] = [
-        FunctionTool(
-            get_legal_moves,
-            name="get_legal_moves",
-            description="Get legal moves.",
-        ),
-        FunctionTool(
-            make_move,
-            name="make_move",
-            description="Make a move.",
-        ),
-        FunctionTool(
-            get_board,
-            name="get_board",
-            description="Get the current board state.",
-        ),
-    ]
-
-    # Register the agents.
-    tool_agent_type = membase_id
-    await ToolAgent.register(
-        runtime,
-        tool_agent_type,
-        lambda: ToolAgent(description="Tool agent for chess game.", tools=chess_tools),
-    )
-
+def get_board() -> Annotated[str, "The current board state"]:
+    return "board is " + random.choice(["empty", "white", "black"])
 
 async def main() -> None:
-    """Main Entrypoint."""
-
     membase_chain.register(membase_id)
     print(f"{membase_id} is register onchain")
     time.sleep(5)
@@ -77,7 +51,29 @@ async def main() -> None:
     runtime.add_message_serializer(try_get_known_serializers_for_type(InteractionMessage))
     await runtime.start()
 
-    await board_tool(runtime)
+    chess_tools: List[Tool] = [
+        FunctionTool(
+            get_legal_moves,
+            name="get_legal_moves",
+            description="Get legal moves.",
+        ),
+        FunctionTool(
+            get_weather,
+            name="get_weather",
+            description="Get the weather of a city on a specific date.",
+        ),
+        FunctionTool(
+            get_board,
+            name="get_board",
+            description="Get the current board state.",
+        ),
+    ]
+
+    await ToolAgent.register(
+        runtime,
+        membase_id,
+        lambda: ToolAgent(description="Tool agent for test.", tools=chess_tools),
+    )
     
     await runtime.stop_when_signal()
 

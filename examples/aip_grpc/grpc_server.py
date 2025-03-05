@@ -24,7 +24,7 @@ from autogen_core.models import (
 from aip_agent.grpc import GrpcWorkerAgentRuntime
 from aip_agent.message.message import InteractionMessage
 
-from membase.chain.chain import membase_chain, membase_id
+from membase.chain.chain import membase_chain, membase_id, membase_account
 from membase.memory.buffered_memory import BufferedMemory
 from membase.memory.message import Message
 from membase.memory.memory import MemoryBase
@@ -43,14 +43,10 @@ class PlayerAgent(RoutedAgent):
 
     @message_handler
     async def handle_message(self, message: InteractionMessage, ctx: MessageContext) -> InteractionMessage:
-        print("1")
         self._memory.add(Message(content=message.content, name=message.source, role="user"))
-        print("2")
         user_message = UserMessage(content=message.content, source=message.source)
         response = await self._model_client.create([user_message])
-        print("3")
         self._memory.add(Message(content=response.content, name=self.id, role="assistant"))
-        print("4")
         return InteractionMessage(
             action="response",
             content=response.content,
@@ -70,7 +66,7 @@ async def main(model_config: Dict[str, Any]) -> None:
     runtime.add_message_serializer(try_get_known_serializers_for_type(InteractionMessage))
     await runtime.start()
 
-    memory = BufferedMemory(persistence_in_remote=True)
+    memory = BufferedMemory(membase_account=membase_account, auto_upload_to_hub=True)
 
 
     model_client = ChatCompletionClient.load_component(model_config)

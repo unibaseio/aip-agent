@@ -75,7 +75,6 @@ class ToolAgent(RoutedAgent):
         Raises:
             ValueError: If the request type is not supported.
         """
-        print("handle tool list")
         if message.action == "list_tools":
             tools_info = []
             for tool in self._tools:

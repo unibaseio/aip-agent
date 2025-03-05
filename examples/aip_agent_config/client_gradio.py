@@ -28,7 +28,7 @@ async def initialize_agent():
     )
     await agent.initialize()
     llm = await agent.attach_llm(OpenAIAugmentedLLM)
-    memory = BufferedMemory(persistence_in_remote=True)
+    memory = BufferedMemory(membase_account=membase_account, auto_upload_to_hub=True)
     return agent, llm, memory
 
 async def get_response(message, history, llm):
