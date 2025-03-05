@@ -9,7 +9,8 @@ from autogen_core import (
 )
 
 
-from aip_agent.agents.full_agent import FullAgentWrapper, CustomAgent
+from aip_agent.agents.full_agent import FullAgentWrapper
+from aip_agent.agents.custom_agent import CustomAgent
 
 from membase.chain.chain import membase_id
 from membase.memory.message import Message
@@ -75,7 +76,7 @@ async def main(tool_id: str) -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run a chess game between two agents.")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging.")
-    parser.add_argument("--tool", type=str, help="Tool ID")
+    parser.add_argument("--target-id", type=str, help="Target Agent ID")
 
     args = parser.parse_args()
     if args.verbose:
@@ -85,4 +86,4 @@ if __name__ == "__main__":
         handler = logging.FileHandler(file_name)
         logging.getLogger("autogen_core").addHandler(handler)
 
-    asyncio.run(main(args.tool))
+    asyncio.run(main(args.target_id))

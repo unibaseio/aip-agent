@@ -1,20 +1,8 @@
 import asyncio
-from typing import Optional
-from contextlib import AsyncExitStack
-
-from mcp import ClientSession
-from aip_agent.agents.full_agent import CustomAgent, FullAgentWrapper
-from aip_agent.app import MCPApp
-from aip_agent.agents.agent import Agent
-from aip_agent.workflows.llm.augmented_llm_openai import OpenAIAugmentedLLM
+from aip_agent.agents.full_agent import FullAgentWrapper
+from aip_agent.agents.custom_agent import CustomAgent
 
 from membase.memory.message import Message
-from membase.memory.buffered_memory import BufferedMemory
-
-from dotenv import load_dotenv
-
-load_dotenv()  # load environment variables from .env
-
 
 import logging
 logging.basicConfig(level=logging.INFO)

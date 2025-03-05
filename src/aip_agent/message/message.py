@@ -10,10 +10,12 @@ class InteractionMessage(BaseModel):
     Attributes:
         type (str): The type of interaction.
             This determines how the agent should handle the message.
-        content (Optional[Any]): Additional content or parameters for the interaction.
-            Defaults to None.
         source (Optional[str]): The source of the interaction message.
             This can be used to identify where the message originated from.
+            Defaults to None.
+        content (Optional[Any]): Additional content or parameters for the interaction.
+            Defaults to None.
+        auth (Optional[Any]): Additional authentication information for the interaction.
             Defaults to None.
     
     Example usage:
@@ -39,5 +41,6 @@ class InteractionMessage(BaseModel):
     ```
     """
     action: str
-    content: Optional[Any] = None
     source: Optional[str] = None
+    content: Optional[Any] = None
+    auth: Optional[Any] = None

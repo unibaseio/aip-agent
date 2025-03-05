@@ -53,7 +53,7 @@ class PlayerAgent(RoutedAgent):
             source=self.id.type
         )
 
-async def main(model_config: Dict[str, Any]) -> None:
+async def main(target_id: str, model_config: Dict[str, Any]) -> None:
     """Main Entrypoint."""
 
     membase_chain.register(membase_id)
@@ -84,10 +84,10 @@ async def main(model_config: Dict[str, Any]) -> None:
     res = await runtime.send_message(
         InteractionMessage(
             action="ask",
-            content="hello",
+            content="tell me the weather in tokyo today",
             source=membase_id
         ),
-        AgentId("agent_full", "default"),
+        AgentId(target_id, "default"),
         sender=AgentId(membase_id, "default")
     )
     print(f"res: {res}")
@@ -102,6 +102,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--model-config", type=str, help="Path to the model configuration file.", default="model_config.yml"
     )
+    parser.add_argument(
+        "--target-id", type=str, help="Target Agent ID", default="agent_full"
+    )
 
     args = parser.parse_args()
     if args.verbose:
@@ -114,4 +117,4 @@ if __name__ == "__main__":
     with open(args.model_config, "r") as f:
         model_config = yaml.safe_load(f)
 
-    asyncio.run(main(model_config))
+    asyncio.run(main(args.target_id, model_config))
