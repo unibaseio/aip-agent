@@ -1,6 +1,7 @@
 import argparse
 import asyncio
 import logging
+import os
 import random
 import time
 import yaml
@@ -18,12 +19,10 @@ from autogen_core.models import (
 )
 from autogen_core.tools import FunctionTool, Tool, ToolSchema
 
-from aip_agent.grpc import GrpcWorkerAgentRuntime
+from aip_agent.agents.tool_agent import ToolAgentWrapper
 
-
-from aip_agent.tool_agent import ToolAgent
 from aip_agent.message.message import InteractionMessage
-from membase.chain.chain import membase_chain, membase_id
+from membase.chain.chain import membase_id
 
 
 def get_legal_moves(role_type: Annotated[str, "Role type: white or black"]) -> str:
@@ -41,17 +40,7 @@ def get_board() -> Annotated[str, "The current board state"]:
     return "board is " + random.choice(["empty", "white", "black"])
 
 async def main() -> None:
-    membase_chain.register(membase_id)
-    print(f"{membase_id} is register onchain")
-    time.sleep(5)
-
-    runtime = GrpcWorkerAgentRuntime('localhost:50060')
-    runtime.add_message_serializer(try_get_known_serializers_for_type(FunctionCall))
-    runtime.add_message_serializer(try_get_known_serializers_for_type(FunctionExecutionResult))
-    runtime.add_message_serializer(try_get_known_serializers_for_type(InteractionMessage))
-    await runtime.start()
-
-    chess_tools: List[Tool] = [
+    local_tools: List[Tool] = [
         FunctionTool(
             get_legal_moves,
             name="get_legal_moves",
@@ -69,13 +58,13 @@ async def main() -> None:
         ),
     ]
 
-    await ToolAgent.register(
-        runtime,
-        membase_id,
-        lambda: ToolAgent(description="Tool agent for test.", tools=chess_tools),
-    )
     
-    await runtime.stop_when_signal()
+    tool_agent = ToolAgentWrapper(
+        name=os.getenv("MEMBASE_ID"),
+        tools=local_tools,
+    )
+    await tool_agent.initialize()
+    await tool_agent.stop_when_signal()
 
 
 if __name__ == "__main__":
@@ -86,7 +75,7 @@ if __name__ == "__main__":
     if args.verbose:
         logging.basicConfig(level=logging.WARNING)
         logging.getLogger("autogen_core").setLevel(logging.DEBUG)
-        file_name = "tool.log"
+        file_name = "agent_" + membase_id + ".log"
         handler = logging.FileHandler(file_name)
         logging.getLogger("autogen_core").addHandler(handler)
 

@@ -156,7 +156,7 @@ if __name__ == "__main__":
     if args.verbose:
         logging.basicConfig(level=logging.WARNING)
         logging.getLogger("autogen_core").setLevel(logging.DEBUG)
-        file_name = "agent.log"
+        file_name = "agent_" + membase_id + ".log"
         handler = logging.FileHandler(file_name)
         logging.getLogger("autogen_core").addHandler(handler)
 

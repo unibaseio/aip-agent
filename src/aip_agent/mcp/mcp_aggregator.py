@@ -173,8 +173,7 @@ class MCPAggregator(ContextDependent):
         if self.initialized:
             logger.warning("MCPAggregator already initialized.")
             return
-
-        print("====load_servers")
+        
         async with self._tool_map_lock:
             self._namespaced_tool_map.clear()
             self._server_to_tool_map.clear()
