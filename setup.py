@@ -16,7 +16,6 @@ setup(
     install_requires=[
         "mcp>=1.2.1",
         "chromadb>=0.6.0",
-        "web3>=7.8.0",
         "twikit>=2.3.3",
         "fastapi>=0.115.6",
         "instructor>=1.7.0",
@@ -31,7 +30,10 @@ setup(
         "scikit-learn>=1.6.0",
         "gradio>=5.16.0",
         "loguru>=0.7.3",
+        "autogen-core==0.4.8",
+        "grpcio==1.70.0",
+        "membase>=0.1.0",
     ],
 
-    python_requires=">=3.10",
+    python_requires=">=3.12",
 ) 
