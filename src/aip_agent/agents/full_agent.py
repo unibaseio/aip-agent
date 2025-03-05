@@ -38,6 +38,7 @@ class FullAgentWrapper:
         name: str,
         host_address: str = 'localhost:50060',
         description: str = "You are an assistant",
+        server_names: List[str] = None,
         **agent_kwargs
     ) -> None:
         """Initialize FullAgent
@@ -54,7 +55,7 @@ class FullAgentWrapper:
         self._host_address = host_address
         self._description = description
         self._agent_kwargs = agent_kwargs
-        
+        self._server_names = server_names
         self._runtime: Optional[GrpcWorkerAgentRuntime] = None
         self._app: Optional[MCPApp] = None
         self._llm: Optional[AugmentedLLM] = None
@@ -99,6 +100,7 @@ class FullAgentWrapper:
             name=self._name,
             runtime=self._runtime,
             instruction="you are an assistant",
+            server_names=self._server_names,
         )
         await self._mcp_agent.initialize()
         return await self._mcp_agent.attach_llm(OpenAIAugmentedLLM)
