@@ -44,7 +44,7 @@ pip install git+https://github.com/unibaseio/aip-agent.git
 # or clone into local
 git clone https://github.com/unibaseio/aip-agent.git
 cd aip-agent
-pip insrall -e .
+pip install -e .
 ```
 
 ### example

@@ -8,7 +8,7 @@ def send_usage_data():
         return
 
     # TODO: saqadri - implement usage tracking
-    # data = {"installation_id": str(uuid.uuid4()), "version": "0.1.0"}
+    # data = {"installation_id": str(uuid.uuid4()), "version": "0.1.1"}
     # try:
     #     requests.post("https://telemetry.example.com/usage", json=data, timeout=2)
     # except:
