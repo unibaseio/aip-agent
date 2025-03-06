@@ -1,8 +1,8 @@
 # AIP Agent
 
-## design
+## Design
 
-The Agent System is an innovative framework that stands at the intersection of distributed systems, blockchain technology, and artificial intelligence. It is designed to facilitate a structured and secure method of interaction among autonomous entities known as agents. The system's core is defined by three principal components: an agent interaction protocol, blockchain-based authorization, and direct invocation by Large Language Models (LLMs). Here is an in-depth look at these core aspects and their respective modules:
+The Agent System is an innovative framework that stands at the intersection of distributed systems, blockchain technology, and artificial intelligence. It is designed to facilitate a structured and secure method of interaction among autonomous entities known as agents. The system's core is defined by three principal components: an agent interaction protocol, blockchain-based authorization, and direct invocation by Large Language Models (LLMs).
 
 ### 1. Agent Interaction Protocol
 
@@ -27,258 +27,221 @@ The system leverages blockchain technology to implement a robust and transparent
 The system is architected to be directly callable by LLMs, enhancing the capabilities of these models and enabling them to perform complex tasks through agent interactions.
 
 - **Agent Tools Integration**: Agents are designed to be accessible as tools for LLMs, allowing these models to leverage the agents' functionalities for a wide range of applications.
-- **Storage**: The storage module is crucial for the integrity of the system, providing the following services:
-  - **Data Backup**: Uploads memory data to a secure storage system, ensuring data reliability and persistence.
-  - **Data Recovery**: Offers the ability to retrieve data from storage in the event of loss or system migration, maintaining the system's resilience.
-    In essence, the Agent System is built on a triad of foundational elements: a standardized interaction protocol for agents, a secure and transparent authorization process via blockchain, and seamless integration with LLMs for advanced functionality. This combination creates a powerful and versatile platform capable of driving complex, AI-assisted operations.
 
 ## Usage
 
-- MEMBASE_ID is different with each other
-- MEMBASE_ACCOUNT have balance in bnb testnet
-
-### install
+### Installation
 
 ```shell
 pip install git+https://github.com/unibaseio/aip-agent.git
 # or clone into local
 git clone https://github.com/unibaseio/aip-agent.git
 cd aip-agent
-pip install -e .
-```
-
-### example
-
-```shell
 # install dependencies
 uv venv
 uv sync --dev --all-extras
+```
 
-# server side:
-# each server has env
+### Requirements
+
+- MEMBASE_ID must be unique for each instance
+- MEMBASE_ACCOUNT must have balance in BNB testnet
+
+### Examples
+
+- more examples in examples dir
+
+#### Running Tools Example
+
+```shell
 export MEMBASE_ID="<membase uuid>"
 export MEMBASE_ACCOUNT="<membase account>"
 export MEMBASE_SECRET_KEY="<membase secret key>"
-# membase
-uv run examples/aip_servers/chroma.py --port 8080
-# twitter
-# addtional env
-export TWITTER_USERNAME = "<your username>"
-export TWITTER_EMAIL = '<your email>'
-export TWITTER_PASSWORD = '<your password>'
-# change 8082 to your desired port
-export MEMBASE_URL='http://0.0.0.0:8082'
-uv run examples/aip_servers/twitter.py --port 8082
-
-# client side usage example:
-export MEMBASE_ID="<agent uuid>"
-export MEMBASE_ACCOUNT="<agent account>"
-export MEMBASE_SECRET_KEY="<agent secret key>"
-# modify aip_agent.config.yaml
-# visit http://localhost:7680
-cd examples/aip_agent_config
-uv run client_gradio.py
+cd examples/aip_tools
+# Start the tool server for other agents to use
+uv run grpc_mock_tool.py
 ```
 
-- query twitter server in llm chat
-
-![Alt text](./img/find.png?raw=true "query twitter server in llm chat")
-
-- connect twitter server in llm chat
-
-![Alt text](./img/connect.png?raw=true "connect twitter server in llm chat")
-
-- use tools in llm chat
-
-![Alt text](./img/usetool.png?raw=true "use tools in llm chat")
-
-### chat memory
-
-```python
-from aip_agent.memory.message import Message
-from aip_agent.memory.buffered_memory import BufferedMemory
-
-memory = BufferedMemory(persistence_in_remote=True)
-msg = Message(
-            "agent",
-            "Hello! How can I help you?",
-            role="assistant",
-            metadata="md"
-        )
-memory.add(msg)
-```
-
-### agent
-
-```python
-from mcp import ClientSession
-from aip_agent.app import MCPApp
-from aip_agent.agents.agent import Agent
-from aip_agent.workflows.llm.augmented_llm_openai import OpenAIAugmentedLLM
-
-from aip_agent.memory.message import Message
-from aip_agent.memory.buffered_memory import BufferedMemory
-
-app = MCPApp(name="aip_app")
-
-agent = Agent(
-  name="aip_agent",
-  instruction="you are an assistant",
-  server_names=[],
-)
-await app.initialize()
-
-await agent.initialize()
-
-llm = await agent.attach_llm(OpenAIAugmentedLLM)
-
-# init memory
-memory = BufferedMemory(persistence_in_remote=True)
-
-async def process_query(query: str) -> str:
-  """Process a query"""
-  msg = Message(membase_id, query, role="user")
-  memory.add(msg)
-  response = await self.llm.generate_str(message=query)
-  msg = Message(membase_id, response, role="user")
-  memory.add(msg)
-  return response
-```
-
-### chain task
-
-- extra env
+#### Running Agents
 
 ```shell
-export MEMBASE_SECRET_KEY="<agent secret key>"
+export MEMBASE_ID="<membase uuid>"
+export MEMBASE_ACCOUNT="<membase account>"
+export MEMBASE_SECRET_KEY="<membase secret key>"
+cd examples/aip_agents
+# You can search/connect to other agents/tools
+# For example, connect to the mock_tool above
+uv run grpc_full_agent.py
 ```
+
+### Python Code Examples
+
+#### Full Agent Example
+
+The `FullAgentWrapper` is designed to create a complete agent with LLM capabilities and memory management. Here's how to use it:
 
 ```python
-from membase.chain.chain import membase_chain
+from aip_agent.agents.full_agent import FullAgentWrapper
+from aip_agent.agents.custom_agent import CallbackAgent
+import os
 
-# register task with id and price<minimal staking>
-# as task owner
-task_id = "task0227"
-price = 100000
-membase_chain.createTask(task_id, price)
+async def main():
+    # Initialize the full agent
+    full_agent = FullAgentWrapper(
+        agent_cls=CallbackAgent,  # Your custom agent implementation
+        name=os.getenv("MEMBASE_ID"),  # Unique identifier
+        description="You are an assistant",  # Agent description
+        host_address="membase_hub_address"  # Network address
+    )
 
-# another one
-# join this task, and staking
-agent_id = "alice"
-membase_chain.register(agent_id)
-membase_chain.joinTask(task_id, agent_id)
+    # Initialize the agent (this will:
+    # 1. Register membase_id on blockchain
+    # 2. Register in membase hub
+    # 3. Connect to membase memory hub)
+    await full_agent.initialize()
 
-# another one
-agent_id = "bob"
-membase_chain.register(agent_id)
-membase_chain.joinTask(task_id, agent_id)
+    # Process user queries
+    response = await full_agent.process_query("Hello, how can you help me?")
+    print(response)
 
-# finish task
-# 95% belongs to winner: agent_id, 5% belongs to task owner
-# call by task owner
-membase_chain.finishTask(task_id, agent_id)
+    # Stop the agent when needed
+    await full_agent.stop()
 
-# show info
-membase_chain.getTask(task_id)
+if __name__ == "__main__":
+    import asyncio
+    asyncio.run(main())
 ```
 
-## Components
+#### Tool Agent Example
 
-### Authorization
+The `ToolAgentWrapper` is designed to manage and execute tools in the agent system. Here's how to use it:
 
-The Authorization Module is responsible for managing access control in a system where agent clients interact with a membase server. The module ensures that the identity of the client is verified and that they possess the necessary permissions to perform specific actions or access certain data.
+```python
+from aip_agent.agents.tool_agent import ToolAgentWrapper
+from autogen_core.tools import Tool, FunctionTool
+from typing import List, Annotated
+import random
+import os
 
-Client-Side:
+async def main():
+    # Define your tools
+    def get_weather(
+        city: Annotated[str, "The city name"],
+        date: Annotated[str, "The date"],
+    ) -> str:
+        weather = random.choice(["sunny", "cloudy", "rainy", "snowy"])
+        return weather + " in " + city + " on " + date
 
-- The client generates a pair of cryptographic keys: a private key, which is kept secret, and a public key, which can be register on chain.
-- When the client needs to authenticate with the server, it creates a digital signature by signing a message with its private key using the ECDSA algorithm.
-- The client then sends the signed message along with its public key to the server.
+    local_tools: List[Tool] = [
+        FunctionTool(
+            get_weather,
+            name="get_weather",
+            description="Get the weather of a city on a specific date.",
+        ),
+    ]
 
-Server-Side:
+    tool_agent = ToolAgentWrapper(
+        name=os.getenv("MEMBASE_ID"),
+        tools=local_tools,
+        host_address="membase_hub_address",
+        description="This is a tool agent that can get the weather of a city on a specific date."
+    )
+    await tool_agent.initialize()
+    await tool_agent.stop_when_signal()
 
-- Check the public key is in whitelist on chain.
-- Uses the public key to verify the signature.
-- If the signature is valid, the client is granted access to the requested resources or services.
+if __name__ == "__main__":
+    import asyncio
+    asyncio.run(main())
+```
 
-### Resources
+### Key Features
 
-The server provides membase storage and retrieval through Chroma's vector database:
+#### FullAgentWrapper Features
 
-- Stores memory with content and metadata
-- Persists data in `src/aip_chroma/data` directory
-- Supports semantic similarity search
+1. **LLM Integration**
 
-### Tools
+   - Built-in LLM support for natural language processing
+   - Customizable response generation
+   - Context-aware conversations
+   - Direct LLM invocation capabilities
 
-The server implements CRUD operations and search functionality:
+2. **Tool Management**
 
-#### Memory Management
+   - Dynamic tool loading and management
+   - Tool discovery and registration
+   - Tool execution with parameter validation
+   - Tool result processing
 
-- `create_memory`: Create a new memory
+3. **Memory Management**
 
-  - Required: `memory_id`, `content`
-  - Optional: `metadata` (key-value pairs)
-  - Returns: Success confirmation
-  - Error: Already exists, Invalid input
+   - Persistent memory storage
+   - Conversation history tracking
+   - Context preservation
+   - Memory-based learning
 
-- `read_memory`: Retrieve a memory by ID
+4. **Membase Hub Integration**
 
-  - Required: `memory_id`
-  - Returns: Memory content and metadata
-  - Error: Not found
+   - Seamless connection to membase hub
+   - Remote service discovery
+   - Distributed communication and coordination
 
-- `update_memory`: Update an existing memory
+5. **Message Handling & Security**
 
-  - Required: `memory_id`, `content`
-  - Optional: `metadata`
-  - Returns: Success confirmation
-  - Error: Not found, Invalid input
+   - Asynchronous message processing
+   - Message validation and verification
+   - Secure message routing
+   - Custom message handlers
 
-- `delete_memory`: Remove a memory
+6. **Blockchain Integration**
+   - Automatic blockchain registration
+   - Identity management
+   - Permission-based access control
+   - Secure authorization
 
-  - Required: `memory_id`
-  - Returns: Success confirmation
-  - Error: Not found
+#### ToolAgentWrapper Features
 
-- `list_memory`: List all memory
-  - Optional: `limit`, `offset`
-  - Returns: List of memory with content and metadata
+1. **Tool Management**
 
-#### Search Operations
+   - Tool registration and exposure
+   - Tool capability advertisement
+   - Parameter validation
+   - Execution monitoring
 
-- `search_similar`: Find semantically similar memory
-  - Required: `query`
-  - Optional: `num_results`, `metadata_filter`, `content_filter`
-  - Returns: Ranked list of similar memory with distance scores
-  - Error: Invalid filter
+2. **Membase Hub Integration**
 
-## Features
+   - Service discovery
+   - Tool capability exposure
+   - Remote accessibility and coordination
 
-- **Semantic Search**: Find memory based on meaning using Chroma's embeddings
-- **Metadata Filtering**: Filter search results by metadata fields
-- **Content Filtering**: Additional filtering based on memory content
-- **Persistent Storage**: Data persists in local directory between server restarts
-- **Error Handling**: Comprehensive error handling with clear messages
-- **Retry Logic**: Automatic retries for transient failures
+3. **Message Handling & Security**
 
-## Error Handling
+   - Message validation
+   - Secure message processing
+   - Request verification
+   - Response formatting
 
-The server provides clear error messages for common scenarios:
+4. **Blockchain Integration**
+   - Blockchain identity registration
+   - Permission management
+   - Access control
+   - Authorization verification
 
-- `Memory already exists [id=X]`
-- `Memory not found [id=X]`
-- `Invalid input: Missing memory_id or content`
-- `Invalid filter`
-- `Operation failed: [details]`
+## Development
+
+### Project Structure
+
+````
+
+### Running Tests
+
+```shell
+pytest tests/
+````
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-```
-
-```
-
-```
-
-```

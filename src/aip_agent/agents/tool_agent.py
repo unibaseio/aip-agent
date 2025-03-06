@@ -23,7 +23,7 @@ class ToolAgentWrapper:
         self,
         name: str,
         tools: List[Tool],
-        host_address: str = 'localhost:50060',
+        host_address: str = '13.212.116.103:8081',
         description: str = "I am a tool agent that can execute various tools",
     ) -> None:
         """Initialize ToolAgentWrapper

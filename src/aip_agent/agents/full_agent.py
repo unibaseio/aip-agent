@@ -31,7 +31,7 @@ class FullAgentWrapper:
         self,
         agent_cls: Type[T],
         name: str,
-        host_address: str = 'localhost:50060',
+        host_address: str = '13.212.116.103:8081',
         description: str = "You are an assistant",
         server_names: List[str] = None,
         **agent_kwargs
