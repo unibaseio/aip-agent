@@ -67,7 +67,7 @@ class OpenAIAugmentedLLM(
             max_iterations=10,
             use_history=True,
         )
-        if self.context.config.openai.model_name:
+        if self.context.config.openai and self.context.config.openai.model_name:
             self.default_request_params.model = self.context.config.openai.model_name
 
     @classmethod
@@ -91,9 +91,12 @@ class OpenAIAugmentedLLM(
         Override this method to use a different LLM.
         """
         config = self.context.config
-        openai_client = OpenAI(
-            api_key=config.openai.api_key, base_url=config.openai.base_url
-        )
+        if config.openai and config.openai.api_key and config.openai.base_url:
+            openai_client = OpenAI(
+                api_key=config.openai.api_key, base_url=config.openai.base_url
+            )
+        else:
+            openai_client = OpenAI()
         messages: List[ChatCompletionMessageParam] = []
 
         params = self.get_request_params(request_params)
