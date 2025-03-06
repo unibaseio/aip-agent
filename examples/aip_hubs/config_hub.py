@@ -6,8 +6,7 @@ import os
 from typing import Annotated, List
 
 from membase.chain.chain import membase_chain, membase_id, membase_account
-from membase.memory.buffered_memory import BufferedMemory
-from membase.memory.message import Message
+
 from membase.knowledge.chroma import ChromaKnowledgeBase
 from membase.knowledge.document import Document
 
@@ -15,82 +14,65 @@ from autogen_core.tools import FunctionTool, Tool
 
 from aip_agent.agents.tool_agent import ToolAgentWrapper
 
-bm = BufferedMemory(
-    membase_account=membase_account,
-    auto_upload_to_hub=True,
-    )
 
 rag = ChromaKnowledgeBase(
-    persist_directory="./chroma_memory_db",
+    persist_directory="./chroma_config_db",
     collection_name="default",
     anonymized_telemetry=False,
+    membase_account=membase_account,
+    auto_upload_to_hub=True,
 )
 
-def add_memory(
-        memory_id: Annotated[str, "The memory id"],
-        content: Annotated[str, "The content of the memory"],
-        metadata: Annotated[dict, "The metadata of the memory"]
+def register_server(
+        name: Annotated[str, "The agent/tool server name"],
+        description: Annotated[str, "The agent/tool server description"],
+        config: Annotated[dict, "The agent/tool server config"],
         ):
-    
-    msg = Message(
-        name=memory_id,
-        content=content,
-        metadata=metadata,
-        role="user",
-    )
 
-    bm.add(msg)
 
     doc = Document(
-        doc_id=memory_id,
-        content=content,
-        metadata=metadata,
+        doc_id=name,
+        content=description,
+        metadata=config,
     )
 
-    if rag.exists(memory_id):
+    if rag.exists(name):
         rag.update_documents(doc)
     else:
         rag.add_documents(doc)
 
-def read_memory(
-        memory_id: Annotated[str, "The memory id to read"]
-        ):
-    def name_filter(msg):
-        return msg.name == memory_id
-    return bm.get(name_filter)
-
-def search_similar(
+def search_server_config(
         query: Annotated[str, "The query to search for"],
         num_results: Annotated[int, "The number of results to return"] = 5,
         metadata_filter: Annotated[dict, "The metadata filter"] = None,
         content_filter: Annotated[str, "The content filter"] = None,
         ):
+    if metadata_filter is None:
+        metadata_filter = {}
+    metadata_filter["type"] = "tool"
+    metadata_filter["state"] = "running"
     docs = rag.retrieve(query, top_k=num_results, metadata_filter=metadata_filter, content_filter=content_filter)
 
     # transform docs to list,with content,metadata, and doc_id
-    return [{"name": doc.doc_id, "content": doc.content, "metadata": doc.metadata} for doc in docs]
+    return [{"server_name": doc.doc_id, "description": doc.content, "config": doc.metadata} for doc in docs]
 
 async def main(address: str) -> None:
     local_tools: List[Tool] = [
         FunctionTool(
-            add_memory,
-            name="add_memory",
-            description="Add a memory to the memory hub.",
+            register_server,
+            name="register_server",
+            description="Register a agent/tool server to the config hub.",
         ),
         FunctionTool(
-            read_memory,
-            name="read_memory",
-            description="Read a memory from the memory hub.",
-        ),
-        FunctionTool(
-            search_similar,
-            name="search_similar",
-            description="Search for memories similar to a query.",
+            search_server_config,
+            name="search_server_config",
+            description="Search for agent/tool servers similar to a query.",
         ),
     ]
 
-    desc = "This is a membase memory hub, which can manage your memories. \n"
-    desc += "You can add, read, and search for memories. \n"
+    desc = "This is a membase config hub, which can manage your agent or tool configuration. \n"
+    desc += "You can register your agent or tool in the hub. \n"
+    desc += "You can find agents or tools you want to use. \n"
     tool_agent = ToolAgentWrapper(
         name=os.getenv("MEMBASE_ID"),
         tools=local_tools,

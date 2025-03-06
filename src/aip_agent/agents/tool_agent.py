@@ -61,7 +61,7 @@ class ToolAgentWrapper:
         await self.register_agent()
         print(f"Tool Agent: {self._name} is initialized")
         try:
-            await self.register_hub()
+            await self.update_in_hub("running")
         except Exception as e:
             print(f"Error registering tool agent in hub: {e}")
         print(f"Tool Agent: {self._name} is registered in hub")
@@ -81,8 +81,8 @@ class ToolAgentWrapper:
             )
         )
 
-    async def register_hub(self) -> None:
-        """Register the agent in the hub"""
+    async def update_in_hub(self, state: str = "running") -> None:
+        """Update the agent in the hub"""
         if not self._runtime:
             raise RuntimeError("Runtime not initialized")
         
@@ -92,21 +92,22 @@ class ToolAgentWrapper:
         res = await self._runtime.send_message(
             FunctionCall(
                 id=str(uuid.uuid4()),
-                name="add_memory",
+                name="register_server",
                 arguments=json.dumps({
-                    "memory_id": self._name,
-                    "content": content,
-                    "metadata": {
+                    "name": self._name,
+                    "description": content,
+                    "config": {
                         "type": "tool",
                         "transport": "aip-grpc",
+                        "state": state,
                         "timestamp": datetime.datetime.now().isoformat()
                         }
                 }),
             ),
-            AgentId("memory_hub", "default"),
+            AgentId("config_hub", "default"),
             sender=AgentId(self._name, "default")
         )
-        print(f"Response from memory_hub: {res}")
+        print(f"Response from config_hub: {res}")
         
     async def stop_when_signal(self) -> None:
         """Await the agent to stop"""
@@ -116,4 +117,5 @@ class ToolAgentWrapper:
     async def stop(self) -> None:
         """Stop the agent and cleanup resources"""
         if self._runtime:
+            await self.update_in_hub(state="stopped")
             await self._runtime.stop()

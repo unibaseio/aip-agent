@@ -60,7 +60,7 @@ class FullAgentWrapper:
 
     async def initialize(self) -> None:
         """Initialize all components"""
-        print(f"Full Agent {self._name} is initializing")
+        print(f"Full Agent: {self._name} is initializing")
         # Register chain identity
         membase_chain.register(self._name)
         logging.info(f"{self._name} is register onchain")
@@ -85,14 +85,15 @@ class FullAgentWrapper:
 
         # Register in hub
         try:
-            await self.register_hub()
-            print(f"Full Agent {self._name} is registered in hub")
+            await self.update_in_hub("running")
+            print(f"Full Agent: {self._name} is registered in hub")
         except Exception as e:
             print(f"Error registering full agent in hub: {e}")
 
         # load hub servers
         try:
-            await self.load_server("memory_hub", "grpc")  
+            await self.load_server("config_hub", "grpc")  
+            await self.load_server("memory_hub", "grpc")
             print(f"Full Agent: {self._name} is connected to hub")
         except Exception as e:
             print(f"Error connecting to hub: {e}")
@@ -158,7 +159,7 @@ class FullAgentWrapper:
         print(f"Response from {target_id}: {response.content}")
         return response
 
-    async def register_hub(self) -> None:
+    async def update_in_hub(self, state: str = "running") -> None:
         """Register the agent in the hub"""
         if not self._runtime:
             raise RuntimeError("Runtime not initialized")
@@ -166,21 +167,22 @@ class FullAgentWrapper:
         res = await self._runtime.send_message(
             FunctionCall(
                 id=str(uuid.uuid4()),
-                name="add_memory",
+                name="register_server",
                 arguments=json.dumps({
-                    "memory_id": self._name,
-                    "content": self._description,
-                    "metadata": {
+                    "name": self._name,
+                    "description": self._description,
+                    "config": {
                         "type": "agent",
                         "transport": "aip-grpc",
+                        "state": state,
                         "timestamp": datetime.datetime.now().isoformat()
                         }
                 }),
             ),
-            AgentId("memory_hub", "default"),
+            AgentId("config_hub", "default"),
             sender=AgentId(self._name, "default")
         )
-        print(f"Response from memory_hub: {res}")
+        print(f"Response from config_hub: {res}")
 
     async def load_server(self, server_name: str, url: str) -> None:
         """Load a server from the hub"""
@@ -197,6 +199,7 @@ class FullAgentWrapper:
     async def stop(self) -> None:
         """Stop the agent and cleanup resources"""
         if self._runtime:
+            await self.update_in_hub(state="stopped")
             await self._runtime.stop()
 
 

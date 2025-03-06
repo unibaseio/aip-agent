@@ -37,6 +37,7 @@ env/
 # Chroma specific
 src/aip_chroma/data/
 chroma_db/
+chroma_*_db/
 
 # Logs
 *.log
