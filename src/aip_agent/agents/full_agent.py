@@ -1,16 +1,14 @@
+import datetime
+import json
 import logging
 import time
 from typing import Optional, Type, TypeVar, List
+import uuid
 
 from autogen_core import (
     AgentId,
-    FunctionCall,
     RoutedAgent,
     try_get_known_serializers_for_type,
-)
-
-from autogen_core.models import (
-    FunctionExecutionResult,
 )
 
 from aip_agent.agents.agent import Agent
@@ -19,7 +17,7 @@ from aip_agent.grpc import GrpcWorkerAgentRuntime
 from aip_agent.workflows.llm.augmented_llm import AugmentedLLM
 from aip_agent.workflows.llm.augmented_llm_openai import OpenAIAugmentedLLM
 
-from aip_agent.message.message import InteractionMessage
+from aip_agent.message.message import InteractionMessage, FunctionCall, FunctionExecutionResult
 from membase.chain.chain import membase_chain, membase_account
 from membase.memory.buffered_memory import BufferedMemory
 from membase.memory.message import Message
@@ -83,7 +81,21 @@ class FullAgentWrapper:
         
         # Register Agent
         await self.register_agent()
-        print(f"Full Agent {self._name} is initialized")
+        print(f"Full Agent: {self._name} is initialized")
+
+        # Register in hub
+        try:
+            await self.register_hub()
+            print(f"Full Agent {self._name} is registered in hub")
+        except Exception as e:
+            print(f"Error registering full agent in hub: {e}")
+
+        # load hub servers
+        try:
+            await self.load_server("memory_hub", "grpc")  
+            print(f"Full Agent: {self._name} is connected to hub")
+        except Exception as e:
+            print(f"Error connecting to hub: {e}")
 
     async def _init_llm(self) -> AugmentedLLM:
         """Initialize LLM model"""
@@ -145,6 +157,37 @@ class FullAgentWrapper:
         )
         print(f"Response from {target_id}: {response.content}")
         return response
+
+    async def register_hub(self) -> None:
+        """Register the agent in the hub"""
+        if not self._runtime:
+            raise RuntimeError("Runtime not initialized")
+        
+        res = await self._runtime.send_message(
+            FunctionCall(
+                id=str(uuid.uuid4()),
+                name="add_memory",
+                arguments=json.dumps({
+                    "memory_id": self._name,
+                    "content": self._description,
+                    "metadata": {
+                        "type": "agent",
+                        "transport": "aip-grpc",
+                        "timestamp": datetime.datetime.now().isoformat()
+                        }
+                }),
+            ),
+            AgentId("memory_hub", "default"),
+            sender=AgentId(self._name, "default")
+        )
+        print(f"Response from memory_hub: {res}")
+
+    async def load_server(self, server_name: str, url: str) -> None:
+        """Load a server from the hub"""
+        if not self._runtime:
+            raise RuntimeError("Runtime not initialized")
+        
+        await self._mcp_agent.load_server(server_name, url)
 
     async def stop_when_signal(self) -> None:
         """Wait for the agent to stop"""

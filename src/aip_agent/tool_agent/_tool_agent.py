@@ -3,11 +3,10 @@ from dataclasses import dataclass
 from typing import List, Optional, Literal, Dict, Any
 
 
-from autogen_core import FunctionCall, MessageContext, RoutedAgent, message_handler
-from autogen_core.models import FunctionExecutionResult
+from autogen_core import MessageContext, RoutedAgent, message_handler
 from autogen_core.tools import Tool
 
-from aip_agent.message.message import InteractionMessage
+from aip_agent.message.message import InteractionMessage, FunctionCall, FunctionExecutionResult
 
 __all__ = [
     "ToolAgent",

@@ -6,15 +6,10 @@ import time
 
 from autogen_core import (
     AgentId,
-    FunctionCall,
     MessageContext,
     RoutedAgent,
     message_handler,
     try_get_known_serializers_for_type,
-)
-
-from autogen_core.models import (
-    FunctionExecutionResult,
 )
 
 from aip_agent.agents.agent import Agent
@@ -23,7 +18,7 @@ from aip_agent.grpc import GrpcWorkerAgentRuntime
 from aip_agent.workflows.llm.augmented_llm import AugmentedLLM
 from aip_agent.workflows.llm.augmented_llm_openai import OpenAIAugmentedLLM
 
-from aip_agent.tool_agent import InteractionMessage
+from aip_agent.message.message import InteractionMessage, FunctionCall, FunctionExecutionResult
 from membase.chain.chain import membase_chain, membase_id, membase_account
 from membase.memory.buffered_memory import BufferedMemory
 from membase.memory.message import Message

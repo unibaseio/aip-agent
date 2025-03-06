@@ -22,12 +22,10 @@ from aip_agent.context_dependent import ContextDependent
 from aip_agent.mcp.mcp_agent_client_session import MCPAgentClientSession
 from aip_agent.mcp.mcp_connection_manager import MCPConnectionManager
 
-from aip_agent.tool_agent._tool_agent import FunctionCall
-from aip_agent.message.message import InteractionMessage
+from aip_agent.message.message import InteractionMessage, FunctionCall,FunctionExecutionResult
 
 from autogen_core import AgentId
 from autogen_core import AgentRuntime
-from autogen_core.models import FunctionExecutionResult
 
 if TYPE_CHECKING:
     from aip_agent.context import Context

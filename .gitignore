@@ -36,6 +36,7 @@ env/
 
 # Chroma specific
 src/aip_chroma/data/
+chroma_db/
 
 # Logs
 *.log
@@ -48,3 +49,4 @@ Thumbs.db
 
 out
 aip_agent.secrets.yaml
+ 

@@ -44,7 +44,7 @@ async def get_client_id_or_abort(context: grpc.aio.ServicerContext[Any, Any]) ->
     return client_id  # type: ignore
 
 from membase.auth import verify_sign
-
+from membase.chain.chain import membase_account
 async def verify_client(agent_id: str ,context: grpc.aio.ServicerContext[Any, Any]) -> str:  # type: ignore
     # The type hint on context.invocation_metadata() is incorrect.
     
@@ -218,7 +218,7 @@ class GrpcWorkerAgentRuntimeHostServicer(agent_worker_pb2_grpc.AgentRpcServicer)
                 from google.protobuf import json_format
                 request_str = json_format.MessageToJson(request, preserving_proto_field_name=True)
                 hub_client.upload_hub(
-                    "membase_hub",
+                    membase_account,
                     request.request_id + "_request",
                     request_str,
                     wait=False
@@ -234,7 +234,7 @@ class GrpcWorkerAgentRuntimeHostServicer(agent_worker_pb2_grpc.AgentRpcServicer)
                 import json
                 response_dict = json_format.MessageToDict(response, preserving_proto_field_name=True)
                 hub_client.upload_hub(
-                    "membase_hub",
+                    membase_account,
                     response.request_id + "_response",
                     json.dumps(response_dict),
                     wait=False

@@ -8,7 +8,6 @@ from typing import Annotated, Any, Dict, List, Literal
 
 from autogen_core import (
     AgentId,
-    FunctionCall,
     MessageContext,
     RoutedAgent,
     message_handler,
@@ -16,13 +15,12 @@ from autogen_core import (
 )
 
 from autogen_core.models import (
-    FunctionExecutionResult,
     ChatCompletionClient,
     UserMessage
 )
 
 from aip_agent.grpc import GrpcWorkerAgentRuntime
-from aip_agent.message.message import InteractionMessage
+from aip_agent.message.message import InteractionMessage, FunctionCall, FunctionExecutionResult
 
 from membase.chain.chain import membase_chain, membase_id, membase_account
 from membase.memory.buffered_memory import BufferedMemory

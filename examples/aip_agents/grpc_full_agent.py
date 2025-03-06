@@ -1,13 +1,6 @@
 import argparse
 import asyncio
-import json
 import logging
-
-from autogen_core import (
-    AgentId,
-    FunctionCall,
-)
-
 
 from aip_agent.agents.full_agent import FullAgentWrapper
 from aip_agent.agents.custom_agent import CallbackAgent
@@ -19,7 +12,7 @@ async def async_input(prompt: str) -> str:
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(None, lambda: input(prompt).strip())
 
-async def main(address: str, target_id: str) -> None:
+async def main(address: str) -> None:
     """Main Entrypoint."""
 
     full_agent = FullAgentWrapper(
@@ -30,31 +23,11 @@ async def main(address: str, target_id: str) -> None:
     )
     await full_agent.initialize()
 
-    response = await full_agent.send_message(target_id, "list_tools", "")
-    print(f"response: {response.content}")
-
-    response = await full_agent._runtime.send_message(
-        FunctionCall(
-            name="get_board",
-            arguments=json.dumps({}),
-            id="1"
-        ),
-        AgentId(target_id, "default"),
-        sender=AgentId(membase_id, "default")
-    )
-    print(f"response: {response}")
-
-    
-    await full_agent._mcp_agent.load_server(server_name = target_id, url="aip-grpc")
-
     servers = await full_agent._mcp_agent.list_servers()
     print(f"servers: {servers}")
 
     tools = await full_agent._mcp_agent.list_tools()
     print(f"tools: {tools}")
-
-    result = await full_agent._mcp_agent.call_tool(name="get_board", arguments={})
-    print(f"result: {result}")
 
     while True:
         try:
@@ -78,7 +51,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run a chess game between two agents.")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging.")
     parser.add_argument("--address", type=str, help="Address to connect to", default="localhost:50060")
-    parser.add_argument("--target-id", type=str, help="Target Agent ID")
 
     args = parser.parse_args()
     if args.verbose:
@@ -88,4 +60,4 @@ if __name__ == "__main__":
         handler = logging.FileHandler(file_name)
         logging.getLogger("autogen_core").addHandler(handler)
 
-    asyncio.run(main(args.address, args.target_id))
+    asyncio.run(main(args.address))
