@@ -14,13 +14,20 @@ from autogen_core import (
 from aip_agent.agents.agent import Agent
 from aip_agent.app import MCPApp
 from aip_agent.grpc import GrpcWorkerAgentRuntime
-from aip_agent.workflows.llm.augmented_llm import AugmentedLLM
-from aip_agent.workflows.llm.augmented_llm_openai import OpenAIAugmentedLLM
+from aip_agent.workflows.llm.augmented_llm import (
+    AugmentedLLM, 
+    RequestParams
+)
+from aip_agent.workflows.llm.augmented_llm_openai import (
+    OpenAIAugmentedLLM, 
+    ChatCompletionUserMessageParam,
+    ChatCompletionAssistantMessageParam
+)
 
 from aip_agent.message.message import InteractionMessage, FunctionCall, FunctionExecutionResult
 from membase.chain.chain import membase_chain, membase_account
-from membase.memory.buffered_memory import BufferedMemory
 from membase.memory.message import Message
+from membase.memory.multi_memory import MultiMemory
 
 T = TypeVar('T', bound=RoutedAgent)
 
@@ -58,7 +65,7 @@ class FullAgentWrapper:
             self._runtime = GrpcWorkerAgentRuntime(self._host_address) 
         self._app: Optional[MCPApp] = None
         self._llm: Optional[AugmentedLLM] = None
-        self._memory: Optional[BufferedMemory] = None
+        self._memory: Optional[MultiMemory] = None
         self._mcp_agent: Optional[Agent] = None
         self._initialized = False
 
@@ -77,7 +84,7 @@ class FullAgentWrapper:
         await self._runtime.start()
         
         # Initialize Memory
-        self._memory = BufferedMemory(membase_account=membase_account, auto_upload_to_hub=True)
+        self._memory = MultiMemory(membase_account=membase_account, auto_upload_to_hub=True, preload_from_hub=True)
         
         # Initialize LLM
         self._llm = await self._init_llm()
@@ -137,14 +144,39 @@ class FullAgentWrapper:
             )
         )
 
-    async def process_query(self, query: str) -> str:
+    async def process_query(self, 
+                            query: str, 
+                            conversation_id: Optional[str] = None, 
+                            use_history: bool = True
+                            ) -> str:
         """Process user queries and generate responses"""
         if not self._initialized:
             raise RuntimeError("Agent not initialized")
-            
-        self._memory.add(Message(content=query, name=self._name, role="user"))
-        response = await self._llm.generate_str(query)
-        self._memory.add(Message(content=response, name=self._name, role="assistant"))
+        
+        memory = self._memory.get_memory(conversation_id)
+
+        if use_history:
+            msgs = memory.get(10)
+        else:
+            msgs = []
+
+        # covert msg into MessageParamT
+        mps = []
+        for msg in msgs:
+            if msg.role == "user":
+                mps.append(ChatCompletionUserMessageParam(content=msg.content, role=msg.role))
+            elif msg.role == "assistant":
+                mps.append(ChatCompletionAssistantMessageParam(content=msg.content, role=msg.role))
+        mps.append(ChatCompletionUserMessageParam(content=query, role="user"))
+        
+        memory.add(Message(content=query, name=self._name, role="user"))
+        response = await self._llm.generate_str(
+            mps,
+            request_params=RequestParams(
+                use_history=False #ignore history in llm, we added here
+            )
+        )
+        memory.add(Message(content=response, name=self._name, role="assistant"))
         return response
 
     async def send_message(self, target_id: str, action: str, message: str):

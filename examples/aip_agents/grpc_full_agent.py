@@ -36,9 +36,7 @@ async def main(address: str) -> None:
             if query.lower() == "quit":
                 break
             
-            full_agent._memory.add(Message(content=query, name=membase_id, role="user"))
-            response = await full_agent._llm.generate_str(query)
-            full_agent._memory.add(Message(content=response, name=membase_id, role="assistant"))
+            response = await full_agent.process_query(query)
             print("\n" + response)
 
         except Exception as e:

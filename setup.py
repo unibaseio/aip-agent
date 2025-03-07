@@ -32,7 +32,7 @@ setup(
         "loguru>=0.7.3",
         "autogen-core==0.4.8",
         "grpcio==1.70.0",
-        "membase>=0.1.1",
+        "membase>=0.1.4",
     ],
 
     python_requires=">=3.12",
