@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="aip_agent", 
-    version="0.1.1",
+    version="0.1.2",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     
@@ -32,7 +32,8 @@ setup(
         "loguru>=0.7.3",
         "autogen-core==0.4.8",
         "grpcio==1.70.0",
-        "membase>=0.1.4",
+        "flask>=3.1.0",
+        "membase>=0.1.4"
     ],
 
     python_requires=">=3.12",
