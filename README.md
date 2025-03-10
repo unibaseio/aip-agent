@@ -35,6 +35,15 @@ The system is architected to be directly callable by LLMs, enhancing the capabil
   - **Tool Authorization**: Secure tool access through blockchain-based authentication
   - **Tool Execution**: Asynchronous tool execution with parameter validation and result handling
 
+## Membase Hub
+
+- Link Hub: 13.212.116.103:8081
+   + agent connects to link hub at startup
+   + exchange messages via link hub
+- Memory Hub: https://testnet.hub.membase.io/
+   + conversation is auto saved in memory hub
+   + preload conversation from memory hub
+
 ## Usage
 
 ### Installation
@@ -56,14 +65,17 @@ uv sync --dev --all-extras
 - Environment variables must be set:
   - `MEMBASE_ID`: Unique identifier for the instance
   - `MEMBASE_ACCOUNT`: Account with BNB testnet balance
-  - `MEMBASE_SECRET_KEY`: Secret key for authentication
+  - `MEMBASE_SECRET_KEY`: Secret key of account for authentication
   - `MEMBASE_SSE_URL`: (Required for SSE tools) Public endpoint URL
+
+
 
 ### Tool Server Setup
 
 The system supports two types of tool servers:
 
 #### 1. gRPC Tool Server (Indirect Access)
+
 ```shell
 export MEMBASE_ID="<membase uuid>"
 export MEMBASE_ACCOUNT="<membase account>"
@@ -74,6 +86,7 @@ uv run grpc_mock_tool.py
 ```
 
 #### 2. SSE Tool Server (Direct Access)
+
 ```shell
 export MEMBASE_ID="<membase uuid>"
 export MEMBASE_ACCOUNT="<membase account>"
@@ -101,19 +114,19 @@ uv run grpc_full_agent.py
 1. **Tool Discovery and Connection**
 
 ![Tool discovery and connection](./img/tool_load.png)
-*Search and connect to tool servers through LLM chat interface*
+_Search and connect to tool servers through LLM chat interface_
 
 2. **Tool Usage**
 
 ![Tool usage example](./img/tool_use.png)
-*Interact with tools through LLM chat interface*
+_Interact with tools through LLM chat interface_
 
 #### Agent-Agent Interaction
 
-+ start another agent, communicate with above agent 
+- start another agent, communicate with above agent
 
 ![Agent interaction](./img/agent_call.png)
-*Demonstration of inter-agent communication*
+_Demonstration of inter-agent communication_
 
 ### Interactive Chess Game Example
 
@@ -129,6 +142,7 @@ pip install chess
 #### Setup and Running
 
 1. **Start Game Moderator**
+
 ```shell
 export MEMBASE_ID="<moderator_id>"
 export MEMBASE_ACCOUNT="<membase account>"
@@ -138,7 +152,7 @@ python main.py
 ```
 
 2. **Start Players**
-The game begins when both black and white players are connected.
+   The game begins when both black and white players are connected.
 
 ```shell
 export MEMBASE_ID="<player_uuid>"
@@ -149,7 +163,7 @@ python role.py --moderator=<above_moderator_id> --role=<white|black>
 ```
 
 3. **Launch Web Interface**
-To view the chess board in your browser:
+   To view the chess board in your browser:
 
 ```shell
 python app.py  # Access at http://localhost:5000
@@ -294,13 +308,13 @@ async def main():
 
 ### Project Structure
 
-```
+````
 
 ### Running Tests
 
 ```shell
 pytest tests/
-```
+````
 
 ## Contributing
 
