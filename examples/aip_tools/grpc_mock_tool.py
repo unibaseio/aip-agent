@@ -44,6 +44,7 @@ async def main(address: str) -> None:
         description="This is a tool agent that can get the weather of a city on a specific date and get the current date."
     )
     await tool_agent.initialize()
+    print(f"GRPC mock tool launched as {membase_id} at {address}")
     await tool_agent.stop_when_signal()
 
 

@@ -406,15 +406,16 @@ class MCPAggregator(ContextDependent):
             ]
         )
 
-    async def send_message(self, server_name: str, content: str):
+    async def send_message(self, agent_name: str, content: str):
         """
-        Send a message to a server
+        Send a message to a agent
         """
+        #print(f"send message to {agent_name} with content: {content}")
         res = await self._grpc_runtime.send_message(InteractionMessage(
             action="ask",
             content=content,
             source=self._name
-        ), AgentId(server_name, "default"), sender=AgentId(self._name, "default"))
+        ), AgentId(agent_name, "default"), sender=AgentId(self._name, "default"))
         return res
         
 

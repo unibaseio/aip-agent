@@ -1,19 +1,14 @@
 import argparse
 import asyncio
 import logging
+import gradio as gr
 
 from aip_agent.agents.full_agent import FullAgentWrapper
 from aip_agent.agents.custom_agent import CallbackAgent
 
 from membase.chain.chain import membase_id
 
-async def async_input(prompt: str) -> str:
-    loop = asyncio.get_event_loop()
-    return await loop.run_in_executor(None, lambda: input(prompt).strip())
-
-async def main(address: str) -> None:
-    """Main Entrypoint."""
-
+async def main(address: str, gradio_address: str, gradio_port: int) -> None:
     full_agent = FullAgentWrapper(
         agent_cls=CallbackAgent,
         name=membase_id,
@@ -22,28 +17,16 @@ async def main(address: str) -> None:
     )
     await full_agent.initialize()
 
-    #await full_agent.load_server("weather_mock_server", "grpc")
+    async def chatbot_interface(prompt, history):
+        return await full_agent.process_query(prompt)
 
-    servers = await full_agent._mcp_agent.list_servers()
-    print(f"servers: {servers}")
-
-    tools = await full_agent._mcp_agent.list_tools()
-    print(f"tools: {tools}")
-
-
-    while True:
-        try:
-            query = await async_input("\nQuery: ")
-
-            if query.lower() == "quit":
-                break
-            
-            response = await full_agent.process_query(query)
-            print("\n" + response)
-
-        except Exception as e:
-            print(f"\nError: {str(e)}")
-
+    interface = gr.ChatInterface(
+        fn=chatbot_interface,
+        type='messages',
+        title="💬 AIP Agent Chatbot",
+        description="A Gradio chatbot powered by aip-agent"
+    )
+    interface.launch(share=False, server_name=gradio_address, server_port=gradio_port)
     await full_agent.stop()
 
 
@@ -51,6 +34,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run a chess game between two agents.")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging.")
     parser.add_argument("--address", type=str, help="Address to connect to", default="13.212.116.103:8081")
+
+    parser.add_argument('--host', default='localhost', help='Host to bind to')
+    parser.add_argument('--port', type=int, default=7860, help='Port to listen on')
 
     args = parser.parse_args()
     if args.verbose:
@@ -60,4 +46,4 @@ if __name__ == "__main__":
         handler = logging.FileHandler(file_name)
         logging.getLogger("autogen_core").addHandler(handler)
 
-    asyncio.run(main(args.address))
+    asyncio.run(main(args.address, args.host, args.port))

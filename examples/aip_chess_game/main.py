@@ -24,7 +24,7 @@ from aip_agent.grpc import GrpcWorkerAgentRuntime
 from aip_agent.message.message import InteractionMessage
 from membase.chain.chain import membase_chain, membase_id
 from membase.memory.message import Message
-from membase.memory.memory import MemoryBase
+from membase.memory.multi_memory import MultiMemory
 
 
 from chess import BLACK, SQUARE_NAMES, WHITE, Board, Move # type: ignore
@@ -228,7 +228,7 @@ class ModeratorAgent(RoutedAgent):
         self,
         description: str,
         llm: AugmentedLLM,
-        memory: MemoryBase,
+        memory: MultiMemory,
         game: ChessGame,
     ) -> None:
         super().__init__(description=description)

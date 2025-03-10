@@ -15,7 +15,7 @@ from autogen_core import (
 )
 
 from membase.memory.message import Message
-from membase.memory.memory import MemoryBase
+from membase.memory.multi_memory import MultiMemory
 from membase.chain.chain import membase_chain, membase_id
 
 from aip_agent.agents.full_agent import FullAgentWrapper
@@ -28,7 +28,7 @@ class PlayerAgent(RoutedAgent):
         self,
         description: str,
         llm: AugmentedLLM,
-        memory: MemoryBase,
+        memory: MultiMemory,
         role_type: str,
     ) -> None:
         super().__init__(description=description)
@@ -90,6 +90,12 @@ async def main(address: str, moderator_id: str, role_type: str) -> None:
         sender=AgentId(membase_id, membase_task_id)
     )
     print(f"=== register message receive from {moderator_id} {role_msg}")
+
+    if role_msg.content == "":
+        print("=== role is not accepted, exit")
+        fa.stop()
+        return
+    
     await fa.stop_when_signal()
 
 if __name__ == "__main__":

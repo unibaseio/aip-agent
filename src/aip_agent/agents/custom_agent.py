@@ -26,6 +26,7 @@ class CallbackAgent(RoutedAgent):
 
     @message_handler
     async def handle_message(self, message: InteractionMessage, ctx: MessageContext) -> InteractionMessage:
+        #print(f"receive message from {message.source} with content: {message.content}")
         if not self.verify_auth(message, ctx):
             return InteractionMessage(
                 action="response",
@@ -33,7 +34,7 @@ class CallbackAgent(RoutedAgent):
                 source=self.id.type
             )
 
-        print(f"{message.source} {ctx.sender}")
+        #print(f"{message.source} {ctx.sender}")
         memory = self._memory.get_memory()
         memory.add(Message(content=message.content, name=message.source, role="user"))
         try:

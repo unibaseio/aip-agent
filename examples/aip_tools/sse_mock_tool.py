@@ -33,4 +33,6 @@ if __name__ == "__main__":
 
     asyncio.run(stap.initialize())
 
+    print(f"SSE mock tool launched at {args.host}:{args.port}")
+
     uvicorn.run(stap._app, host=args.host, port=args.port)

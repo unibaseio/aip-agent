@@ -28,13 +28,13 @@ setup(
         "typer>=0.15.1",
         "numpy>=2.2.1",
         "scikit-learn>=1.6.0",
-        "gradio>=5.16.0",
         "loguru>=0.7.3",
         "autogen-core==0.4.8",
         "grpcio==1.70.0",
         "flask>=3.1.0",
-        "membase>=0.1.4"
+        "gradio>=5.20.1",
+        "membase>=0.1.5"
     ],
 
-    python_requires=">=3.12",
+    python_requires=">=3.10",
 ) 

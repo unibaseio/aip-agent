@@ -27,6 +27,13 @@ The system leverages blockchain technology to implement a robust and transparent
 The system is architected to be directly callable by LLMs, enhancing the capabilities of these models and enabling them to perform complex tasks through agent interactions.
 
 - **Agent Tools Integration**: Agents are designed to be accessible as tools for LLMs, allowing these models to leverage the agents' functionalities for a wide range of applications.
+  - **Tool Management**: Supports two types of tool communication protocols:
+    - `aip-grpc`: Internal network communication, accessible by agents from anywhere
+    - `aip-sse`: Direct access requiring the tool's machine to be directly accessible
+  - **Tool Registration**: Tools can be registered with the system and exposed through either gRPC or SSE endpoints
+  - **Tool Discovery**: Agents can dynamically discover and load available tools
+  - **Tool Authorization**: Secure tool access through blockchain-based authentication
+  - **Tool Execution**: Asynchronous tool execution with parameter validation and result handling
 
 ## Usage
 
@@ -46,13 +53,17 @@ uv sync --dev --all-extras
 
 - MEMBASE_ID must be unique for each instance
 - MEMBASE_ACCOUNT must have balance in BNB testnet
+- Environment variables must be set:
+  - `MEMBASE_ID`: Unique identifier for the instance
+  - `MEMBASE_ACCOUNT`: Account with BNB testnet balance
+  - `MEMBASE_SECRET_KEY`: Secret key for authentication
+  - `MEMBASE_SSE_URL`: (Required for SSE tools) Public endpoint URL
 
-### Examples
+### Tool Server Setup
 
-- more examples in examples dir
+The system supports two types of tool servers:
 
-#### Running Tools Example
-
+#### 1. gRPC Tool Server (Indirect Access)
 ```shell
 export MEMBASE_ID="<membase uuid>"
 export MEMBASE_ACCOUNT="<membase account>"
@@ -62,16 +73,86 @@ cd examples/aip_tools
 uv run grpc_mock_tool.py
 ```
 
-#### Running Agents
+#### 2. SSE Tool Server (Direct Access)
+```shell
+export MEMBASE_ID="<membase uuid>"
+export MEMBASE_ACCOUNT="<membase account>"
+export MEMBASE_SECRET_KEY="<membase secret key>"
+export MEMBASE_SSE_URL="<http://your_ip:your_port>"
+cd examples/aip_tools
+# Start the tool server with specified port
+uv run sse_mock_tool.py --port=<your_port>
+```
+
+### Agent Setup and Usage
+
+Agents can interact with tools and other agents through a unified interface:
 
 ```shell
 export MEMBASE_ID="<membase uuid>"
 export MEMBASE_ACCOUNT="<membase account>"
 export MEMBASE_SECRET_KEY="<membase secret key>"
 cd examples/aip_agents
-# You can search/connect to other agents/tools
-# For example, connect to the mock_tool above
 uv run grpc_full_agent.py
+```
+
+#### Agent-Tool Interaction
+
+1. **Tool Discovery and Connection**
+
+![Tool discovery and connection](./img/tool_load.png)
+*Search and connect to tool servers through LLM chat interface*
+
+2. **Tool Usage**
+
+![Tool usage example](./img/tool_use.png)
+*Interact with tools through LLM chat interface*
+
+#### Agent-Agent Interaction
+
++ start another agent, communicate with above agent 
+
+![Agent interaction](./img/agent_call.png)
+*Demonstration of inter-agent communication*
+
+### Interactive Chess Game Example
+
+This example demonstrates a multi-agent system implementing an interactive chess game.
+
+#### Prerequisites
+
+```shell
+cd examples/aip_chess_game
+pip install chess
+```
+
+#### Setup and Running
+
+1. **Start Game Moderator**
+```shell
+export MEMBASE_ID="<moderator_id>"
+export MEMBASE_ACCOUNT="<membase account>"
+export MEMBASE_SECRET_KEY="<membase secret key>"
+export MEMBASE_TASK_ID="<task id>"
+python main.py
+```
+
+2. **Start Players**
+The game begins when both black and white players are connected.
+
+```shell
+export MEMBASE_ID="<player_uuid>"
+export MEMBASE_ACCOUNT="<membase account>"
+export MEMBASE_SECRET_KEY="<membase secret key>"
+export MEMBASE_TASK_ID="<above_task_id>"
+python role.py --moderator=<above_moderator_id> --role=<white|black>
+```
+
+3. **Launch Web Interface**
+To view the chess board in your browser:
+
+```shell
+python app.py  # Access at http://localhost:5000
 ```
 
 ### Python Code Examples
@@ -112,46 +193,29 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-#### Tool Agent Example
+#### Custom Agent Implementation
 
-The `ToolAgentWrapper` is designed to manage and execute tools in the agent system. Here's how to use it:
+You can create custom agents by extending the base agent classes:
 
 ```python
-from aip_agent.agents.tool_agent import ToolAgentWrapper
-from autogen_core.tools import Tool, FunctionTool
-from typing import List, Annotated
-import random
-import os
+from aip_agent.agents.full_agent import FullAgentWrapper
+from aip_agent.agents.custom_agent import CallbackAgent
+
+class MyCustomAgent(CallbackAgent):
+    async def handle_message(self, message):
+        # Custom message handling logic
+        pass
 
 async def main():
-    # Define your tools
-    def get_weather(
-        city: Annotated[str, "The city name"],
-        date: Annotated[str, "The date"],
-    ) -> str:
-        weather = random.choice(["sunny", "cloudy", "rainy", "snowy"])
-        return weather + " in " + city + " on " + date
-
-    local_tools: List[Tool] = [
-        FunctionTool(
-            get_weather,
-            name="get_weather",
-            description="Get the weather of a city on a specific date.",
-        ),
-    ]
-
-    tool_agent = ToolAgentWrapper(
+    agent = FullAgentWrapper(
+        agent_cls=MyCustomAgent,
         name=os.getenv("MEMBASE_ID"),
-        tools=local_tools,
-        host_address="membase_hub_address",
-        description="This is a tool agent that can get the weather of a city on a specific date."
+        description="Custom agent description",
+        host_address="membase_hub_address"
     )
-    await tool_agent.initialize()
-    await tool_agent.stop_when_signal()
-
-if __name__ == "__main__":
-    import asyncio
-    asyncio.run(main())
+    await agent.initialize()
+    # Your agent logic here
+    await agent.stop()
 ```
 
 ### Key Features
@@ -230,13 +294,13 @@ if __name__ == "__main__":
 
 ### Project Structure
 
-````
+```
 
 ### Running Tests
 
 ```shell
 pytest tests/
-````
+```
 
 ## Contributing
 
