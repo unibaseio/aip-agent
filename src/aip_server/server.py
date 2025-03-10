@@ -93,7 +93,7 @@ def create_starlette_app(mcp_server: Server, *, debug: bool = False) -> Starlett
                 write_stream,
                 InitializationOptions(
                 server_name=membase_id,
-                server_version="0.1.2",
+                server_version="0.1.3",
                 capabilities=mcp_server.get_capabilities(
                     notification_options=NotificationOptions(),
                     experimental_capabilities={},
