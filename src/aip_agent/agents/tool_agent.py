@@ -43,7 +43,7 @@ class ToolAgentWrapper:
 
     async def initialize(self) -> None:
         """Initialize all components"""
-        print(f"Tool Agent {self._name} is initializing")
+        print(f"Tool Agent: {self._name} is initializing")
 
         # Register chain identity
         membase_chain.register(self._name)

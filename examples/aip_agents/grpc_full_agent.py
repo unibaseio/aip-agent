@@ -6,7 +6,6 @@ from aip_agent.agents.full_agent import FullAgentWrapper
 from aip_agent.agents.custom_agent import CallbackAgent
 
 from membase.chain.chain import membase_id
-from membase.memory.message import Message
 
 async def async_input(prompt: str) -> str:
     loop = asyncio.get_event_loop()

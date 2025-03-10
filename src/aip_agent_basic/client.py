@@ -80,9 +80,9 @@ class AIPClient:
         print("Connected to server with tools:", [tool.name for tool in tools])
 
     async def register(self, desc: str):
-        membase_url = os.getenv('MEMBASE_URL')
+        membase_url = os.getenv('MEMBASE_SSE_URL')
         if not membase_url or membase_url == "":
-            raise Exception("'MEMBASE_URL' is not set")
+            raise Exception("'MEMBASE_SSE_URL' is not set")
 
         register_args = {
             "memory_id": membase_id,
