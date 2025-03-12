@@ -94,7 +94,7 @@ async def main(address: str, target_id: str, model_config: Dict[str, Any]) -> No
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run a chess game between two agents.")
+    parser = argparse.ArgumentParser(description="Run an aip agent.")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging.")
     parser.add_argument("--address", type=str, help="Address to connect to", default="localhost:50060")
     parser.add_argument(
