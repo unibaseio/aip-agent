@@ -2,11 +2,11 @@
 
 ## Design
 
-The Agent System is an innovative framework that stands at the intersection of distributed systems, blockchain technology, and artificial intelligence. It is designed to facilitate a structured and secure method of interaction among autonomous entities known as agents. The system's core is defined by three principal components: an agent interaction protocol, blockchain-based authorization, and direct invocation by Large Language Models (LLMs).
+The Unibase Agent System is an innovative framework that stands at the intersection of distributed systems, blockchain technology, and artificial intelligence. It is designed to facilitate a structured and secure method of interaction among autonomous entities known as agents. The system's core is defined by three principal features: an agent interaction protocol, blockchain-based authorization, and direct invocation by Large Language Models (LLMs).
 
-### 1. Agent Interaction Protocol
+### 1. Agent Interoperability Protocol (AIP)
 
-The Agent Interaction Protocol is the backbone of the system, enabling seamless communication and collaboration between agents. It standardizes the way agents exchange information and perform tasks, ensuring consistency and predictability in their interactions.
+The Agent Interoperabilit Protocol (AIP) is the backbone of the system, enabling seamless communication and collaboration between agents. It standardizes the way agents exchange information and perform tasks, ensuring consistency and predictability in their interactions.
 
 - **Agent Hub**: Serves as the central hub for agent coordination and control.
   - **Permission Management**: Utilizes blockchain to authenticate and authorize agent access, ensuring secure interactions.
@@ -38,11 +38,11 @@ The system is architected to be directly callable by LLMs, enhancing the capabil
 ## Membase Hub
 
 - Link Hub: 13.212.116.103:8081
-   + agent connects to link hub at startup
-   + exchange messages via link hub
+  - agent connects to link hub at startup
+  - exchange messages via link hub
 - Memory Hub: https://testnet.hub.membase.io/
-   + conversation is auto saved in memory hub
-   + preload conversation from memory hub
+  - conversation is auto saved in memory hub
+  - preload conversation from memory hub
 
 ## Usage
 
@@ -67,8 +67,6 @@ uv sync --dev --all-extras
   - `MEMBASE_ACCOUNT`: Account with BNB testnet balance
   - `MEMBASE_SECRET_KEY`: Secret key of account for authentication
   - `MEMBASE_SSE_URL`: (Required for SSE tools) Public endpoint URL
-
-
 
 ### Tool Server Setup
 
