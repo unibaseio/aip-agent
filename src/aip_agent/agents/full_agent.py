@@ -83,17 +83,32 @@ class FullAgentWrapper:
                 if not self._runtime or not self._initialized:
                     raise RuntimeError("Runtime not initialized")
                 
-                await self._runtime.send_message(
-                    InteractionMessage(
-                        action="heartbeat",
-                        content="ok",
-                        source=self._name
-                    ),
-                    AgentId(self._name, "default"),
-                    sender=AgentId(self._name, "default")
-                )
-                self._heartbeat_failures = 0
-                await asyncio.sleep(60)  # 60秒发送一次心跳
+                # use asyncio.wait_for to add timeout mechanism
+                try:
+                    await asyncio.wait_for(
+                        self._runtime.send_message(
+                            InteractionMessage(
+                                action="heartbeat",
+                                content="ok",
+                                source=self._name
+                            ),
+                            AgentId(self._name, "default"),
+                            sender=AgentId(self._name, "default")
+                        ),
+                        timeout=10.0  # 10 seconds timeout
+                    )
+                    self._heartbeat_failures = 0
+                except asyncio.TimeoutError:
+                    print("Heartbeat message timed out after 10 seconds")
+                    self._heartbeat_failures += 1
+                    if self._heartbeat_failures >= self._max_failures:
+                        print(f"Too many heartbeat failures ({self._heartbeat_failures}), stopping agent")
+                        await self.stop()
+                        break
+                    await asyncio.sleep(30*self._heartbeat_failures)  # wait 5 seconds and retry
+                    continue
+                
+                await asyncio.sleep(60)  # wait 60 seconds and send heartbeat again
             except Exception as e:
                 print(f"Heartbeat failed: {e}")
                 self._heartbeat_failures += 1
@@ -101,7 +116,7 @@ class FullAgentWrapper:
                     print(f"Too many heartbeat failures ({self._heartbeat_failures}), stopping agent")
                     await self.stop()
                     break
-                await asyncio.sleep(5)  # 失败后等待5秒重试
+                await asyncio.sleep(30*self._heartbeat_failures)  # wait and retry
 
     async def initialize(self) -> None:
         """Initialize all components"""
@@ -221,49 +236,79 @@ class FullAgentWrapper:
         if not self._initialized:
             raise RuntimeError("Agent not initialized")
             
-        response = await self._runtime.send_message(
-            InteractionMessage(
-                action=action,
-                content=message,
-                source=self._name
-            ),
-            AgentId(target_id, "default"),
-            sender=AgentId(self._name, "default")
-        )
-        print(f"Response from {target_id}: {response.content}")
-        return response
+        try:
+            response = await asyncio.wait_for(
+                self._runtime.send_message(
+                    InteractionMessage(
+                        action=action,
+                        content=message,
+                        source=self._name
+                    ),
+                    AgentId(target_id, "default"),
+                    sender=AgentId(self._name, "default")
+                ),
+                timeout=10.0  # 10 seconds timeout
+            )
+            print(f"Response from {target_id}: {response.content}")
+            return response
+        except asyncio.TimeoutError:
+            print(f"Message to {target_id} timed out after 10 seconds")
+            return f"Message to {target_id} timed out after 10 seconds"
+        except Exception as e:
+            print(f"Error sending message to {target_id}: {e}")
+            return f"Error sending message to {target_id}: {e}"
 
     async def update_in_hub(self, state: str = "running") -> None:
         """Register the agent in the hub"""
         if not self._runtime:
             raise RuntimeError("Runtime not initialized")
         
-        res = await self._runtime.send_message(
-            FunctionCall(
-                id=str(uuid.uuid4()),
-                name="register_server",
-                arguments=json.dumps({
-                    "name": self._name,
-                    "description": self._description,
-                    "config": {
-                        "type": "agent",
-                        "transport": "aip-grpc",
-                        "state": state,
-                        "timestamp": datetime.datetime.now().isoformat()
-                        }
-                }),
-            ),
-            AgentId("config_hub", "default"),
-            sender=AgentId(self._name, "default")
-        )
-        print(f"Response from config_hub: {res}")
+        try:
+            res = await asyncio.wait_for(
+                self._runtime.send_message(
+                    FunctionCall(
+                        id=str(uuid.uuid4()),
+                        name="register_server",
+                        arguments=json.dumps({
+                            "name": self._name,
+                            "description": self._description,
+                            "config": {
+                                "type": "agent",
+                                "transport": "aip-grpc",
+                                "state": state,
+                                "timestamp": datetime.datetime.now().isoformat()
+                                }
+                        }),
+                    ),
+                    AgentId("config_hub", "default"),
+                    sender=AgentId(self._name, "default")
+                ),
+                timeout=10.0  # 10秒超时
+            )
+            print(f"Response from config_hub: {res}")
+        except asyncio.TimeoutError:
+            print("Update in hub timed out after 10 seconds")
+            raise
+        except Exception as e:
+            print(f"Error updating in hub: {e}")
+            raise
 
     async def load_server(self, server_name: str, url: str) -> None:
         """Load a server from the hub"""
         if not self._runtime:
             raise RuntimeError("Runtime not initialized")
         
-        await self._mcp_agent.load_server(server_name, url)
+        try:
+            await asyncio.wait_for(
+                self._mcp_agent.load_server(server_name, url),
+                timeout=10.0  # 10秒超时
+            )
+        except asyncio.TimeoutError:
+            print(f"Loading server {server_name} timed out after 10 seconds")
+            raise
+        except Exception as e:
+            print(f"Error loading server {server_name}: {e}")
+            raise
 
     async def stop_when_signal(self) -> None:
         """Wait for the agent to stop"""

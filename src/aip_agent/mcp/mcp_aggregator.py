@@ -2,6 +2,7 @@ from asyncio import Lock, gather
 import json
 from typing import List, Dict, Optional, TYPE_CHECKING
 import uuid
+import asyncio
 
 from pydantic import BaseModel, ConfigDict
 from mcp.client.session import ClientSession
@@ -410,14 +411,26 @@ class MCPAggregator(ContextDependent):
         """
         Send a message to a agent
         """
-        #print(f"send message to {agent_name} with content: {content}")
-        res = await self._grpc_runtime.send_message(InteractionMessage(
-            action="ask",
-            content=content,
-            source=self._name
-        ), AgentId(agent_name, "default"), sender=AgentId(self._name, "default"))
-        return res
-        
+        try:
+            res = await asyncio.wait_for(
+                self._grpc_runtime.send_message(
+                    InteractionMessage(
+                        action="ask",
+                        content=content,
+                        source=self._name
+                    ),
+                    AgentId(agent_name, "default"),
+                    sender=AgentId(self._name, "default")
+                ),
+                timeout=10.0  # 10 seconds timeout
+            )
+            return res
+        except asyncio.TimeoutError:
+            print(f"Message to {agent_name} timed out after 10 seconds")
+            return f"Message sending timed out, {agent_name} is offline"
+        except Exception as e:
+            print(f"Error sending message to {agent_name}: {e}")
+            return f"Error sending message to {agent_name}: {e}"
 
     async def call_grpc_tool(
         self, server_name: str, tool_name: str, arguments: dict | None = None
