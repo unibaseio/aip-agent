@@ -34,6 +34,12 @@ class CallbackAgent(RoutedAgent):
                 source=self.id.type
             )
 
+        if message.action == "heartbeat":
+            return InteractionMessage(
+                action="response",
+                content="ok"
+            )
+    
         #print(f"{message.source} {ctx.sender}")
         memory = self._memory.get_memory()
         memory.add(Message(content=message.content, name=message.source, role="user"))

@@ -4,6 +4,7 @@ import logging
 import time
 from typing import Optional, Type, TypeVar, List
 import uuid
+import asyncio
 
 from autogen_core import (
     AgentId,
@@ -68,6 +69,39 @@ class FullAgentWrapper:
         self._memory: Optional[MultiMemory] = None
         self._mcp_agent: Optional[Agent] = None
         self._initialized = False
+        
+        # 心跳相关属性
+        self._heartbeat_task: Optional[asyncio.Task] = None
+        self._heartbeat_failures = 0
+        self._max_failures = 3
+        self._running = True
+
+    async def _send_heartbeat(self) -> None:
+        """Send heartbeat message to self periodically"""
+        while self._running:
+            try:
+                if not self._runtime or not self._initialized:
+                    raise RuntimeError("Runtime not initialized")
+                
+                await self._runtime.send_message(
+                    InteractionMessage(
+                        action="heartbeat",
+                        content="ok",
+                        source=self._name
+                    ),
+                    AgentId(self._name, "default"),
+                    sender=AgentId(self._name, "default")
+                )
+                self._heartbeat_failures = 0
+                await asyncio.sleep(60)  # 60秒发送一次心跳
+            except Exception as e:
+                print(f"Heartbeat failed: {e}")
+                self._heartbeat_failures += 1
+                if self._heartbeat_failures >= self._max_failures:
+                    print(f"Too many heartbeat failures ({self._heartbeat_failures}), stopping agent")
+                    await self.stop()
+                    break
+                await asyncio.sleep(5)  # 失败后等待5秒重试
 
     async def initialize(self) -> None:
         """Initialize all components"""
@@ -109,6 +143,9 @@ class FullAgentWrapper:
             print(f"Error connecting to hub: {e}")
 
         self._initialized = True
+        
+        # Start heartbeat after initialization is complete
+        self._heartbeat_task = asyncio.create_task(self._send_heartbeat())
 
     async def _init_llm(self) -> AugmentedLLM:
         """Initialize LLM model"""
@@ -235,6 +272,13 @@ class FullAgentWrapper:
 
     async def stop(self) -> None:
         """Stop the agent and cleanup resources"""
+        self._running = False
+        if self._heartbeat_task:
+            self._heartbeat_task.cancel()
+            try:
+                await self._heartbeat_task
+            except asyncio.CancelledError:
+                pass
         if self._initialized:
             await self.update_in_hub(state="stopped")
             await self._runtime.stop()

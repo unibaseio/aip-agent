@@ -106,6 +106,11 @@ class ToolAgent(RoutedAgent):
                     "version": "1.0"
                 }
             )
+        elif message.action == "heartbeat":
+            return InteractionMessage(
+                action="response",
+                content="ok"
+            )
         else:
             raise ValueError(f"Unsupported request type: {message.action}")
 

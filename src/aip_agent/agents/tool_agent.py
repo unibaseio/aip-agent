@@ -15,6 +15,7 @@ from aip_agent.tool_agent import ToolAgent
 from aip_agent.grpc import GrpcWorkerAgentRuntime
 from aip_agent.message.message import InteractionMessage, FunctionCall, FunctionExecutionResult
 from membase.chain.chain import membase_chain
+import asyncio
 
 class ToolAgentWrapper:
     """A wrapper class that manages ToolAgent with common infrastructure"""
@@ -40,6 +41,36 @@ class ToolAgentWrapper:
         self._description = description
         
         self._runtime: Optional[GrpcWorkerAgentRuntime] = None
+        self._heartbeat_task: Optional[asyncio.Task] = None
+        self._heartbeat_failures = 0
+        self._max_failures = 3
+        self._running = True
+
+    async def _send_heartbeat(self) -> None:
+        """Send heartbeat message to self periodically"""
+        while self._running:
+            try:
+                if not self._runtime:
+                    raise RuntimeError("Runtime not initialized")
+                
+                await self._runtime.send_message(InteractionMessage(
+                        action="heartbeat",
+                        content="ok",
+                        source=self._name
+                    ),
+                    AgentId(self._name, "default"),
+                    sender=AgentId(self._name, "default")
+                )
+                self._heartbeat_failures = 0
+                await asyncio.sleep(60)  # 60秒发送一次心跳
+            except Exception as e:
+                print(f"Heartbeat failed: {e}")
+                self._heartbeat_failures += 1
+                if self._heartbeat_failures >= self._max_failures:
+                    print(f"Too many heartbeat failures ({self._heartbeat_failures}), stopping agent")
+                    await self.stop()
+                    break
+                await asyncio.sleep(5)  # 失败后等待5秒重试
 
     async def initialize(self) -> None:
         """Initialize all components"""
@@ -60,6 +91,10 @@ class ToolAgentWrapper:
         # Register Agent
         await self.register_agent()
         print(f"Tool Agent: {self._name} is initialized")
+        
+        # Start heartbeat
+        self._heartbeat_task = asyncio.create_task(self._send_heartbeat())
+        
         try:
             await self.update_in_hub("running")
         except Exception as e:
@@ -116,6 +151,13 @@ class ToolAgentWrapper:
 
     async def stop(self) -> None:
         """Stop the agent and cleanup resources"""
+        self._running = False
+        if self._heartbeat_task:
+            self._heartbeat_task.cancel()
+            try:
+                await self._heartbeat_task
+            except asyncio.CancelledError:
+                pass
         if self._runtime:
             await self.update_in_hub(state="stopped")
             await self._runtime.stop()
