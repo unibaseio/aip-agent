@@ -1,6 +1,6 @@
 [project]
 name = "aip-agent"
-version = "0.1.3"
+version = "0.1.4"
 description = "A Membase AIP project"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -24,7 +24,7 @@ dependencies = [
  "grpcio==1.70.0",
  "flask>=3.1.0",
  "gradio>=5.20.1",
- "membase>=0.1.5",
+ "membase>=0.1.6",
 ]
 [[project.authors]]
 name = "felix"
