@@ -173,7 +173,7 @@ class FullAgentWrapper:
         self._mcp_agent = Agent(
             name=self._name,
             runtime=self._runtime,
-            instruction="you are an assistant",
+            instruction=self._description,
             server_names=self._server_names,
         )
         await self._mcp_agent.initialize()
