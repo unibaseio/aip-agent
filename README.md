@@ -1,8 +1,8 @@
 # AIP Agent
 
-## Design
+## Introduction
 
-The Unibase Agent System is an innovative framework that stands at the intersection of distributed systems, blockchain technology, and artificial intelligence. It is designed to facilitate a structured and secure method of interaction among autonomous entities known as agents. The system's core is defined by three principal features: an agent interaction protocol, blockchain-based authorization, and direct invocation by Large Language Models (LLMs).
+The Unibase Agent System is an innovative framework that stands at the intersection of distributed systems, blockchain technology, and artificial intelligence. It is designed to facilitate a structured and secure method of interaction among autonomous agents. The system's core is defined by three principal features: an agent interaction protocol, blockchain-based authorization, and direct invocation by Large Language Models (LLMs).
 
 ### 1. Agent Interoperability Protocol (AIP)
 
@@ -15,7 +15,7 @@ The Agent Interoperabilit Protocol (AIP) is the backbone of the system, enabling
   - **Memory Management**: Provides a global memory space for storing agent configurations, dialogue history, and prompt information.
   - **Data Storage**: Facilitates decentralized data backup to protect against data loss.
 
-- **Protocol Support and Extension**: The AIP extends the foundational MCP (Multi-Component Protocol) to enable seamless integration with local/remote MCP tools, ensuring that agents and tools from anywhere can communicate and interoperate effectively.
+- **Protocol Support and Extension**: The AIP extends the foundational MCP (Model Context Protocol) to enable seamless integration with local/remote MCP tools, ensuring that agents and tools from anywhere can communicate and interoperate effectively.
   - **SSE (Server-Sent Events) Protocol**: Facilitates remote connectivity with MCP tools over networks, enabling real-time event streaming and authorization.
   - **gRPC Integration**: To address scenarios where remote tools/agents cannot establish direct connections, gRPC-based communication is introduced. This provides high-performance, bidirectional streaming and structured data exchange, ensuring reliable remote interactions.
 
