@@ -14,6 +14,10 @@ The Agent Interoperabilit Protocol (AIP) is the backbone of the system, enabling
   - **Memory Management**: Provides a global memory space for storing agent configurations, dialogue history, and prompt information.
   - **Data Storage**: Facilitates decentralized data backup to protect against data loss.
 
+- **Protocol Support and Extension**: The AIP Agent framework extends the foundational MCP (Multi-Component Protocol) to enable seamless integration with local MCP tools. 
+   - **SSE (Server-Sent Events) Protocol**: Facilitates remote connectivity with MCP tools over networks, enabling real-time event streaming and authorization.
+   - **gRPC Integration**: To address scenarios where remote tools/agents cannot establish direct connections, gRPC-based communication is introduced. This provides high-performance, bidirectional streaming and structured data exchange, ensuring reliable remote interactions.
+
 ### 2. Blockchain-Based Authorization
 
 The system leverages blockchain technology to implement a robust and transparent authorization mechanism.
@@ -27,12 +31,14 @@ The system leverages blockchain technology to implement a robust and transparent
 The system is architected to be directly callable by LLMs, enhancing the capabilities of these models and enabling them to perform complex tasks through agent interactions.
 
 - **Agent Tools Integration**: Agents are designed to be accessible as tools for LLMs, allowing these models to leverage the agents' functionalities for a wide range of applications.
-  - **Tool Management**: Supports two types of tool communication protocols:
+  - **Tool Management**: Supports three types of tool communication protocols:
+    - `mcp`: Legacy MCP tool, access it locally
     - `aip-grpc`: Internal network communication, accessible by agents from anywhere
     - `aip-sse`: Direct access requiring the tool's machine to be directly accessible
   - **Tool Registration**: Tools can be registered with the system and exposed through either gRPC or SSE endpoints
   - **Tool Discovery**: Agents can dynamically discover and load available tools
   - **Tool Authorization**: Secure tool access through blockchain-based authentication
+  - **Tool Loading**: Supports on-the-fly loading of functionalities during dialogues, allowing adaptive tool integration without interrupting workflows.
   - **Tool Execution**: Asynchronous tool execution with parameter validation and result handling
 
 ## Membase Hub
