@@ -2,7 +2,7 @@ import datetime
 import json
 import logging
 import time
-from typing import Optional, Type, TypeVar, List
+from typing import Callable, Optional, Type, TypeVar, List
 import uuid
 import asyncio
 
@@ -43,6 +43,7 @@ class FullAgentWrapper:
         description: str = "You are an assistant",
         runtime: Optional[GrpcWorkerAgentRuntime] = None,
         server_names: List[str] = None,
+        functions: List[Callable] = None,
         **agent_kwargs
     ) -> None:
         """Initialize FullAgent
@@ -58,8 +59,10 @@ class FullAgentWrapper:
         self._name = name
         self._host_address = host_address
         self._description = description
-        self._agent_kwargs = agent_kwargs
         self._server_names = server_names
+        self._functions = functions
+        self._agent_kwargs = agent_kwargs
+        
         if runtime:
             self._runtime = runtime  
         else:
@@ -175,6 +178,7 @@ class FullAgentWrapper:
             runtime=self._runtime,
             instruction=self._description,
             server_names=self._server_names,
+            functions=self._functions
         )
         await self._mcp_agent.initialize()
         return await self._mcp_agent.attach_llm(OpenAIAugmentedLLM)
