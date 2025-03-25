@@ -15,18 +15,18 @@ token_address = "0x2e6b3f12408d5441e56c3C20848A57fd53a78931"
 tc = TraderClient(BSC_TESTNET_SETTINGS, membase_account, membase_secret, token_address)
 
 def buy_token(amount: int, reason: str):
-    """Buy a token with the given amount and reason."""
-    print(f"Buy a token with the amount: {amount} and reason: {reason}")
+    """Buy token with the given amount and reason."""
+    #print(f"Buy a token with the amount: {amount} and reason: {reason}")
     return tc.buy(amount, reason)
 
 def sell_token(amount: int, reason: str):
-    """Sell a token with the given amount and reason."""
-    print(f"Sell a token with the amount: {amount} and reason: {reason}")
+    """Sell token with the given amount and reason."""
+    #print(f"Sell a token with the amount: {amount} and reason: {reason}")
     return tc.sell(amount, reason)
 
 def do_nothing(reason: str):
     """Do nothing with the given reason."""
-    print(f"Do nothing with the reason: {reason}")
+    print(f"Do nothing")
 
 def get_trader_info():
     """Get the information of the trader."""
@@ -40,14 +40,22 @@ async def async_input(prompt: str) -> str:
 async def main(address: str) -> None:
     """Main Entrypoint."""
 
-    description = """
-    You are a smart trader on dex. You buy low and sell high to make profit.
-    You can buy or sell token depending on the information you get.
-    You can decide the amount to buy or sell based on the information you get.
-    You can show the reason for your decision.
-    You can do nothing if the information is not enough to make a decision.
-    Note that any transaction costs transaction gas fee and swap fee.
+    description = "You are a smart trader on dex. You buy low and sell high to make profit.\n"
+    
+    description += """
+    **Context Rules**
+    1. Price moves inversely to pool token reserves: more token reserves = lower price
+    2. Large swaps create significant price impact (slippage)
+    3. High volume suggests momentum; low volume may indicate manipulation risk
+    **Task**
+    You need to decide whether to buy or sell token based on the information you get.
+    You need to decide the amount to buy or sell based on the information you get.
+    You need to show the reason for your decision.
+    You need to do nothing if the information is not enough to make a decision.
+    **Note**
+    Any transaction costs transaction gas fee and swap fee.
     """
+
     full_agent = FullAgentWrapper(
         agent_cls=CallbackAgent,
         name=membase_id,
