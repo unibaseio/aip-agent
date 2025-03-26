@@ -256,7 +256,7 @@ class MCPAggregator(ContextDependent):
         
         try:
             if not isinstance(response.content, dict):
-                logger.error(f"Invalid response format from server {server_name}: content is not a dictionary")
+                logger.error(f"Invalid response format from server {server_name}: content is not a dict type")
                 return server_name
                 
             tools_data = response.content.get("tools", [])
@@ -438,7 +438,6 @@ class MCPAggregator(ContextDependent):
         """
         Call a tool using grpc implementation
         """
-        
         response = await self._grpc_runtime.send_message(
             FunctionCall(
                 id=str(uuid.uuid4()),
@@ -451,7 +450,7 @@ class MCPAggregator(ContextDependent):
         
         try:
             if not isinstance(response, FunctionExecutionResult):
-                logger.error(f"Invalid response format from server {server_name}: content is not a FunctionExecutionResult")
+                logger.error(f"Invalid response format from {server_name}, {arguments}, {response}")
                 return CallToolResult(isError=True, content=[TextContent(type="text", text="Invalid response format")])
                 
             if response.is_error:

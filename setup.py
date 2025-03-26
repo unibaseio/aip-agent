@@ -33,7 +33,7 @@ setup(
         "grpcio==1.70.0",
         "flask>=3.1.0",
         "gradio>=5.20.1",
-        "membase>=0.1.6"
+        "membase>=0.1.8"
     ],
 
     python_requires=">=3.10",

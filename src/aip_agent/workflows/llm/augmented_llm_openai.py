@@ -342,10 +342,17 @@ class OpenAIAugmentedLLM(
         )
 
         if result.content:
+            content_str = ""
+            for c in result.content:
+                if isinstance(c, TextContent):
+                    content_str += c.text + "\n"
+                else:
+                    content_str += str(c) + "\n"
+            content_str = content_str.strip()
             return ChatCompletionToolMessageParam(
                 role="tool",
                 tool_call_id=tool_call_id,
-                content=[mcp_content_to_openai_content(c) for c in result.content],
+                content=content_str,
             )
 
         return None
