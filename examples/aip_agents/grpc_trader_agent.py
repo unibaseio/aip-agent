@@ -12,7 +12,15 @@ from membase.chain.util import BSC_TESTNET_SETTINGS
 from membase.chain.trader import TraderClient
 
 token_address = "0x2e6b3f12408d5441e56c3C20848A57fd53a78931"
-tc = TraderClient(BSC_TESTNET_SETTINGS, membase_account, membase_secret, token_address)
+tc = TraderClient(
+    config=BSC_TESTNET_SETTINGS, 
+    wallet_address=membase_account, 
+    private_key=membase_secret, 
+    token_address=token_address,
+    membase_id=membase_id
+)
+
+state = "idle"
 
 def buy_token(amount: int, reason: str):
     """Buy token with the given amount and reason."""
@@ -33,6 +41,23 @@ def get_trader_info():
     infos = tc.get_info()
     return infos
 
+def start_trader():
+    """Start trading."""
+    global state
+    state = "running"
+    print(f"Start trading")
+
+def stop_trader():
+    """Stop trading."""
+    global state
+    state = "idle"
+    print(f"Stop trading")
+
+def get_trader_state():
+    """Get the state of the trader."""
+    global state
+    return state
+
 async def async_input(prompt: str) -> str:
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(None, lambda: input(prompt).strip())
@@ -40,21 +65,46 @@ async def async_input(prompt: str) -> str:
 async def main(address: str) -> None:
     """Main Entrypoint."""
 
-    description = "You are a smart trader on dex. You buy low and sell high to make profit.\n"
-    
-    description += """
-    **Context Rules**
-    1. Price moves inversely to pool token reserves: more token reserves = lower price
-    2. Large swaps create significant price impact (slippage)
-    3. High volume suggests momentum; low volume may indicate manipulation risk
-    **Task**
-    You need to decide whether to buy or sell token based on the information you get.
-    You need to decide the amount to buy or sell based on the information you get.
-    You need to show the reason for your decision.
-    You need to do nothing if the information is not enough to make a decision.
-    **Note**
-    Any transaction costs transaction gas fee and swap fee.
-    """
+    description = """You are a professional DEX trader specializing in profit-making through strategic buy-low-sell-high operations. Your role is to make trading decisions based on market information.
+
+Role Definition:
+- You are an experienced DEX trader
+- Your primary goal is to maximize trading profits
+- You must carefully assess risks and avoid impulsive trading
+
+Market Rules:
+1. Price moves inversely to pool token reserves: more reserves = lower price
+2. Large transactions create significant price impact (slippage)
+3. High trading volume suggests momentum, while low volume may indicate manipulation risk
+
+Available Actions:
+1. Buy: Execute a buy order when market conditions are favorable
+   - Provide amount to buy
+   - Explain why buying is the best action
+   - Consider price, volume, and market trends
+
+2. Sell: Execute a sell order when profit-taking is appropriate
+   - Provide amount to sell
+   - Explain why selling is the best action
+   - Consider current position and market conditions
+
+3. Do Nothing: Choose to stay out of the market
+   - Explain why no action is the best decision
+   - Consider uncertainty, risk, or insufficient information
+
+Decision Requirements:
+1. Choose ONE action from: Buy, Sell, or Do Nothing
+2. Provide detailed reasoning for your chosen action
+3. If trading, specify the exact amount
+4. Consider all market factors before making a decision
+5. No need to ask for confirmation, just do it
+
+Important Considerations:
+- All transactions incur gas fees and trading fees
+- Prioritize risk management over aggressive trading
+- Maintain rational analysis, unaffected by market sentiment
+- Always provide clear reasoning for your chosen action
+"""
 
     full_agent = FullAgentWrapper(
         agent_cls=CallbackAgent,
@@ -73,8 +123,14 @@ async def main(address: str) -> None:
     tools = await full_agent._mcp_agent.list_tools()
     print(f"tools: {tools}")
 
+    state = "running"
+
     # stop here until receive a signal to stop
     while True:
+        if state == "idle":
+            await asyncio.sleep(60)
+            continue
+
         try:
             infos = tc.get_info()
             json_infos = json.dumps(infos)

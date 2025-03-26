@@ -136,7 +136,12 @@ class FullAgentWrapper:
         await self._runtime.start()
         
         # Initialize Memory
-        self._memory = MultiMemory(membase_account=membase_account, auto_upload_to_hub=True, preload_from_hub=True)
+        self._memory = MultiMemory(
+            membase_account=membase_account, 
+            auto_upload_to_hub=True, 
+            preload_from_hub=False,
+            default_conversation_id= str(uuid.uuid5(uuid.NAMESPACE_URL, self._name))  
+        )
         
         # Initialize LLM
         self._llm = await self._init_llm()
@@ -210,6 +215,7 @@ class FullAgentWrapper:
             raise RuntimeError("Agent not initialized")
         
         memory = self._memory.get_memory(conversation_id)
+        self._memory.load_from_hub(conversation_id) 
 
         if use_history:
             msgs = memory.get(10)
