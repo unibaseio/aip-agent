@@ -1713,7 +1713,7 @@ wheels = [
 [[package]]
 name = "membase"
 version = "0.1.8"
-source = { git = "https://github.com/unibaseio/membase.git#3531641ecd4f7b3f3d702ec4f3e6560df12bed5b" }
+source = { git = "https://github.com/unibaseio/membase.git#58bff1e25f216d70ca9f6e370b4909e416a6ab38" }
 dependencies = [
     { name = "chromadb" },
     { name = "loguru" },

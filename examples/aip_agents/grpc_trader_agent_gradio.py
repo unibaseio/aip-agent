@@ -1,6 +1,7 @@
 import argparse
 import asyncio
 import json
+import os
 import gradio as gr
 from datetime import datetime
 
@@ -13,12 +14,13 @@ from membase.chain.chain import membase_id, membase_account, membase_secret
 from membase.chain.util import BSC_TESTNET_SETTINGS
 from membase.chain.trader import TraderClient
 
-token_address = "0x2e6b3f12408d5441e56c3C20848A57fd53a78931"
+target_token_address = os.getenv('MEMBASE_TARGET_TOKEN', "0x2e6b3f12408d5441e56c3C20848A57fd53a78931")
+
 tc = TraderClient(
     config=BSC_TESTNET_SETTINGS, 
     wallet_address=membase_account, 
     private_key=membase_secret, 
-    token_address=token_address,
+    token_address=target_token_address,
     membase_id=membase_id
 )
 
@@ -97,6 +99,7 @@ async def process_query(query: str, full_agent):
 
 def create_gradio_interface(full_agent):
     """Create Gradio interface."""
+    
     with gr.Blocks() as demo:
         gr.Markdown("# DEX Trading Agent: " + membase_id)
         
@@ -122,7 +125,7 @@ def create_gradio_interface(full_agent):
                 query_input = gr.Textbox(label="Enter your query", value="analyze the profit", lines=4)
                 query_btn = gr.Button("Process Query")
                 query_output = gr.Textbox(label="Query Result", lines=10)
-                
+
         
         # event handler
         def start_trader_event(progress=gr.Progress()):
@@ -181,7 +184,7 @@ def create_gradio_interface(full_agent):
                 result = get_trader_info()
                 result_dict = json.loads(result)
                 progress(1, desc="Wallet info updated")
-                
+
                 markdown_content = "## Wallet Information\n\n"
                 
                 if "wallet_infos" in result_dict:
@@ -224,9 +227,9 @@ def create_gradio_interface(full_agent):
                 return error_msg
         
         # reverse, latest log first
-        # latest 16 logs
+        # latest 64 logs
         def update_logs():
-            logs = log_history[-16:][::-1] if log_history else []
+            logs = log_history[-64:][::-1] if log_history else []
             markdown_content = "## Operation Logs\n\n"
             for log in logs:
                 markdown_content += f"- {log}\n"
@@ -241,14 +244,20 @@ def create_gradio_interface(full_agent):
                 markdown_content += f"{m.content}\n\n"
             return markdown_content
         
-        # bind events
+
+        # create timer
+        timer = gr.Timer(20, active=True) 
+        timer.tick(update_logs, outputs=history_display)
+        
+        # bind event
         start_btn.click(start_trader_event, outputs=state_display)
         stop_btn.click(stop_trader_event, outputs=state_display)
         refresh_trade_btn.click(update_trade, outputs=history_display)
         query_btn.click(handle_query, inputs=query_input, outputs=query_output)
-        refresh_logs_btn.click(update_logs, outputs=history_display)
-        refresh_wallet_btn.click(update_wallet, outputs=history_display)
         refresh_memory_btn.click(update_memory, outputs=history_display)
+        refresh_wallet_btn.click(update_wallet, outputs=history_display)
+        refresh_logs_btn.click(update_logs, outputs=history_display)
+        
         # Initialize logs on load and update state
         demo.load(update_logs, None, history_display)
         demo.load(update_state, None, state_display)
