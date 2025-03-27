@@ -42,13 +42,15 @@ def get_trader_info():
 def buy_token(amount: int, reason: str):
     """Buy token with the given amount of native token and reason."""
     result = tc.buy(amount, reason)
-    update_log(f"Buy token: amount={amount}, reason={reason}, result={result}")
+    update_log(f"Buy token: amount={amount}, reason={reason}")
+    update_log(f"Buy token result: {result}")
     return result
 
 def sell_token(amount: int, reason: str):
     """Sell token with the given amount of token and reason."""
     result = tc.sell(amount, reason)
-    update_log(f"Sell token: amount={amount}, reason={reason}, result={result}")
+    update_log(f"Sell token: amount={amount}, reason={reason}")
+    update_log(f"Sell token result: {result}")
     return result
 
 def do_nothing(reason: str):
@@ -144,6 +146,9 @@ def create_gradio_interface(full_agent):
                 error_msg = f"Error stopping trader: {str(e)}"
                 update_log(error_msg)
                 return "error"
+        
+        def update_state():
+            return get_trader_state()
         
         def update_trade(progress=gr.Progress()):
             try:
@@ -244,8 +249,9 @@ def create_gradio_interface(full_agent):
         refresh_logs_btn.click(update_logs, outputs=history_display)
         refresh_wallet_btn.click(update_wallet, outputs=history_display)
         refresh_memory_btn.click(update_memory, outputs=history_display)
-        # Initialize logs on load
+        # Initialize logs on load and update state
         demo.load(update_logs, None, history_display)
+        demo.load(update_state, None, state_display)
 
     return demo
 
