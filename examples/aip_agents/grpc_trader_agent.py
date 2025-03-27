@@ -23,12 +23,12 @@ tc = TraderClient(
 state = "idle"
 
 def buy_token(amount: int, reason: str):
-    """Buy token with the given amount and reason."""
+    """Buy token with the given amount of native token and reason."""
     #print(f"Buy a token with the amount: {amount} and reason: {reason}")
     return tc.buy(amount, reason)
 
 def sell_token(amount: int, reason: str):
-    """Sell token with the given amount and reason."""
+    """Sell token with the given amount of token and reason."""
     #print(f"Sell a token with the amount: {amount} and reason: {reason}")
     return tc.sell(amount, reason)
 

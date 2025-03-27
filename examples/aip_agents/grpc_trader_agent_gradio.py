@@ -1,15 +1,13 @@
 import argparse
 import asyncio
 import json
-import logging
-import time
 import gradio as gr
 from datetime import datetime
-import sys
-from pathlib import Path
 
 from aip_agent.agents.full_agent import FullAgentWrapper
 from aip_agent.agents.custom_agent import CallbackAgent
+
+from membase.memory.message import Message
 
 from membase.chain.chain import membase_id, membase_account, membase_secret
 from membase.chain.util import BSC_TESTNET_SETTINGS
@@ -23,6 +21,8 @@ tc = TraderClient(
     token_address=token_address,
     membase_id=membase_id
 )
+
+llm_memory = tc.memory.get_memory()
 
 state = "idle"
 log_history = []
@@ -40,13 +40,13 @@ def get_trader_info():
     return json.dumps(infos, indent=2)
 
 def buy_token(amount: int, reason: str):
-    """Buy token with the given amount and reason."""
+    """Buy token with the given amount of native token and reason."""
     result = tc.buy(amount, reason)
     update_log(f"Buy token: amount={amount}, reason={reason}, result={result}")
     return result
 
 def sell_token(amount: int, reason: str):
-    """Sell token with the given amount and reason."""
+    """Sell token with the given amount of token and reason."""
     result = tc.sell(amount, reason)
     update_log(f"Sell token: amount={amount}, reason={reason}, result={result}")
     return result
@@ -78,9 +78,15 @@ def get_trader_state():
 async def process_query(query: str, full_agent):
     """Process a query and update logs."""
     try:
-        response = await full_agent.process_query(query, use_history=False)
         update_log(f"Query: \n{query}")
+        msg = Message(name=membase_id, role="user", content=query)
+        llm_memory.add(msg)
+
+        response = await full_agent.process_query(query, use_history=False)
+        
         update_log(f"Response: \n{response}")
+        msg = Message(name=membase_id, role="assistant", content=response)
+        llm_memory.add(msg)
         return response
     except Exception as e:
         error_msg = f"Error: {str(e)}"
@@ -103,9 +109,10 @@ def create_gradio_interface(full_agent):
                 
                 with gr.Row():
                     refresh_wallet_btn = gr.Button("Wallet Info")
-                    refresh_trade_btn = gr.Button("Trade Info")
+                    refresh_trade_btn = gr.Button("Transactions")
+                    refresh_memory_btn = gr.Button("LLM Memory")
                     refresh_logs_btn = gr.Button("Operation Logs")
-                history_display = gr.Textbox(label="History Records", value="", lines=10)
+                history_display = gr.Markdown(label="History Records", value="")
                         
             # right log area
             with gr.Column(scale=1):
@@ -147,33 +154,58 @@ def create_gradio_interface(full_agent):
                 if "trade_infos" in result_dict:
                     # latest log first
                     trade_info = result_dict["trade_infos"]["infos"][::-1]
-                    return json.dumps(trade_info, indent=2)
+                    markdown_content = "## Trade History\n\n"
+                    for trade in trade_info:
+                        markdown_content += f"- **Tx Hash**: {trade.get('tx_hash', 'N/A')}\n"
+                        markdown_content += f"  - **Time**: {trade.get('timestamp', 'N/A')}\n"
+                        markdown_content += f"  - **Type**: {trade.get('type', 'N/A')}\n"
+                        markdown_content += f"  - **Gas Fee**: {trade.get('gas_fee', 'N/A')}\n"
+                        markdown_content += f"  - **Price**: {trade.get('strike_price', 'N/A')}\n"
+                        markdown_content += f"  - **Token Delta**: {trade.get('token_delta', 'N/A')}\n"
+                        markdown_content += f"  - **Native Delta**: {trade.get('native_delta', 'N/A')}\n"
+                        markdown_content += f"  - **Reason**: {trade.get('reason', 'N/A')}\n\n"
+                    return markdown_content
                 else:
-                    return "No trade info found"
+                    return "## Trade History\n\nNo trade records found"
             except Exception as e:
-                return "Error getting trade info: " + str(e) 
+                return f"## Error\n\nFailed to get trade info: {str(e)}"
         
         def update_wallet(progress=gr.Progress()):
-            res = ""
             try:
                 progress(0, desc="Updating wallet info...")
                 result = get_trader_info()
-                # Parse JSON string to dict
                 result_dict = json.loads(result)
                 progress(1, desc="Wallet info updated")
+                
+                markdown_content = "## Wallet Information\n\n"
+                
                 if "wallet_infos" in result_dict:
-                    # latest one
                     wallet_info = result_dict["wallet_infos"]["infos"][-1]
-                    res += f"**Wallet Info:**\n{wallet_info}\n"
+                    markdown_content += f"### Wallet Status\n"
+                    markdown_content += f"- **Balance**: {wallet_info.get('native_balance', 'N/A')}\n"
+                    markdown_content += f"- **Token Balance**: {wallet_info.get('token_balance', 'N/A')}\n\n"
+                    tv = wallet_info.get('total_value')
+                    if tv is not None:
+                        tv = float(tv) / 10**18
+                        markdown_content += f"- **Total Value**: {tv} BNB\n"
+
                 if "token_info" in result_dict:
                     token_info = result_dict["token_info"]["infos"]
-                    res += f"**Token Info:**\n{token_info}\n"
+                    markdown_content += f"### Token Information\n"
+                    markdown_content += f"- **Token Address**: {token_info.get('token_address', 'N/A')}\n"
+                    markdown_content += f"- **Total Supply**: {token_info.get('token_total_supply', 'N/A')}\n"
+                    markdown_content += f"- **Swap Fee Tier**: {token_info.get('swap_fee_tier', 'N/A')}\n\n"
+                
                 if "liquidity_infos" in result_dict:
                     liquidity_info = result_dict["liquidity_infos"]["infos"][-1]
-                    res += f"**Liquidity Info:**\n{liquidity_info}\n"
-                return res
+                    markdown_content += f"### Liquidity Information\n"
+                    markdown_content += f"- **Token Reserve**: {liquidity_info.get('token_reserve', 'N/A')}\n"
+                    markdown_content += f"- **BNB Reserve**: {liquidity_info.get('native_reserve', 'N/A')}\n"
+                    markdown_content += f"- **Estimated Price**: {liquidity_info.get('token_price', 'N/A')} BNB\n"
+                
+                return markdown_content
             except Exception as e:
-                return "Error getting wallet info: " + str(e)
+                return f"## Error\n\nFailed to get wallet info: {str(e)}"
         
         async def handle_query(query, progress=gr.Progress()):
             try:
@@ -190,7 +222,19 @@ def create_gradio_interface(full_agent):
         # latest 16 logs
         def update_logs():
             logs = log_history[-16:][::-1] if log_history else []
-            return "\n".join(logs)
+            markdown_content = "## Operation Logs\n\n"
+            for log in logs:
+                markdown_content += f"- {log}\n"
+            return markdown_content
+        
+        def update_memory():
+            latest_memory = llm_memory.get(recent_n=16)
+            latest_memory = latest_memory[::-1]
+            markdown_content = "## LLM Conversation History\n\n"
+            for m in latest_memory:
+                markdown_content += f"### {m.timestamp} {m.role}\n"
+                markdown_content += f"{m.content}\n\n"
+            return markdown_content
         
         # bind events
         start_btn.click(start_trader_event, outputs=state_display)
@@ -199,9 +243,9 @@ def create_gradio_interface(full_agent):
         query_btn.click(handle_query, inputs=query_input, outputs=query_output)
         refresh_logs_btn.click(update_logs, outputs=history_display)
         refresh_wallet_btn.click(update_wallet, outputs=history_display)
-
+        refresh_memory_btn.click(update_memory, outputs=history_display)
         # Initialize logs on load
-        demo.load(update_wallet, None, history_display)
+        demo.load(update_logs, None, history_display)
 
     return demo
 
@@ -224,8 +268,9 @@ async def trader_loop(full_agent):
             response = await full_agent.process_query(json_infos, use_history=False)
             
             # Log the response
-            update_log(f"Response:\n {response}")
-            
+            #update_log(f"Response:\n {response}")
+            msg = Message(name=membase_id, role="assistant", content=response)
+            llm_memory.add(msg)
         except Exception as e:
             error_msg = f"Error: {str(e)}"
             update_log(error_msg)
