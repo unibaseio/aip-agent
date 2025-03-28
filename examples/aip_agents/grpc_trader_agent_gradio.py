@@ -4,7 +4,6 @@ import json
 import os
 import gradio as gr
 from datetime import datetime
-import pandas as pd
 import plotly.graph_objects as go
 
 from aip_agent.agents.full_agent import FullAgentWrapper

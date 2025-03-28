@@ -25,6 +25,7 @@ dependencies = [
  "flask>=3.1.0",
  "gradio>=5.20.1",
  "membase>=0.1.8",
+ "plotly>=6.0.1",
 ]
 [[project.authors]]
 name = "felix"
