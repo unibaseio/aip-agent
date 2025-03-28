@@ -53,3 +53,5 @@ aip_agent.secrets.yaml
 chessboard.svg
  
 .gradio
+
+.cursor/*

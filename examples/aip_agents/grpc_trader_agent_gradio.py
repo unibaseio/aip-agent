@@ -4,6 +4,8 @@ import json
 import os
 import gradio as gr
 from datetime import datetime
+import pandas as pd
+import plotly.graph_objects as go
 
 from aip_agent.agents.full_agent import FullAgentWrapper
 from aip_agent.agents.custom_agent import CallbackAgent
@@ -45,9 +47,11 @@ Decision Requirements:
 1. Choose ONE action from: Buy, Sell, or Do Nothing
 2. Provide detailed reasoning for your chosen action
 3. If trading, specify the exact amount
-4. Sell amount should be larger than minimum sell amount, buy amount should be larger than minimum buy amount
-5. Consider all market factors before making a decision
-6. No need to ask for confirmation, just do it
+   - Ensure your trade amount is larger than the minimum requirement
+   - For buy orders: amount must be > minimum buy amount
+   - For sell orders: amount must be > minimum sell amount
+4. Consider all market factors before making a decision
+5. No need to ask for confirmation, just do it
 
 Important Considerations:
 - All transactions incur gas fees and trading fees
@@ -148,25 +152,28 @@ def create_gradio_interface(full_agent):
         with gr.Row():
             # left config area
             with gr.Column(scale=1):
-                gr.Markdown("## Configuration")
-                with gr.Row():
-                    start_btn = gr.Button("Start Trading")
-                    stop_btn = gr.Button("Stop Trading")
-                state_display = gr.Textbox(label="Current State", value=get_trader_state())
-                
+                gr.Markdown("## Wallet Balance")
+                wallet_chart = gr.Plot()    
+            
                 with gr.Row():
                     refresh_wallet_btn = gr.Button("Wallet Info")
                     refresh_trade_btn = gr.Button("Transactions")
                     refresh_memory_btn = gr.Button("LLM Memory")
                     refresh_logs_btn = gr.Button("Operation Logs")
-                history_display = gr.Markdown(label="History Records", value="")
-                        
+                history_display = gr.Markdown(label="History Records", value="", min_height=100)
+     
             # right log area
             with gr.Column(scale=1):
+                gr.Markdown("## Background Trade Task")
+                with gr.Row():
+                    start_btn = gr.Button("Start")
+                    stop_btn = gr.Button("Stop")
+                state_display = gr.Textbox(label="Current State", value=get_trader_state())
+
                 gr.Markdown("## Query")
-                query_input = gr.Textbox(label="Enter your query", value="analyze the profit", lines=4)
+                query_input = gr.Textbox(label="Enter your query", value="analyze my profit using trade info", lines=4)
                 query_btn = gr.Button("Process Query")
-                query_output = gr.Textbox(label="Query Result", lines=10)
+                query_output = gr.Markdown(label="Query Result", value="", min_height=100)
 
         
         # event handler
@@ -233,7 +240,6 @@ def create_gradio_interface(full_agent):
                 progress(1, desc="Wallet info updated")
 
                 markdown_content = "## Wallet Information\n\n"
-                
                 if "wallet_infos" in result_dict:
                     wallet_info = result_dict["wallet_infos"]["infos"][-1]
                     markdown_content += f"### Wallet Status\n"
@@ -242,8 +248,8 @@ def create_gradio_interface(full_agent):
                     tv = wallet_info.get('total_value')
                     if tv is not None:
                         tv = float(tv) / 10**18
-                        markdown_content += f"- **Total Value**: {tv} BNB\n"
-
+                        markdown_content += f"- **Total Balance**: {tv} BNB\n"
+                
                 if "token_info" in result_dict:
                     token_info = result_dict["token_info"]["infos"]
                     markdown_content += f"### Token Information\n"
@@ -253,7 +259,7 @@ def create_gradio_interface(full_agent):
                 
                 if "liquidity_infos" in result_dict:
                     liquidity_info = result_dict["liquidity_infos"]["infos"][-1]
-                    markdown_content += f"### Liquidity Information\n"
+                    markdown_content += f"### Liquidity Pool\n"
                     markdown_content += f"- **Token Reserve**: {liquidity_info.get('token_reserve', 'N/A')}\n"
                     markdown_content += f"- **BNB Reserve**: {liquidity_info.get('native_reserve', 'N/A')}\n"
                     markdown_content += f"- **Estimated Price**: {liquidity_info.get('token_price', 'N/A')} BNB\n"
@@ -261,12 +267,129 @@ def create_gradio_interface(full_agent):
                 return markdown_content
             except Exception as e:
                 return f"## Error\n\nFailed to get wallet info: {str(e)}"
+
+        def update_wallet_chart():
+            try:
+                infos = tc.get_info(recent_n=64)
+                
+                fig = go.Figure()
+                if "wallet_infos" in infos:
+                    wallet_history = []
+                    wallet_infos = infos["wallet_infos"]["infos"][1:]
+                    for wallet_info in wallet_infos:
+                        tv = wallet_info.get('total_value')
+                        tb = wallet_info.get('token_balance')
+                        if tv is not None and tb is not None:
+                            tv = float(tv) / 10**18
+                            tb = float(tb) / 10**18
+                            wallet_history.append({
+                                "timestamp": wallet_info.get('timestamp'),
+                                "total_value": tv,
+                                "token_balance": tb
+                            })
+                    
+                    if len(wallet_history) > 1:
+                        # Calculate ranges with padding
+                        total_values = [h["total_value"] for h in wallet_history]
+                        token_values = [h["token_balance"] for h in wallet_history]
+                        
+                        total_min, total_max = min(total_values), max(total_values)
+                        token_min, token_max = min(token_values), max(token_values)
+                        
+                        # Add 10% padding to ranges
+                        total_range = total_max - total_min
+                        token_range = token_max - token_min
+                        
+                        total_min -= total_range * 0.30
+                        if total_min < 0:
+                            total_min = 0
+                        total_max += total_range * 0.30
+                        token_min -= token_range * 0.25
+                        if token_min < 0:
+                            token_min = 0
+                        token_max += token_range * 0.25
+                        
+                        # Add total balance trace
+                        fig.add_trace(go.Scatter(
+                            x=[h["timestamp"] for h in wallet_history],
+                            y=[h["total_value"] for h in wallet_history],
+                            mode='lines',
+                            name='Total Balance (BNB)',
+                            line=dict(
+                                color='#CBD5E0',  # Light gray color
+                                width=2.5,
+                                shape='spline',
+                                smoothing=1.3,
+                                dash='solid'
+                            ),
+                            yaxis='y'
+                        ))
+
+                        # Add token balance trace
+                        fig.add_trace(go.Scatter(
+                            x=[h["timestamp"] for h in wallet_history],
+                            y=[h["token_balance"] for h in wallet_history],
+                            mode='lines',
+                            name='Token Balance',
+                            line=dict(
+                                color='#BEE3F8',  # Light blue color
+                                width=2.5,
+                                shape='spline',
+                                smoothing=1.3,
+                                dash='solid'
+                            ),
+                            yaxis='y2'
+                        ))
+                
+                fig.update_layout(
+                    yaxis_title='Total Balance (BNB)',
+                    yaxis2=dict(
+                        title='Token Balance',
+                        overlaying='y',
+                        side='right',
+                        showgrid=False,
+                        range=[token_min, token_max]
+                    ),
+                    yaxis=dict(
+                        range=[total_min, total_max],
+                        gridcolor='#e2e8f0',
+                        showgrid=True
+                    ),
+                    height=400,
+                    margin=dict(l=50, r=50, t=50, b=50),
+                    showlegend=True,
+                    legend=dict(
+                        yanchor="bottom",
+                        y=1.02,
+                        xanchor="center",
+                        x=0.5,
+                        orientation="h"  # Horizontal layout
+                    ),
+                    plot_bgcolor='white',
+                    paper_bgcolor='white',
+                    xaxis=dict(
+                        gridcolor='#e2e8f0',
+                        showgrid=True
+                    )
+                )
+                
+                return fig
+            except Exception as e:
+                update_log(f"Error updating wallet chart: {str(e)}")
+                return None
         
         async def handle_query(query, progress=gr.Progress()):
             try:
-                progress(0, desc="Processing query...")
+                # Set estimated time to 20 seconds
+                progress(0, desc="Processing query...", total=20)
+                
+                # Simulate progress updates
+                for i in range(19):
+                    await asyncio.sleep(1)
+                    progress((i + 1)/20, desc=f"Processing query...")
+                    
                 result = await process_query(query, full_agent)
-                progress(1, desc="Query processed")
+                progress(1, desc="Query processed successfully")
                 return result
             except Exception as e:
                 error_msg = f"Error processing query: {str(e)}"
@@ -296,11 +419,15 @@ def create_gradio_interface(full_agent):
         timer = gr.Timer(20, active=True) 
         timer.tick(update_logs, outputs=history_display)
         
+        # create wallet chart timer
+        wallet_chart_timer = gr.Timer(60, active=True)
+        wallet_chart_timer.tick(update_wallet_chart, outputs=wallet_chart)
+        
         # bind event
         start_btn.click(start_trader_event, outputs=state_display)
         stop_btn.click(stop_trader_event, outputs=state_display)
         refresh_trade_btn.click(update_trade, outputs=history_display)
-        query_btn.click(handle_query, inputs=query_input, outputs=query_output)
+        query_btn.click(handle_query, inputs=query_input, outputs=query_output, show_progress=True)
         refresh_memory_btn.click(update_memory, outputs=history_display)
         refresh_wallet_btn.click(update_wallet, outputs=history_display)
         refresh_logs_btn.click(update_logs, outputs=history_display)
@@ -308,6 +435,7 @@ def create_gradio_interface(full_agent):
         # Initialize logs on load and update state
         demo.load(update_logs, None, history_display)
         demo.load(update_state, None, state_display)
+        demo.load(update_wallet_chart, None, wallet_chart)
 
     return demo
 
