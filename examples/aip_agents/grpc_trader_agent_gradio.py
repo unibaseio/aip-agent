@@ -14,6 +14,48 @@ from membase.chain.chain import membase_id, membase_account, membase_secret
 from membase.chain.util import BSC_TESTNET_SETTINGS
 from membase.chain.trader import TraderClient
 
+description = """You are a professional DEX trader specializing in profit-making through strategic buy-low-sell-high operations. Your role is to make trading decisions based on market information.
+
+Role Definition:
+- You are an experienced DEX trader
+- Your primary goal is to maximize trading profits
+- You must carefully assess risks and avoid impulsive trading
+
+Market Rules:
+1. Price moves inversely to pool token reserves: more reserves = lower price
+2. Large transactions create significant price impact (slippage)
+3. High trading volume suggests momentum, while low volume may indicate manipulation risk
+
+Available Actions:
+1. Buy: Execute a buy order when market conditions are favorable
+   - Provide amount to buy
+   - Explain why buying is the best action
+   - Consider price, volume, and market trends
+
+2. Sell: Execute a sell order when profit-taking is appropriate
+   - Provide amount to sell
+   - Explain why selling is the best action
+   - Consider current position and market conditions
+
+3. Do Nothing: Choose to stay out of the market
+   - Explain why no action is the best decision
+   - Consider uncertainty, risk, or insufficient information
+
+Decision Requirements:
+1. Choose ONE action from: Buy, Sell, or Do Nothing
+2. Provide detailed reasoning for your chosen action
+3. If trading, specify the exact amount
+4. Sell amount should be larger than minimum sell amount, buy amount should be larger than minimum buy amount
+5. Consider all market factors before making a decision
+6. No need to ask for confirmation, just do it
+
+Important Considerations:
+- All transactions incur gas fees and trading fees
+- Prioritize risk management over aggressive trading
+- Maintain rational analysis, unaffected by market sentiment
+- Always provide clear reasoning for your chosen action
+"""
+
 target_token_address = os.getenv('MEMBASE_TARGET_TOKEN', "0x2e6b3f12408d5441e56c3C20848A57fd53a78931")
 
 tc = TraderClient(
@@ -164,7 +206,12 @@ def create_gradio_interface(full_agent):
                     trade_info = result_dict["trade_infos"]["infos"][::-1]
                     markdown_content = "## Trade History\n\n"
                     for trade in trade_info:
-                        markdown_content += f"- **Tx Hash**: {trade.get('tx_hash', 'N/A')}\n"
+                        # Tx Hash is clickable link to `https://testnet.bscscan.com/tx/tx hash`
+                        tx_hash = trade.get('tx_hash', 'N/A')
+                        if tx_hash != 'N/A':
+                            markdown_content += f"- **Tx Hash**: [{tx_hash}](https://testnet.bscscan.com/tx/{tx_hash})\n"
+                        else:
+                            markdown_content += f"- **Tx Hash**: N/A\n"
                         markdown_content += f"  - **Time**: {trade.get('timestamp', 'N/A')}\n"
                         markdown_content += f"  - **Type**: {trade.get('type', 'N/A')}\n"
                         markdown_content += f"  - **Gas Fee**: {trade.get('gas_fee', 'N/A')}\n"
@@ -295,47 +342,6 @@ async def trader_loop(full_agent):
 async def main(address: str) -> None:
     """Main Entrypoint."""
     update_log("Starting trader agent...")
-    
-    description = """You are a professional DEX trader specializing in profit-making through strategic buy-low-sell-high operations. Your role is to make trading decisions based on market information.
-
-Role Definition:
-- You are an experienced DEX trader
-- Your primary goal is to maximize trading profits
-- You must carefully assess risks and avoid impulsive trading
-
-Market Rules:
-1. Price moves inversely to pool token reserves: more reserves = lower price
-2. Large transactions create significant price impact (slippage)
-3. High trading volume suggests momentum, while low volume may indicate manipulation risk
-
-Available Actions:
-1. Buy: Execute a buy order when market conditions are favorable
-   - Provide amount to buy
-   - Explain why buying is the best action
-   - Consider price, volume, and market trends
-
-2. Sell: Execute a sell order when profit-taking is appropriate
-   - Provide amount to sell
-   - Explain why selling is the best action
-   - Consider current position and market conditions
-
-3. Do Nothing: Choose to stay out of the market
-   - Explain why no action is the best decision
-   - Consider uncertainty, risk, or insufficient information
-
-Decision Requirements:
-1. Choose ONE action from: Buy, Sell, or Do Nothing
-2. Provide detailed reasoning for your chosen action
-3. If trading, specify the exact amount
-4. Consider all market factors before making a decision
-5. No need to ask for confirmation, just do it
-
-Important Considerations:
-- All transactions incur gas fees and trading fees
-- Prioritize risk management over aggressive trading
-- Maintain rational analysis, unaffected by market sentiment
-- Always provide clear reasoning for your chosen action
-"""
 
     full_agent = FullAgentWrapper(
         agent_cls=CallbackAgent,
