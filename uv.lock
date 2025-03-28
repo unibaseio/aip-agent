@@ -1713,7 +1713,7 @@ wheels = [
 [[package]]
 name = "membase"
 version = "0.1.8"
-source = { git = "https://github.com/unibaseio/membase.git#58bff1e25f216d70ca9f6e370b4909e416a6ab38" }
+source = { git = "https://github.com/unibaseio/membase.git#1f6ecf09930c5df8d505f54e4d80b167f749a470" }
 dependencies = [
     { name = "chromadb" },
     { name = "loguru" },
@@ -3469,7 +3469,7 @@ wheels = [
 
 [[package]]
 name = "web3"
-version = "7.9.0"
+version = "7.10.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -3487,9 +3487,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "websockets" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/5d/d7/f67b4947d89ab6a0c7a2079452e804368ebb4c36e47bfb12cf7641d93c60/web3-7.9.0.tar.gz", hash = "sha256:3c4487a7ac57e0a187bd7ee03db455d94f354d15cca45f097f15f7281ad1a01f", size = 2193782 }
+sdist = { url = "https://files.pythonhosted.org/packages/6d/19/c1e213dd87ead2ace55ff1dd179df6050bcf5d9006440c9153969c7d6863/web3-7.10.0.tar.gz", hash = "sha256:0cace05ea14f800a4497649ecd99332ca4e85c8a90ea577e05ae909cb08902b9", size = 2193725 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ef/df/7ca4a880772a3eea99c994d40d142c96cb679e625dd4bce3cd79901e58d8/web3-7.9.0-py3-none-any.whl", hash = "sha256:7818267675283e9cae4487d2805fc34b899aa26f41b0000c798c79b1684899eb", size = 1365826 },
+    { url = "https://files.pythonhosted.org/packages/4c/c5/a8e25e3ff51c7cd6d2bdecf75da2afb2923b29eba28e5dfe4fde72ad2322/web3-7.10.0-py3-none-any.whl", hash = "sha256:06fcab920554450e9f7d108da5e6b9d29c0d1a981a59a5551cc82d2cb2233b34", size = 1365880 },
 ]
 
 [[package]]
