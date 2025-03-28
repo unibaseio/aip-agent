@@ -174,6 +174,19 @@ python role.py --moderator=<above_moderator_id> --role=<white|black>
 python app.py  # Access at http://localhost:5000
 ```
 
+### Trade Agent
+
+```shell
+export MEMBASE_ID="<moderator_id>"
+export MEMBASE_ACCOUNT="<membase account>"
+export MEMBASE_SECRET_KEY="<membase secret key>"
+# default taget token is "0x2e6b3f12408d5441e56c3C20848A57fd53a78931"
+# token is paired with wnbn using pancakeswap v3 in bsc testnet
+export MEMBASE_TARGET_TOKEN="your target token"
+cd examples/aip_agents
+uv run grpc_trader_agent_gradio.py
+```
+
 ### Python Code Examples
 
 #### Full Agent Example
