@@ -19,6 +19,7 @@ async def main(address: str) -> None:
         name=membase_id,
         description="You are an assistant",
         host_address=address,
+        server_names=["membase"],
     )
     await full_agent.initialize()
 

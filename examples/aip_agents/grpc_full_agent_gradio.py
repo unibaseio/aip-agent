@@ -14,6 +14,7 @@ async def main(address: str, gradio_address: str, gradio_port: int) -> None:
         name=membase_id,
         description="You are an assistant",
         host_address=address,
+        server_names=["membase"]
     )
     await full_agent.initialize()
 
@@ -24,10 +25,10 @@ async def main(address: str, gradio_address: str, gradio_port: int) -> None:
         fn=chatbot_interface,
         type='messages',
         title="💬 AIP Agent Chatbot",
-        description="A Gradio chatbot powered by aip-agent"
+        description="A Gradio chatbot powered by aip-agent: "+ membase_id
     )
-    interface.launch(share=False, server_name=gradio_address, server_port=gradio_port)
-    await full_agent.stop()
+    interface.launch(share=False, server_port=gradio_port, prevent_thread_lock=True)
+    await full_agent.stop_when_signal()
 
 
 if __name__ == "__main__":

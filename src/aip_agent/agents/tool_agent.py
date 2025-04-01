@@ -65,11 +65,11 @@ class ToolAgentWrapper:
                             AgentId(self._name, "default"),
                             sender=AgentId(self._name, "default")
                         ),
-                        timeout=10.0  # 10 seconds timeout
+                        timeout=30.0  # 30 seconds timeout
                     )
                     self._heartbeat_failures = 0
                 except asyncio.TimeoutError:
-                    print("Heartbeat message timed out after 10 seconds")
+                    print("Heartbeat message timed out after 30 seconds")
                     self._heartbeat_failures += 1
                     if self._heartbeat_failures >= self._max_failures:
                         print(f"Too many heartbeat failures ({self._heartbeat_failures}), stopping agent")
@@ -160,11 +160,11 @@ class ToolAgentWrapper:
                     AgentId("config_hub", "default"),
                     sender=AgentId(self._name, "default")
                 ),
-                timeout=10.0  # 10 seconds timeout
+                timeout=30.0  # 30 seconds timeout
             )
             print(f"Response from config_hub: {res}")
         except asyncio.TimeoutError:
-            print("Update in hub timed out after 10 seconds")
+            print("Update in hub timed out after 30 seconds")
             raise
         except Exception as e:
             print(f"Error updating in hub: {e}")

@@ -257,13 +257,13 @@ class FullAgentWrapper:
                     AgentId(target_id, "default"),
                     sender=AgentId(self._name, "default")
                 ),
-                timeout=10.0  # 10 seconds timeout
+                timeout=120.0  # 120 seconds timeout
             )
             print(f"Response from {target_id}: {response.content}")
             return response
         except asyncio.TimeoutError:
-            print(f"Message to {target_id} timed out after 10 seconds")
-            return f"Message to {target_id} timed out after 10 seconds"
+            print(f"Message to {target_id} timed out after 120 seconds")
+            return f"Message to {target_id} timed out after 120 seconds"
         except Exception as e:
             print(f"Error sending message to {target_id}: {e}")
             return f"Error sending message to {target_id}: {e}"
@@ -293,11 +293,11 @@ class FullAgentWrapper:
                     AgentId("config_hub", "default"),
                     sender=AgentId(self._name, "default")
                 ),
-                timeout=10.0  # 10秒超时
+                timeout=30.0  
             )
             print(f"Response from config_hub: {res}")
         except asyncio.TimeoutError:
-            print("Update in hub timed out after 10 seconds")
+            print("Update in hub timed out after 30 seconds")
             raise
         except Exception as e:
             print(f"Error updating in hub: {e}")
@@ -311,10 +311,10 @@ class FullAgentWrapper:
         try:
             await asyncio.wait_for(
                 self._mcp_agent.load_server(server_name, url),
-                timeout=10.0  # 10秒超时
+                timeout=30.0 
             )
         except asyncio.TimeoutError:
-            print(f"Loading server {server_name} timed out after 10 seconds")
+            print(f"Loading server {server_name} timed out after 30 seconds")
             raise
         except Exception as e:
             print(f"Error loading server {server_name}: {e}")

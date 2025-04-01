@@ -17,8 +17,7 @@ from aip_agent.agents.tool_agent import ToolAgentWrapper
 
 rag = ChromaKnowledgeBase(
     persist_directory="./chroma_config_db",
-    collection_name="default",
-    anonymized_telemetry=False,
+    collection_name="membase_config",
     membase_account=membase_account,
     auto_upload_to_hub=True,
 )

@@ -16,6 +16,18 @@ mcp:
     agent_hub:
       transport: "aip-sse"
       url: "http://127.0.0.1:8080"
+    mcp_agent:
+      command: "uv"
+      args: ["run", "mcp_server.py"]
+    membase:
+      #transport: "sse"
+      #url: "http://127.0.0.1:8000/sse"
+      command: uv
+      args: ["run", "../../../membase-mcp/src/membase_mcp/server.py"]
+      env:
+        MEMBASE_ACCOUNT: membase-mcp-test
+        MEMBASE_CONVERSATION_ID: conversation_test
+        MEMBASE_ID: mcp
 
 openai:
   # Secrets (API keys, etc.) are stored in an aip_agent.secrets.yaml file which can be gitignored

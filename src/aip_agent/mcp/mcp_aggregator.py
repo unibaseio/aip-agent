@@ -422,11 +422,11 @@ class MCPAggregator(ContextDependent):
                     AgentId(agent_name, "default"),
                     sender=AgentId(self._name, "default")
                 ),
-                timeout=10.0  # 10 seconds timeout
+                timeout=120.0  # 120 seconds timeout
             )
             return res
         except asyncio.TimeoutError:
-            print(f"Message to {agent_name} timed out after 10 seconds")
+            print(f"Message to {agent_name} timed out after 120 seconds")
             return f"Message sending timed out, {agent_name} is offline"
         except Exception as e:
             print(f"Error sending message to {agent_name}: {e}")
