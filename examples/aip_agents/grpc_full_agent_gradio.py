@@ -14,7 +14,7 @@ async def main(address: str, gradio_address: str, gradio_port: int) -> None:
         name=membase_id,
         description="You are an assistant",
         host_address=address,
-        server_names=["membase"]
+        server_names=["membase", "beeper"]
     )
     await full_agent.initialize()
 
@@ -41,10 +41,9 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     if args.verbose:
-        logging.basicConfig(level=logging.WARNING)
-        logging.getLogger("autogen_core").setLevel(logging.DEBUG)
-        file_name = "agent_" + membase_id + ".log"
-        handler = logging.FileHandler(file_name)
-        logging.getLogger("autogen_core").addHandler(handler)
+        logging.basicConfig(level=logging.INFO)
+        logging.getLogger("aip_agent").setLevel(logging.DEBUG)
+        logging.getLogger("autogen").setLevel(logging.DEBUG)
+
 
     asyncio.run(main(args.address, args.host, args.port))

@@ -20,14 +20,17 @@ mcp:
       command: "uv"
       args: ["run", "mcp_server.py"]
     membase:
-      #transport: "sse"
-      #url: "http://127.0.0.1:8000/sse"
       command: uv
       args: ["run", "../../../membase-mcp/src/membase_mcp/server.py"]
       env:
         MEMBASE_ACCOUNT: membase-mcp-test
         MEMBASE_CONVERSATION_ID: conversation_test
         MEMBASE_ID: mcp
+    beeper:
+      command: uv
+      args: ["run", "../../../beeper-mcp/src/beeper_mcp/server.py"]
+      env:
+        MEMBASE_CHAIN: bsc-testnet
 
 openai:
   # Secrets (API keys, etc.) are stored in an aip_agent.secrets.yaml file which can be gitignored

@@ -26,7 +26,6 @@ setup(
         "pyyaml>=6.0.2",
         "rich>=13.9.4",
         "typer>=0.15.1",
-        "numpy>=2.2.1",
         "scikit-learn>=1.6.0",
         "loguru>=0.7.3",
         "autogen-core==0.4.8",
