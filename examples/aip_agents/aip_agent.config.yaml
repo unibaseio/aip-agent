@@ -21,14 +21,24 @@ mcp:
       args: ["run", "mcp_server.py"]
     membase:
       command: uv
-      args: ["run", "../../../membase-mcp/src/membase_mcp/server.py"]
+      args: [
+        "--directory",
+        "../../../membase-mcp",
+        "run",
+        "src/membase_mcp/server.py",
+      ]
       env:
         MEMBASE_ACCOUNT: membase-mcp-test
         MEMBASE_CONVERSATION_ID: conversation_test
         MEMBASE_ID: mcp
     beeper:
       command: uv
-      args: ["run", "../../../beeper-mcp/src/beeper_mcp/server.py"]
+      args: [
+        "--directory",
+        "../../../beeper-mcp",
+        "run",
+        "src/beeper_mcp/server.py",
+      ]
       env:
         MEMBASE_CHAIN: bsc-testnet
 
