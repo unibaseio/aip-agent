@@ -101,7 +101,7 @@ class OpenAIAugmentedLLM(
 
         params = self.get_request_params(request_params)
 
-        system_prompt = self.instruction or params.systemPrompt
+        system_prompt =  params.systemPrompt or self.instruction
         if system_prompt:
             messages.append(
                 ChatCompletionSystemMessageParam(role="system", content=system_prompt)

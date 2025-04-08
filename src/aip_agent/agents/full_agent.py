@@ -76,7 +76,7 @@ class FullAgentWrapper:
         # 心跳相关属性
         self._heartbeat_task: Optional[asyncio.Task] = None
         self._heartbeat_failures = 0
-        self._max_failures = 3
+        self._max_failures = 5
         self._running = True
 
     async def _send_heartbeat(self) -> None:
@@ -108,7 +108,7 @@ class FullAgentWrapper:
                         print(f"Too many heartbeat failures ({self._heartbeat_failures}), stopping agent")
                         await self.stop()
                         break
-                    await asyncio.sleep(30*self._heartbeat_failures)  # wait 5 seconds and retry
+                    await asyncio.sleep(30*self._heartbeat_failures)  # wait and retry
                     continue
                 
                 await asyncio.sleep(60)  # wait 60 seconds and send heartbeat again
@@ -208,7 +208,9 @@ class FullAgentWrapper:
     async def process_query(self, 
                             query: str, 
                             conversation_id: Optional[str] = None, 
-                            use_history: bool = True
+                            use_history: bool = True,
+                            system_prompt: Optional[str] = None,
+                            recent_n_messages: int = 16,
                             ) -> str:
         """Process user queries and generate responses"""
         if not self._initialized:
@@ -218,7 +220,7 @@ class FullAgentWrapper:
         self._memory.load_from_hub(conversation_id) 
 
         if use_history:
-            msgs = memory.get(10)
+            msgs = memory.get(recent_n=recent_n_messages)
         else:
             msgs = []
 
@@ -235,7 +237,8 @@ class FullAgentWrapper:
         response = await self._llm.generate_str(
             mps,
             request_params=RequestParams(
-                use_history=False #ignore history in llm, we added here
+                use_history=False, #ignore history in llm, we added here
+                systemPrompt=system_prompt
             )
         )
         memory.add(Message(content=response, name=self._name, role="assistant"))

@@ -126,12 +126,14 @@ def get_trader_state():
 
 async def process_query(query: str, full_agent):
     """Process a query and update logs."""
+    global description
     try:
         update_log(f"Query: \n{query}")
         msg = Message(name=membase_id, role="user", content=query)
         llm_memory.add(msg)
 
-        response = await full_agent.process_query(query, use_history=False)
+        print(f"description: {description}")
+        response = await full_agent.process_query(query, use_history=False, system_prompt=description)
         
         update_log(f"Response: \n{response}")
         msg = Message(name=membase_id, role="assistant", content=response)
@@ -169,6 +171,13 @@ def create_gradio_interface(full_agent):
                     stop_btn = gr.Button("Stop")
                 state_display = gr.Textbox(label="Current State", value=get_trader_state())
 
+                # display system prompt and allow user to change it
+                gr.Markdown("## Trade Strategy")
+                system_prompt_display = gr.Textbox(label="Trade Strategy", value=description, lines=4, max_lines=16)
+                with gr.Row():
+                    system_prompt_update_btn = gr.Button("Update")
+                    system_prompt_refresh_btn = gr.Button("Reset")
+                
                 gr.Markdown("## Query")
                 query_input = gr.Textbox(label="Enter your query", value="analyze my profit using trade info", lines=4)
                 query_btn = gr.Button("Process Query")
@@ -413,6 +422,11 @@ def create_gradio_interface(full_agent):
                 markdown_content += f"{m.content}\n\n"
             return markdown_content
         
+        def update_system_prompt(system_prompt):
+            global description
+            if system_prompt:
+                description = system_prompt
+            return description
 
         # create timer
         timer = gr.Timer(20, active=True) 
@@ -430,6 +444,8 @@ def create_gradio_interface(full_agent):
         refresh_memory_btn.click(update_memory, outputs=history_display)
         refresh_wallet_btn.click(update_wallet, outputs=history_display)
         refresh_logs_btn.click(update_logs, outputs=history_display)
+        system_prompt_update_btn.click(update_system_prompt, inputs=system_prompt_display, outputs=system_prompt_display)
+        system_prompt_refresh_btn.click(update_system_prompt, inputs=gr.State(description), outputs=system_prompt_display)
         
         # Initialize logs on load and update state
         demo.load(update_logs, None, history_display)
@@ -454,7 +470,8 @@ async def trader_loop(full_agent):
             json_infos = json.dumps(infos)
             
             # Process the query
-            response = await full_agent.process_query(json_infos, use_history=False)
+            print(f"description: {description}")
+            response = await full_agent.process_query(json_infos, use_history=False, system_prompt=description)
             
             # Log the response
             #update_log(f"Response:\n {response}")
