@@ -278,7 +278,7 @@ def create_gradio_interface(full_agent):
 
         def update_wallet_chart():
             try:
-                infos = tc.get_info(recent_n=64)
+                infos = tc.get_info(recent_n=128)
                 
                 fig = go.Figure()
                 if "wallet_infos" in infos:
