@@ -1,0 +1,9 @@
+services:
+  trader_agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "7860:7860"
+    env_file:
+      - .env

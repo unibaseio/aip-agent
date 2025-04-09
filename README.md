@@ -187,6 +187,14 @@ cd examples/aip_agents
 uv run grpc_trader_agent_gradio.py
 ```
 
+- use docker
+
+```shell
+# set your environments in .env.example
+# rename to .env
+docker compose up -d --build
+```
+
 ### Python Code Examples
 
 #### Full Agent Example

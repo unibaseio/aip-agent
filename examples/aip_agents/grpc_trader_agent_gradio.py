@@ -251,6 +251,7 @@ def create_gradio_interface(full_agent):
                 if "wallet_infos" in result_dict:
                     wallet_info = result_dict["wallet_infos"]["infos"][-1]
                     markdown_content += f"### Wallet Status\n"
+                    markdown_content += f"- **Address**: {membase_account}\n"
                     markdown_content += f"- **Balance**: {wallet_info.get('native_balance', 'N/A')}\n"
                     markdown_content += f"- **Token Balance**: {wallet_info.get('token_balance', 'N/A')}\n\n"
                     tv = wallet_info.get('total_value')
