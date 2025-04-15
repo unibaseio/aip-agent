@@ -14,7 +14,7 @@ async def main(address: str, gradio_address: str, gradio_port: int) -> None:
         name=membase_id,
         description="You are an assistant",
         host_address=address,
-        server_names=["membase", "beeper"]
+        server_names=["membase", "beeper", "cryptopanic"]
     )
     await full_agent.initialize()
 

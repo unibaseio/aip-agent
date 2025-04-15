@@ -183,7 +183,7 @@ export MEMBASE_SECRET_KEY="<membase secret key>"
 # default taget token is "0x2e6b3f12408d5441e56c3C20848A57fd53a78931"
 # token is paired with wnbn using pancakeswap v3 in bsc testnet
 export MEMBASE_TARGET_TOKEN="your target token"
-cd examples/aip_agents
+cd examples/aip_trader_agents
 uv run grpc_trader_agent_gradio.py
 ```
 

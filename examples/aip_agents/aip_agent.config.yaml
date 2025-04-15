@@ -34,13 +34,24 @@ mcp:
     beeper:
       command: uv
       args: [
+        #"../../../beeper-mcp/src/beeper_mcp/server.py",
         "--directory",
         "../../../beeper-mcp",
         "run",
         "src/beeper_mcp/server.py",
       ]
       env:
-        MEMBASE_CHAIN: bsc-testnet
+        BEEPER_CHAIN: bsc-testnet
+    cryptopanic:
+      command: uv
+      args: [
+        "--directory",
+        "../../../cryptopanic-mcp-server",
+        "run",
+        "main.py",
+      ]
+      env:
+        CRYPTOPANIC_API_KEY: <cryptopanic_api_key>
 
 openai:
   # Secrets (API keys, etc.) are stored in an aip_agent.secrets.yaml file which can be gitignored
