@@ -52,8 +52,6 @@ def save_tweets(user_name):
     for tweet in tweets:
         doc = format_tweet(tweet)
         rag.add_documents([doc])
-    
-    rag.close()
 
 if __name__ == "__main__":
     save_tweets(default_x_name)
