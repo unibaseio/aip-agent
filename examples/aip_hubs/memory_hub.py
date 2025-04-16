@@ -3,11 +3,9 @@ import argparse
 import asyncio
 import logging
 import os
-from typing import Annotated, List
+from typing import Annotated, List, Optional
 
-from membase.chain.chain import membase_chain, membase_id, membase_account
-from membase.memory.buffered_memory import BufferedMemory
-from membase.memory.message import Message
+from membase.chain.chain import membase_id, membase_account
 from membase.knowledge.chroma import ChromaKnowledgeBase
 from membase.knowledge.document import Document
 
@@ -15,31 +13,25 @@ from autogen_core.tools import FunctionTool, Tool
 
 from aip_agent.agents.tool_agent import ToolAgentWrapper
 
-bm = BufferedMemory(
-    membase_account=membase_account,
-    auto_upload_to_hub=True,
-    )
-
 rag = ChromaKnowledgeBase(
     persist_directory="./chroma_memory_db",
     collection_name="default",
-    anonymized_telemetry=False,
+    membase_account=membase_account,
+    auto_upload_to_hub=True,
 )
 
 def add_memory(
         memory_id: Annotated[str, "The memory id"],
-        content: Annotated[str, "The content of the memory"],
-        metadata: Annotated[dict, "The metadata of the memory"]
+        content: Annotated[str, "The memory content"],
+        metadata: Annotated[Optional[dict], "The memory metadata"] = None
         ):
-    
-    msg = Message(
-        name=memory_id,
-        content=content,
-        metadata=metadata,
-        role="user",
-    )
-
-    bm.add(msg)
+    """
+    Add a memory to the memory hub.
+    metadata is optional, if not provided, it will be an empty dict. You can add your membase id or agent name as one of the metadata.
+    """
+    if metadata is None:
+        metadata = {}
+    metadata["manager"] = membase_id
 
     doc = Document(
         doc_id=memory_id,
@@ -51,13 +43,6 @@ def add_memory(
         rag.update_documents(doc)
     else:
         rag.add_documents(doc)
-
-def read_memory(
-        memory_id: Annotated[str, "The memory id to read"]
-        ):
-    def name_filter(msg):
-        return msg.name == memory_id
-    return bm.get(name_filter)
 
 def search_similar(
         query: Annotated[str, "The query to search for"],
@@ -78,11 +63,6 @@ async def main(address: str) -> None:
             description="Add a memory to the memory hub.",
         ),
         FunctionTool(
-            read_memory,
-            name="read_memory",
-            description="Read a memory from the memory hub.",
-        ),
-        FunctionTool(
             search_similar,
             name="search_similar",
             description="Search for memories similar to a query.",
@@ -90,9 +70,9 @@ async def main(address: str) -> None:
     ]
 
     desc = "This is a membase memory hub, which can manage your memories. \n"
-    desc += "You can add, read, and search for memories. \n"
+    desc += "You can add memories and search similar memories. \n"
     tool_agent = ToolAgentWrapper(
-        name=os.getenv("MEMBASE_ID"),
+        name=membase_id,
         tools=local_tools,
         host_address=address,
         description=desc
@@ -104,13 +84,10 @@ async def main(address: str) -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run an aip agent for saving memory.")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging.")
-    parser.add_argument("--address", type=str, help="Address to connect to", default="localhost:50060")
+    parser.add_argument("--address", type=str, help="GRPC server address", default="localhost:50060")
     args = parser.parse_args()
     if args.verbose:
-        logging.basicConfig(level=logging.WARNING)
+        logging.basicConfig(level=logging.INFO)
         logging.getLogger("autogen_core").setLevel(logging.DEBUG)
-        file_name = "agent_" + membase_id + ".log"
-        handler = logging.FileHandler(file_name)
-        logging.getLogger("autogen_core").addHandler(handler)
 
     asyncio.run(main(args.address))
