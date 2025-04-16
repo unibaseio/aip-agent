@@ -73,34 +73,10 @@ uv sync --dev --all-extras
   - `MEMBASE_ID`: Unique identifier for the instance
   - `MEMBASE_ACCOUNT`: Account with BNB testnet balance
   - `MEMBASE_SECRET_KEY`: Secret key of account for authentication
-  - `MEMBASE_SSE_URL`: (Required for SSE tools) Public endpoint URL
 
 ### Tool Server Setup
 
-The system supports two types of tool servers:
-
-#### 1. gRPC Tool Server (Indirect Access)
-
-```shell
-export MEMBASE_ID="<membase uuid>"
-export MEMBASE_ACCOUNT="<membase account>"
-export MEMBASE_SECRET_KEY="<membase secret key>"
-cd examples/aip_tools
-# Start the tool server for other agents to use
-uv run grpc_mock_tool.py
-```
-
-#### 2. SSE Tool Server (Direct Access)
-
-```shell
-export MEMBASE_ID="<membase uuid>"
-export MEMBASE_ACCOUNT="<membase account>"
-export MEMBASE_SECRET_KEY="<membase secret key>"
-export MEMBASE_SSE_URL="<http://your_ip:your_port>"
-cd examples/aip_tools
-# Start the tool server with specified port
-uv run sse_mock_tool.py --port=<your_port>
-```
+see [aip tool introduction](./examples/aip_tools/README.md)
 
 ### Agent Setup and Usage
 
@@ -111,7 +87,7 @@ export MEMBASE_ID="<membase uuid>"
 export MEMBASE_ACCOUNT="<membase account>"
 export MEMBASE_SECRET_KEY="<membase secret key>"
 cd examples/aip_agents
-uv run grpc_full_agent.py
+uv run grpc_full_agent_gradio.py
 ```
 
 #### Agent-Tool Interaction
@@ -133,67 +109,27 @@ _Interact with tools through LLM chat interface_
 ![Agent interaction](./img/agent_call.png)
 _Demonstration of inter-agent communication_
 
-### Interactive Chess Game Example
+### Interactive Chess Game
 
-This example demonstrates a multi-agent system implementing an interactive chess game.
+A chess game implementation with two AIP agents playing against each other.
 
-#### Prerequisites
-
-```shell
-cd examples/aip_chess_game
-pip install chess
-```
-
-#### Setup and Running
-
-1. **Start Game Moderator**
-
-```shell
-export MEMBASE_ID="<moderator_id>"
-export MEMBASE_ACCOUNT="<membase account>"
-export MEMBASE_SECRET_KEY="<membase secret key>"
-export MEMBASE_TASK_ID="<task id>"
-python main.py
-```
-
-2. **Start Players**
-   The game begins when both black and white players are connected.
-
-```shell
-export MEMBASE_ID="<player_uuid>"
-export MEMBASE_ACCOUNT="<membase account>"
-export MEMBASE_SECRET_KEY="<membase secret key>"
-export MEMBASE_TASK_ID="<above_task_id>"
-python role.py --moderator=<above_moderator_id> --role=<white|black>
-```
-
-3. **Launch Web Interface**
-   To view the chess board in your browser:
-
-```shell
-python app.py  # Access at http://localhost:5000
-```
+See [aip chess game introduction](./examples/aip_chess_game/README.md)
 
 ### Trade Agent
 
-```shell
-export MEMBASE_ID="<moderator_id>"
-export MEMBASE_ACCOUNT="<membase account>"
-export MEMBASE_SECRET_KEY="<membase secret key>"
-# default taget token is "0x2e6b3f12408d5441e56c3C20848A57fd53a78931"
-# token is paired with wnbn using pancakeswap v3 in bsc testnet
-export MEMBASE_TARGET_TOKEN="your target token"
-cd examples/aip_trader_agents
-uv run grpc_trader_agent_gradio.py
-```
+An automated trading agent system based on the AIP framework, supporting token trading on the BSC testnet/mainnet. 
 
-- use docker
+See [aip trader agents introduction](./examples/aip_trader_agents/README.md)
 
-```shell
-# set your environments in .env.example
-# rename to .env
-docker compose up -d --build
-```
+![trader agents](./img/trader.png)
+
+### Personal Agent
+
+A personal intelligent agent system that generates personalized agents based on Twitter/X users' historical records.
+
+See [aip personal agents introduction](./examples/aip_personal_agents/README.md) 
+
+![personal agents](./img/personal_single.png)
 
 ### Python Code Examples
 
@@ -334,18 +270,204 @@ async def main():
 
 ### Project Structure
 
-````
+## Architecture Overview
 
-### Running Tests
+### System Components
 
-```shell
-pytest tests/
-````
+1. **Agent Core**
+   - LLM Integration Layer
+   - Memory Management System
+   - Tool Management System
+   - Blockchain Integration Layer
+
+2. **Network Layer**
+   - gRPC Communication
+   - SSE Event Streaming
+   - WebSocket Support
+   - REST API Endpoints
+
+3. **Security Layer**
+   - Blockchain Authentication
+   - Permission Management
+   - Data Encryption
+   - Access Control
+
+### Data Flow
+
+1. **Agent Initialization**
+   - Register on blockchain
+   - Connect to Membase Hub
+   - Load configuration
+   - Initialize memory
+
+2. **Tool Integration**
+   - Discover available tools
+   - Register tool capabilities
+   - Establish secure connections
+   - Validate permissions
+
+3. **Message Processing**
+   - Receive user input
+   - Process through LLM
+   - Execute tool actions
+   - Update memory
+   - Return response
+
+## Advanced Features
+
+### Memory Management
+
+- **Persistent Storage**
+  - Conversation history
+  - Tool configurations
+  - Agent states
+  - User preferences
+
+- **Memory Operations**
+  - Read/Write access
+  - Memory versioning
+  - Data synchronization
+  - Conflict resolution
+
+### Tool System
+
+- **Tool Types**
+  - Local tools
+  - Remote tools
+  - Hybrid tools
+  - Composite tools
+
+- **Tool Lifecycle**
+  - Registration
+  - Discovery
+  - Loading
+  - Execution
+  - Cleanup
+
+### Blockchain Integration
+
+- **Smart Contracts**
+  - Agent registration
+  - Permission management
+  - Token operations
+  - Event logging
+
+- **Security Features**
+  - Identity verification
+  - Access control
+  - Transaction signing
+  - Audit trails
+
+## Best Practices
+
+### Development Guidelines
+
+1. **Agent Development**
+   - Follow modular design
+   - Implement error handling
+   - Use type hints
+   - Write unit tests
+   - Document code
+
+2. **Tool Development**
+   - Define clear interfaces
+   - Handle edge cases
+   - Implement timeouts
+   - Validate inputs
+   - Log operations
+
+3. **Security Practices**
+   - Use environment variables
+   - Implement rate limiting
+   - Validate permissions
+   - Encrypt sensitive data
+   - Monitor access
+
+### Performance Optimization
+
+1. **Memory Management**
+   - Implement caching
+   - Use efficient data structures
+   - Clean up unused resources
+   - Monitor memory usage
+
+2. **Network Optimization**
+   - Use connection pooling
+   - Implement retry logic
+   - Optimize payload size
+   - Handle timeouts
+
+3. **Tool Execution**
+   - Parallel processing
+   - Resource allocation
+   - Load balancing
+   - Error recovery
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Connection Problems**
+   - Check network settings
+   - Verify hub addresses
+   - Validate credentials
+   - Test connectivity
+
+2. **Tool Integration**
+   - Verify tool registration
+   - Check permissions
+   - Validate configurations
+   - Monitor logs
+
+3. **Memory Issues**
+   - Check storage limits
+   - Verify access rights
+   - Monitor performance
+   - Clean up old data
+
+### Debugging Tools
+
+- **Logging System**
+  - Error tracking
+  - Performance metrics
+  - User actions
+  - System events
+
+- **Monitoring Tools**
+  - Resource usage
+  - Network traffic
+  - Tool performance
+  - Memory status
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+We welcome contributions to the AIP Agent project. Here's how you can help:
+
+1. **Code Contributions**
+   - Fork the repository
+   - Create feature branch
+   - Write tests
+   - Submit pull request
+
+2. **Documentation**
+   - Update README
+   - Write tutorials
+   - Add examples
+   - Improve comments
+
+3. **Testing**
+   - Report bugs
+   - Write test cases
+   - Test new features
+   - Performance testing
 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Contact
+
+For questions, suggestions, or support:
+- GitHub Issues: [https://github.com/unibaseio/aip-agent/issues](https://github.com/unibaseio/aip-agent/issues)
+- Email: support@unibase.io
+- Discord: [Join our community](https://discord.gg/unibase)

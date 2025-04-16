@@ -54,10 +54,7 @@ if __name__ == "__main__":
     parser.add_argument("--address", type=str, help="Address to connect to", default="13.212.116.103:8081")
     args = parser.parse_args()
     if args.verbose:
-        logging.basicConfig(level=logging.WARNING)
+        logging.basicConfig(level=logging.INFO)
         logging.getLogger("autogen_core").setLevel(logging.DEBUG)
-        file_name = "agent_" + membase_id + ".log"
-        handler = logging.FileHandler(file_name)
-        logging.getLogger("autogen_core").addHandler(handler)
 
     asyncio.run(main(args.address))

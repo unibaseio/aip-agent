@@ -37,6 +37,7 @@ env/
 # Chroma specific
 src/aip_chroma/data/
 chroma_db/
+chroma_db_*
 chroma_*_db/
 
 # Logs
@@ -55,3 +56,5 @@ chessboard.svg
 .gradio
 
 .cursor/*
+
+outputs/

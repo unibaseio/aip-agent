@@ -1,39 +1,99 @@
 # Chess Game Example
 
-An example with two chess player agents that executes its own tools to demonstrate tool use and reflection on tool use.
+This example demonstrates a chess game implementation with two AIP agents playing against each other, using tools to reason about game state and make moves. The game includes a moderator agent that manages the game flow and player registration.
+
+## Features
+
+- Two AI players (black and white) that can make strategic moves
+- A moderator agent to manage game flow and player registration
+- Real-time chess board visualization through a web interface
+- On-chain task management and reward distribution
+- Automatic move validation and game state tracking
 
 ## Prerequisites
 
-First, you need a shell with AutoGen core and required dependencies installed.
-
+1. Python 3.10 or higher
+2. Required Python packages:
 ```bash
-pip install "chess"
+pip install "chess" flask
 ```
 
-## Running the example
+## Configuration
 
-- MEMBASE_TASK_ID is same
-- MEMBASE_ID is different with each other
-- MEMBASE_ACCOUNT have balance in bnb testnet
+Before running the game, you need to set up the following environment variables:
 
 ```bash
-# start game moderator, wait for palyers
-# moderator register and create task onchain
-# when game finish, moderator finish task, winner get the staking money
-export MEMBASE_TASK_ID="<this task uuid>"
-export MEMBASE_ID="<membase uuid>"
-export MEMBASE_ACCOUNT="<membase account>"
-export MEMBASE_SECRET_KEY="<membase secret key>"
+# For moderator
+export MEMBASE_TASK_ID="<task_uuid>"  # Same for all participants
+export MEMBASE_ID="<membase_uuid>"    # Unique for each participant
+export MEMBASE_ACCOUNT="<membase_account>"
+export MEMBASE_SECRET_KEY="<membase_secret_key>"
+
+# For players (same variables, different values)
+export MEMBASE_TASK_ID="<task_uuid>"  # Must match moderator's task ID
+export MEMBASE_ID="<membase_uuid>"    # Unique for each player
+export MEMBASE_ACCOUNT="<membase_account>"
+export MEMBASE_SECRET_KEY="<membase_secret_key>"
+```
+
+## Usage Instructions
+
+### 1. Start the Moderator
+
+The moderator agent will:
+- Register on the blockchain
+- Create a new task
+- Wait for players to join
+- Manage the game flow
+- Distribute rewards at the end
+
+```bash
+# Start the moderator agent
 python main.py --verbose
-
-# start two player
-# player register and staking to join this task
-export MEMBASE_ID="<membase uuid>"
-export MEMBASE_TASK_ID="<this task uuid>"
-export MEMBASE_ACCOUNT="<membase account>"
-export MEMBASE_SECRET_KEY="<membase secret key>"
-python role.py --verbose --moderator=<moderator membase_id> --role=<black/white>
-
-# start web browser in localhost:5000, show chess board
-python app.py
 ```
+
+### 2. Start the Players
+
+Each player needs to:
+- Register on the blockchain
+- Join the task
+- Connect to the moderator
+- Play their assigned color (black or white)
+
+```bash
+# Start a player agent (black)
+python role.py --verbose --moderator=<moderator_membase_id> --role=black
+
+# Start a player agent (white)
+python role.py --verbose --moderator=<moderator_membase_id> --role=white
+```
+
+### 3. View the Game
+
+To view the chess board in real-time:
+```bash
+# Start the web interface
+python app.py # Access at http://localhost:5000
+```
+
+The chess board will automatically update every 3 seconds.
+
+## Game Flow
+
+1. Moderator creates a task and waits for players
+2. Players register and join the task
+3. Game begins with white making the first move
+4. Players take turns making moves
+5. Game continues until:
+   - Checkmate
+   - Stalemate
+   - Maximum rounds reached (100)
+6. Winner receives the staked reward
+
+## Notes
+
+- The game supports standard chess rules
+- Each player has a maximum of 100 moves
+- The web interface shows the current board state
+- All moves are validated for legality
+- Game state is tracked and managed by the moderator

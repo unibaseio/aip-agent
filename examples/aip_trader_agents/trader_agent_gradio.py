@@ -511,7 +511,7 @@ async def main(address: str) -> None:
     try:
         # Launch Gradio in a separate thread
         update_log("Starting Gradio server in a separate thread...")
-        demo.launch(server_port=7860, prevent_thread_lock=True)
+        demo.launch(prevent_thread_lock=True, share=False)
         
         # Wait for the query task
         await query_task
