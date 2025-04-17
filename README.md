@@ -148,7 +148,7 @@ async def main():
         agent_cls=CallbackAgent,  # Your custom agent implementation
         name=os.getenv("MEMBASE_ID"),  # Unique identifier
         description="You are an assistant",  # Agent description
-        host_address="membase_hub_address"  # Network address
+        host_address="13.212.116.103:8081"  # GRPC server address
     )
 
     # Initialize the agent (this will:
@@ -187,7 +187,7 @@ async def main():
         agent_cls=MyCustomAgent,
         name=os.getenv("MEMBASE_ID"),
         description="Custom agent description",
-        host_address="membase_hub_address"
+        host_address="13.212.116.103:8081"
     )
     await agent.initialize()
     # Your agent logic here
