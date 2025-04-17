@@ -74,6 +74,12 @@ uv sync --dev --all-extras
   - `MEMBASE_ACCOUNT`: Account with BNB testnet balance
   - `MEMBASE_SECRET_KEY`: Secret key of account for authentication
 
+### demo video
+
+[![aip demo](http://img.youtube.com/vi/CJpuOGE2qqw/0.jpg)](https://youtu.be/CJpuOGE2qqw)
+
+[![aip with mcp tool](http://img.youtube.com/vi/QNlPzXHuVpA/0.jpg)](https://youtu.be/QNlPzXHuVpA)
+
 ### Tool Server Setup
 
 see [aip tool introduction](./examples/aip_tools/README.md)
@@ -115,13 +121,19 @@ A chess game implementation with two AIP agents playing against each other.
 
 See [aip chess game introduction](./examples/aip_chess_game/README.md)
 
++ demo video
+
+[![aip chess game](http://img.youtube.com/vi/COvK9Y9d8SE/0.jpg)](https://youtu.be/COvK9Y9d8SE)
+
 ### Trade Agent
 
 An automated trading agent system based on the AIP framework, supporting token trading on the BSC testnet/mainnet. 
 
 See [aip trader agents introduction](./examples/aip_trader_agents/README.md)
 
-![trader agents](./img/trader.png)
++ demo video
+
+[![aip automated trader agents](./img/trader.png)](https://youtu.be/QcRkOOZ1vZM)
 
 ### Personal Agent
 
@@ -129,7 +141,9 @@ A personal intelligent agent system that generates personalized agents based on 
 
 See [aip personal agents introduction](./examples/aip_personal_agents/README.md) 
 
-![personal agents](./img/personal_single.png)
++ demo video
+
+[![aip personal agents](./img/personal_single.png)](https://youtu.be/jXorx1qrGF4)
 
 ### Python Code Examples
 
