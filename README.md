@@ -76,9 +76,9 @@ uv sync --dev --all-extras
 
 ### demo video
 
-[![aip demo](http://img.youtube.com/vi/CJpuOGE2qqw/0.jpg)](https://youtu.be/CJpuOGE2qqw)
+[![aip demo](http://img.youtube.com/vi/CJpuOGE2qqw/1.jpg)](https://youtu.be/CJpuOGE2qqw)
 
-[![aip with mcp tool](http://img.youtube.com/vi/QNlPzXHuVpA/0.jpg)](https://youtu.be/QNlPzXHuVpA)
+[![aip with mcp tool](http://img.youtube.com/vi/QNlPzXHuVpA/1.jpg)](https://youtu.be/QNlPzXHuVpA)
 
 ### Tool Server Setup
 
@@ -123,7 +123,7 @@ See [aip chess game introduction](./examples/aip_chess_game/README.md)
 
 + demo video
 
-[![aip chess game](http://img.youtube.com/vi/COvK9Y9d8SE/0.jpg)](https://youtu.be/COvK9Y9d8SE)
+[![aip chess game](http://img.youtube.com/vi/COvK9Y9d8SE/1.jpg)](https://youtu.be/COvK9Y9d8SE)
 
 ### Trade Agent
 
