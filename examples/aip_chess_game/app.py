@@ -1,5 +1,4 @@
 from flask import Flask, render_template_string
-import chess.svg
 
 app = Flask(__name__)
 
@@ -9,12 +8,31 @@ with open('chessboard.svg', 'r') as file:
 
 @app.route('/')
 def index():
-    """主页面路由"""
     return render_template_string('''
         <!DOCTYPE html>
         <html>
         <head>
             <title>Auto Chess Board</title>
+            <style>
+                #board {
+                    max-width: 80vw;
+                    max-height: 80vh;
+                    margin: 0 auto;
+                }
+                #board svg {
+                    width: 100%;
+                    height: 100%;
+                }
+                body {
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    min-height: 100vh;
+                    margin: 0;
+                    padding: 0;
+                    background-color: #f0f0f0;
+                }
+            </style>
         </head>
         <body>
             <div id="board">{{ svg|safe }}</div>
@@ -28,7 +46,7 @@ def index():
                         });
                 }
                 
-                // 每3秒刷新一次
+                // refresh the board every 3 seconds
                 setInterval(refreshBoard, 3000);
             </script>
         </body>

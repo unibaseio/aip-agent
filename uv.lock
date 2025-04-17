@@ -126,6 +126,7 @@ source = { editable = "." }
 dependencies = [
     { name = "apify-client" },
     { name = "autogen-core" },
+    { name = "chess" },
     { name = "chromadb" },
     { name = "fastapi" },
     { name = "flask" },
@@ -152,6 +153,7 @@ dependencies = [
 requires-dist = [
     { name = "apify-client", specifier = ">=1.9.3" },
     { name = "autogen-core", specifier = "==0.4.8" },
+    { name = "chess", specifier = ">=1.11.2" },
     { name = "chromadb", specifier = ">=0.6.0" },
     { name = "fastapi", specifier = ">=0.115.6" },
     { name = "flask", specifier = ">=3.1.0" },
@@ -595,6 +597,12 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/27/f2/4f9a69cc7712b9b5ad8fdb87039fd89abba997ad5cbe690d1835d40405b0/charset_normalizer-3.4.1-cp313-cp313-win_amd64.whl", hash = "sha256:b1ac5992a838106edb89654e0aebfc24f5848ae2547d22c2c3f66454daa11971", size = 102702 },
     { url = "https://files.pythonhosted.org/packages/0e/f6/65ecc6878a89bb1c23a086ea335ad4bf21a588990c3f535a227b9eea9108/charset_normalizer-3.4.1-py3-none-any.whl", hash = "sha256:d98b1668f06378c6dbefec3b92299716b931cd4e6061f3c875a71ced1780ab85", size = 49767 },
 ]
+
+[[package]]
+name = "chess"
+version = "1.11.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/93/09/7d04d7581ae3bb8b598017941781bceb7959dd1b13e3ebf7b6a2cd843bc9/chess-1.11.2.tar.gz", hash = "sha256:a8b43e5678fdb3000695bdaa573117ad683761e5ca38e591c4826eba6d25bb39", size = 6131385 }
 
 [[package]]
 name = "chroma-hnswlib"

@@ -40,7 +40,6 @@ if not membase_task_id or membase_task_id == "":
     raise Exception("'MEMBASE_TASK_ID' is not set, user defined")
 
 
-
 from common import Player
 from prompt import parse_response
 
@@ -138,7 +137,7 @@ class ChessGame:
         with open("chessboard.svg", "w") as file:
             file.write(svg_board)
 
-    def register(self, name: str, role_type: str) -> str:
+    def register(self, name: str) -> str:
         """Register a new player to the game.
         
         Args:
@@ -162,16 +161,7 @@ class ChessGame:
             return ""  # No available slots
         
         # Assign random available role
-        #choosed = random.choice(self.unregister)
-        if role_type == "white":
-            choosed = 0
-        elif role_type == "black":
-            choosed = 1
-        else:
-            return ""
-        if choosed not in self.unregister:
-            return ""
-            
+        choosed = random.choice(self.unregister)    
         self.players[choosed].state = "alive"
         self.players[choosed].name = name
         self.unregister.remove(choosed)
@@ -242,10 +232,17 @@ class ModeratorAgent(RoutedAgent):
     async def handle_message(self, message: InteractionMessage, ctx: MessageContext) -> InteractionMessage:
         """Handle incoming messages based on their type."""
         logging.debug(f"handle message {message}")
+
+        if message.action == "heartbeat":
+            return InteractionMessage(
+                action="response",
+                content="ok"
+            )
+        
         self._memory.add(Message(content=message.content, role="user", name=message.source))
         # Handle registration
         if message.action == "register":
-            playertype = self._game.register(message.source, message.content)
+            playertype = self._game.register(message.source)
             self._memory.add(Message(content=playertype, role="assistant", name=self.id.type))
             return InteractionMessage(
                 action="response",
@@ -318,7 +315,8 @@ async def main(address: str) -> None:
             # result format: thinking: xxx, move: xxx
             thinking, move = parse_response(result.content)
             res = game.make_move(player, thinking, move)
-            print("=====", i, player , res)
+            print("--------------------------------")
+            print(f"===== step {i}, {player} decision: {res}")
 
         # white and black take turns to move
         game.white = not game.white
@@ -335,12 +333,11 @@ if __name__ == "__main__":
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging.")
     parser.add_argument("--address", type=str, default="13.212.116.103:8081", help="Address of the agent runtime.")
 
+    logging.basicConfig(level=logging.WARNING)
+
     args = parser.parse_args()
     if args.verbose:
-        logging.basicConfig(level=logging.WARNING)
+        logging.basicConfig(level=logging.INFO)
         logging.getLogger("autogen_core").setLevel(logging.DEBUG)
-        file_name = "chess_game_" + membase_id + ".log"
-        handler = logging.FileHandler(file_name)
-        logging.getLogger("autogen_core").addHandler(handler)
 
     asyncio.run(main(args.address))

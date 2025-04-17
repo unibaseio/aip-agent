@@ -27,6 +27,7 @@ dependencies = [
  "membase>=0.1.8",
  "apify-client>=1.9.3",
  "tiktoken>=0.9.0",
+ "chess>=1.11.2",
 ]
 [[project.authors]]
 name = "felix"

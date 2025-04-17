@@ -23,13 +23,14 @@ from aip_agent.workflows.llm.augmented_llm import AugmentedLLM
 from aip_agent.message.message import InteractionMessage
 from prompt import get_game_prompt
 
+role_type = ""
+
 class PlayerAgent(RoutedAgent):
     def __init__(
         self,
         description: str,
         llm: AugmentedLLM,
         memory: MultiMemory,
-        role_type: str,
     ) -> None:
         super().__init__(description=description)
         self._llm = llm
@@ -41,12 +42,20 @@ class PlayerAgent(RoutedAgent):
     async def handle_message(self, message: InteractionMessage, ctx: MessageContext) -> InteractionMessage:
         """Handle incoming messages based on their type."""
 
+        if message.action == "heartbeat":
+            return InteractionMessage(
+                action="response",
+                content="ok"
+            )
+
         print(message)
 
         msg = Message(content=message.content, role="user", name=message.source)
         self._memory.add(msg)
 
-        input_messages = get_game_prompt(self._role_type) + "\n" + message.content
+        global role_type
+        print(f"=== act as role: {role_type}")
+        input_messages = get_game_prompt(role_type) + "\n" + message.content
         
         # Get LLM response
         response = await self._llm.generate_str(input_messages)
@@ -64,7 +73,7 @@ if not membase_task_id or membase_task_id == "":
     print("'MEMBASE_TASK_ID' is not set, user defined")
     raise Exception("'MEMBASE_TASK_ID' is not set, user defined")
 
-async def main(address: str, moderator_id: str, role_type: str) -> None:
+async def main(address: str, moderator_id: str) -> None:
     membase_chain.register(membase_id)
     print(f"{membase_id} is register onchain")
     time.sleep(3)
@@ -79,13 +88,12 @@ async def main(address: str, moderator_id: str, role_type: str) -> None:
         name=membase_id,
         host_address=address,
         description="You are player in chess game",
-        role_type=role_type,
     )
     await fa.initialize()
 
-    print(f"=== send register message to {moderator_id} {role_type}")
+    print(f"=== send register message to {moderator_id}")
     role_msg = await fa._runtime.send_message(
-        InteractionMessage(action="register",content=role_type, source=membase_id),
+        InteractionMessage(action="register",content="register", source=membase_id),
         AgentId(moderator_id, membase_task_id),
         sender=AgentId(membase_id, membase_task_id)
     )
@@ -95,7 +103,12 @@ async def main(address: str, moderator_id: str, role_type: str) -> None:
         print("=== role is not accepted, exit")
         fa.stop()
         return
-    
+
+
+    global role_type
+    role_type = role_msg.content
+    print(f"=== register as role: {role_type}")
+
     await fa.stop_when_signal()
 
 if __name__ == "__main__":
@@ -105,16 +118,12 @@ if __name__ == "__main__":
     parser.add_argument(
         "--moderator", type=str, help="moderator id", default="board_starter"
     )
-    parser.add_argument(
-        "--role", type=str, help="role type", default=""
-    )
+
+    logging.basicConfig(level=logging.WARNING)
 
     args = parser.parse_args()
     if args.verbose:
-        logging.basicConfig(level=logging.WARNING)
+        logging.basicConfig(level=logging.INFO)
         logging.getLogger("autogen_core").setLevel(logging.DEBUG)
-        file_name = "chess_game_" + membase_id + ".log"
-        handler = logging.FileHandler(file_name)
-        logging.getLogger("autogen_core").addHandler(handler)
 
-    asyncio.run(main(args.address, args.moderator, args.role))
+    asyncio.run(main(args.address, args.moderator))

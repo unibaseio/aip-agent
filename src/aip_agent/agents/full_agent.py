@@ -73,7 +73,6 @@ class FullAgentWrapper:
         self._mcp_agent: Optional[Agent] = None
         self._initialized = False
         
-        # 心跳相关属性
         self._heartbeat_task: Optional[asyncio.Task] = None
         self._heartbeat_failures = 0
         self._max_failures = 5
@@ -322,6 +321,12 @@ class FullAgentWrapper:
         except Exception as e:
             print(f"Error loading server {server_name}: {e}")
             raise
+
+    async def set_system_prompt(self, system_prompt: str) -> None:
+        """Set the system prompt for the agent"""
+        if not self._initialized:
+            raise RuntimeError("Agent not initialized")
+        self._mcp_agent.instruction = system_prompt
 
     async def stop_when_signal(self) -> None:
         """Wait for the agent to stop"""

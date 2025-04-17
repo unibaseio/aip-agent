@@ -14,7 +14,7 @@ def retrieve_tweets(user_name: str):
     # Prepare the Actor input
     run_input = {
         "searchTerms": [
-            f"from:{user_name} since:2024-01-01_00:00:00_UTC until:{now}",
+            f"from:{user_name} since:2015-01-01_00:00:00_UTC until:{now}",
         ],
         "maxItems": 1000,
         "queryType": "Latest",

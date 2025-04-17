@@ -12,26 +12,17 @@ This example demonstrates a chess game implementation with two AIP agents playin
 
 ## Prerequisites
 
-1. Python 3.10 or higher
-2. Required Python packages:
-```bash
-pip install "chess" flask
-```
++ Install uv package manager:
+   - Follow the official installation guide: https://docs.astral.sh/uv/getting-started/installation/
 
 ## Configuration
 
 Before running the game, you need to set up the following environment variables:
 
 ```bash
-# For moderator
+# For moderator and players
 export MEMBASE_TASK_ID="<task_uuid>"  # Same for all participants
 export MEMBASE_ID="<membase_uuid>"    # Unique for each participant
-export MEMBASE_ACCOUNT="<membase_account>"
-export MEMBASE_SECRET_KEY="<membase_secret_key>"
-
-# For players (same variables, different values)
-export MEMBASE_TASK_ID="<task_uuid>"  # Must match moderator's task ID
-export MEMBASE_ID="<membase_uuid>"    # Unique for each player
 export MEMBASE_ACCOUNT="<membase_account>"
 export MEMBASE_SECRET_KEY="<membase_secret_key>"
 ```
@@ -49,7 +40,7 @@ The moderator agent will:
 
 ```bash
 # Start the moderator agent
-python main.py --verbose
+uv run main.py
 ```
 
 ### 2. Start the Players
@@ -61,11 +52,13 @@ Each player needs to:
 - Play their assigned color (black or white)
 
 ```bash
-# Start a player agent (black)
-python role.py --verbose --moderator=<moderator_membase_id> --role=black
+# Start a player 
+uv run role.py  --moderator=<moderator_membase_id>
 
-# Start a player agent (white)
-python role.py --verbose --moderator=<moderator_membase_id> --role=white
+# Start another
+uv run role.py --moderator=<moderator_membase_id> 
+
+# Game start when two players finish registeration
 ```
 
 ### 3. View the Game
@@ -73,7 +66,7 @@ python role.py --verbose --moderator=<moderator_membase_id> --role=white
 To view the chess board in real-time:
 ```bash
 # Start the web interface
-python app.py # Access at http://localhost:5000
+uv run app.py # Access at http://localhost:5000
 ```
 
 The chess board will automatically update every 3 seconds.
