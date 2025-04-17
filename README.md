@@ -76,9 +76,9 @@ uv sync --dev --all-extras
 
 ### demo video
 
-[![aip demo](http://img.youtube.com/vi/CJpuOGE2qqw/1.jpg)](https://youtu.be/CJpuOGE2qqw)
+[![aip demo](./img/fdemo.png)](https://youtu.be/CJpuOGE2qqw)
 
-[![aip with mcp tool](http://img.youtube.com/vi/QNlPzXHuVpA/1.jpg)](https://youtu.be/QNlPzXHuVpA)
+[![aip with mcp tool](./img/fmcp.png)](https://youtu.be/QNlPzXHuVpA)
 
 ### Tool Server Setup
 
@@ -123,7 +123,7 @@ See [aip chess game introduction](./examples/aip_chess_game/README.md)
 
 + demo video
 
-[![aip chess game](http://img.youtube.com/vi/COvK9Y9d8SE/1.jpg)](https://youtu.be/COvK9Y9d8SE)
+[![aip chess game](./img/fchess.png)](https://youtu.be/COvK9Y9d8SE)
 
 ### Trade Agent
 
@@ -133,7 +133,7 @@ See [aip trader agents introduction](./examples/aip_trader_agents/README.md)
 
 + demo video
 
-[![aip automated trader agents](./img/trader.png)](https://youtu.be/QcRkOOZ1vZM)
+[![aip automated trader agents](./img/ftrader.png)](https://youtu.be/QcRkOOZ1vZM)
 
 ### Personal Agent
 
@@ -143,7 +143,7 @@ See [aip personal agents introduction](./examples/aip_personal_agents/README.md)
 
 + demo video
 
-[![aip personal agents](./img/personal_single.png)](https://youtu.be/jXorx1qrGF4)
+[![aip personal agents](./img/fpersonal.png)](https://youtu.be/jXorx1qrGF4)
 
 ### Python Code Examples
 
