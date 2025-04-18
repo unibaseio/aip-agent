@@ -439,6 +439,11 @@ async def main():
    - Monitor performance
    - Clean up old data
 
+
+4. **Lifecycle Exit**
+   - Lifecycle task encountered an error: unhandled errors in a TaskGroup
+   - Use python instead of uv 
+
 ### Debugging Tools
 
 - **Logging System**

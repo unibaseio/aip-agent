@@ -143,6 +143,8 @@ async def main(address: str, x_account: str) -> None:
     update_log("Starting personal agent...")
 
     global description, default_x_name
+    if x_account.startswith("@"):
+        x_account = x_account[1:]
     default_x_name = x_account
     description = build_users(x_account)
 

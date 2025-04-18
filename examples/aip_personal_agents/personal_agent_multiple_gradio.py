@@ -35,6 +35,11 @@ def update_log(message):
 
 def add_x_user(x_user: str):
     """Add a new X user to candidates list"""
+
+    # check x_user is a valid x account
+    if x_user.startswith("@"):
+        x_user = x_user[1:]
+
     global users, users_candidates
 
     # check if the user already exists in users or candidates
@@ -64,13 +69,19 @@ def build_users(x_user: str):
     # check if tweets need to be retrieved
     if not os.path.exists(f"outputs/{x_user}.json"):
         print(f"Retrieving tweets for {x_user}")
-        update_log(f"Retrieving tweets for {x_user}")
-        retrieve_tweets(x_user)
+        try:
+            update_log(f"Retrieving tweets for {x_user}")
+            retrieve_tweets(x_user)
+        except Exception as e:
+            update_log(f"Error retrieving tweets for {x_user}: {str(e)}")
     
     # generate profile if tweets exist
     if os.path.exists(f"outputs/{x_user}.json"):
         update_log(f"Generating profile for {x_user}")
-        generate_profile(x_user)
+        try:
+            generate_profile(x_user)
+        except Exception as e:
+            update_log(f"Error generating profile for {x_user}: {str(e)}")
     
     # after profile is generated, update user status
     if os.path.exists(f"outputs/{x_user}_profile_final.json"):
@@ -242,8 +253,11 @@ async def personal_loop():
             list_users()
             update_log(f"Finished building profile for {user_candidate}")
             update_log(f"Saving tweets in chroma db for {user_candidate}")
-            save_tweets(user_candidate)
-            update_log(f"Finished saving tweets in chroma db for {user_candidate}")
+            try:
+                save_tweets(user_candidate)
+                update_log(f"Finished saving tweets in chroma db for {user_candidate}")
+            except Exception as e:
+                update_log(f"Error saving tweets in chroma db for {user_candidate}: {str(e)}")
 
         await asyncio.sleep(60)
         continue

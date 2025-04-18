@@ -241,6 +241,7 @@ class MCPConnectionManager:
                         if not membase_chain.has_auth(memory_id, membase_id):
                             logger.info(f"add agent: {membase_id} to hub memory: {memory_id}")
                             membase_chain.buy(memory_id, membase_id)
+                            time.sleep(3)
                     except Exception as e:
                         print(e)
                         raise
