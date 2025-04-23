@@ -40,8 +40,11 @@ def generate_system_prompt(user_name: str) -> str:
             else:
                 lines.append(f"{'  ' * indent}- **{key}**: {value}")
         return "\n".join(lines)
-    
-    profile_markdown = format_profile_markdown(profile)
+    try:
+        profile_markdown = format_profile_markdown(profile)
+    except Exception as e:
+        print(f"Error formatting profile: {e}")
+        profile_markdown = profile
     
     return f"""# Twitter/X Account Profile: {user_name}
 
