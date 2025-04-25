@@ -7,13 +7,16 @@ from core.merge import merge_profiles
 
 def generate_profile(user_name):
     print(f"Generating profile for {user_name}")
-    jsonfile = f"outputs/{user_name}.json"
+    jsonfile = f"outputs/{user_name}_tweets.json"
     with open(jsonfile, 'r') as f:
         tweets = json.load(f)
     
     ordered_tweets = order_tweets(tweets)
-    for i in range(10):
-        print(f"Ordered tweets: {ordered_tweets[i]['createdAt']}")
+    if len(ordered_tweets) == 0:
+        raise Exception("no tweets") 
+
+    user_info = ordered_tweets[-1].get("author", {})
+
     filtered_tweets = filter_tweets(ordered_tweets)
 
     batches = build_batches(filtered_tweets)
@@ -21,7 +24,7 @@ def generate_profile(user_name):
     results = []
     for i, batch in enumerate(batches):
         print(f"Processing batch {i+1}/{len(batches)}")
-        result = call_batch(batch)
+        result = call_batch(user_info, batch)
         results.append(result)
 
     merged_text = "\n\n".join(results)

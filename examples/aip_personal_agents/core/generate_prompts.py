@@ -33,6 +33,11 @@ model_name = "gpt-4o"
 prompt_template = """
 You are an expert in personality analysis through social media data. Your task is to analyze a user's tweets and generate a comprehensive personality profile. Focus on both explicit and implicit characteristics, and provide evidence-based insights.
 
+The user's information is as follows:
+==== BEGIN USER INFO ====
+{user_info}
+==== END USER INFO ====
+
 Below is a list of tweets from a user:
 
 ==== BEGIN TWEETS ====
@@ -134,8 +139,11 @@ Important notes:
 10. Identify any potential biases or limitations in the analysis
 """
 
-def call_batch(batch):
-    prompt = prompt_template.replace("{tweets_here}", "\n".join(batch))
+def call_batch(user_info, batch):
+    # convert user info into string
+    if isinstance(user_info, dict):
+        user_info = json.dumps(user_info)
+    prompt = prompt_template.replace("{user_info}", user_info).replace("{tweets_here}", "\n".join(batch))
     response = client.chat.completions.create(
         model=model_name,
         messages=[{"role": "user", "content": prompt}],
@@ -146,12 +154,19 @@ def call_batch(batch):
 if __name__ == "__main__":
     user_name = "elonmusk"
     tweets = json.load(open(f"outputs/{user_name}_cleaned.json"))
+    
+    if len(tweets) == 0:
+        print(f"No tweets found for {user_name}")
+        exit()
+
+    user_info = tweets[-1].get("author", {})
+
     batches = build_batches(tweets)
     
     results = []
     for i, batch in enumerate(batches):
         print(f"Processing batch {i+1}/{len(batches)}")
-        result = call_batch(batch)
+        result = call_batch(user_info, batch)
         results.append(result)
         with open(f"outputs/{user_name}_profile_batch_{i+1}.json", "w") as f:
             f.write(result)

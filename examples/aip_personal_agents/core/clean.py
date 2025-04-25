@@ -2,7 +2,7 @@ import json
 from datetime import datetime
 
 def load_tweets(name):
-    jsonfile = f"outputs/{name}.json"
+    jsonfile = f"outputs/{name}_tweets.json"
     with open(jsonfile, 'r') as f:
         return json.load(f)
 
@@ -13,6 +13,10 @@ def clean_text(text):
     text = re.sub(r"#\w+", "", text)        # remove hashtags
     return text.strip()
 
+def get_tweet_user(tweet):
+    author = tweet.get("author", {})
+    print(author)
+
 def build_text(tweet):
     base = tweet["text"].strip()
 
@@ -20,12 +24,9 @@ def build_text(tweet):
         quoted = tweet["quoted_tweet"]
         quoted_text = quoted.get("text", "").strip()
         quoted_user = quoted.get("author", {}).get("name", "unknown")
-        base += f"\nQuoted Tweet from @{quoted_user}:\n{quoted_text}"
-    
-    # add created_at
-    base += f"\nCreated at: {tweet.get('createdAt')}"
+        base += f"\nQuoted from @{quoted_user}:\n{quoted_text}"
     base += "\n\n"
-    
+
     return base
 
 def order_tweets(tweets):
@@ -55,6 +56,8 @@ def filter_tweets(tweets):
 if __name__ == "__main__":
     user_name = "cz_binance"
     tweets = load_tweets(user_name)
-    filtered = filter_tweets(tweets)
-    with open(f"outputs/{user_name}_cleaned.json", "w") as f:
-        json.dump(filtered, f, indent=2)
+    #filtered = filter_tweets(tweets)
+    #with open(f"outputs/{user_name}_cleaned.json", "w") as f:
+    #    json.dump(filtered, f, indent=2)
+    if len(tweets) > 0:
+        get_tweet_user(tweets[0])

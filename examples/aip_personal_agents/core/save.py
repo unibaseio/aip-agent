@@ -38,7 +38,7 @@ def format_tweet(tweet):
     return doc
 
 def save_tweets(user_name):
-    jsonfile = f"outputs/{user_name}.json"
+    jsonfile = f"outputs/{user_name}_tweets.json"
     with open(jsonfile, 'r') as f:
         tweets = json.load(f)
     

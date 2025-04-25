@@ -7,11 +7,12 @@ import json
 from concurrent.futures import ThreadPoolExecutor
 from functools import wraps
 import time
+import argparse
 
 from membase.chain.chain import membase_id
 from aip_agent.agents.custom_agent import CallbackAgent
 from aip_agent.agents.full_agent import FullAgentWrapper
-from core.build import load_unfinished_users, load_user, load_users, build_user
+from core.build import get_user_info, load_unfinished_users, load_user, load_users, build_user
 
 app = Flask(__name__)
 CORS(app)
@@ -24,7 +25,8 @@ def refresh_users_task():
             print(f"Refreshed users list at {datetime.now()}")
             unfinished_users = load_unfinished_users()
             for username in unfinished_users:
-                build_user(username)
+                if username not in app.candidates:
+                    build_user(username)
             app.users = load_users()
         except Exception as e:
             print(f"Error refreshing users: {str(e)}")
@@ -60,7 +62,25 @@ def validate_required_fields(required_fields):
         return decorated_function
     return decorator
 
+def validate_token(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        token = request.headers.get('Authorization')
+        if not token:
+            return jsonify({'success': False, 'error': 'Missing Authorization header'}), 401
+        
+        # Remove 'Bearer ' prefix if present
+        if token.startswith('Bearer '):
+            token = token[7:]
+            
+        if token != app.bearer_token:
+            return jsonify({'success': False, 'error': 'Invalid bearer token'}), 403
+            
+        return f(*args, **kwargs)
+    return decorated_function
+
 @app.route('/api/list_users', methods=['GET'])
+@validate_token
 def list_users():
     """List all available users"""
     try:
@@ -70,6 +90,7 @@ def list_users():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/get_profile', methods=['GET'])
+@validate_token
 def get_profile():
     """Get a specific profile by username"""
     try:
@@ -87,9 +108,26 @@ def get_profile():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route('/api/get_userinfo', methods=['GET'])
+@validate_token
+def get_userinfo():
+    """Get a specific userinfo from x by username"""
+    try:
+        username = request.args.get('username')
+        if not username:
+            return jsonify({'success': False, 'error': 'Missing username parameter'}), 400
+            
+        userinfo = get_user_info(username)
+        if not userinfo:
+            return jsonify({'success': False, 'error': 'Userinfo not found'}), 404
+        return jsonify({'success': True, 'data': userinfo})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @app.route('/api/generate', methods=['POST'])
 @validate_json
 @validate_required_fields(['username'])
+@validate_token
 def generate_profile_api():
     """Generate a new profile based on username"""
     try:
@@ -102,6 +140,11 @@ def generate_profile_api():
         if username not in app.users:
             if username not in app.candidates:
                 app.candidates.append(username)
+                # create a new file in outputs/{username}_tweets.json
+                if not os.path.exists(f"outputs/{username}_tweets.json"):
+                    with open(f"outputs/{username}_tweets.json", "w") as f:
+                        json.dump([], f)
+
                 executor.submit(build_user_sync, username)
                 return jsonify({'success': True, 'data': "start building..."})
             else:
@@ -127,7 +170,8 @@ def build_user_sync(username: str):
 @app.route('/api/chat', methods=['POST'])
 @validate_json
 @validate_required_fields(['username', 'message'])
-async def chat():
+@validate_token
+def chat():
     """Chat with a specific profile using username"""
     try:
         data = request.get_json()
@@ -145,12 +189,13 @@ async def chat():
         profile_str = json.dumps(profile)
         description = "Your act as " + username + " with the following characteristics: " + profile_str
         
-        response = await app.agent.process_query(
+        # Run the async operation synchronously
+        response = asyncio.run(app.agent.process_query(
             message,
             use_history=False,
             system_prompt=description,
             conversation_id=conversation_id
-        )
+        ))
         return jsonify({'success': True, 'data': response})
     except Exception as e:
         return jsonify({
@@ -158,10 +203,15 @@ async def chat():
             'error': str(e),
         }), 500
 
-async def initialize() -> None:
+async def initialize(port: int = 5001, bearer_token: str = None) -> None:
     """Initialize"""
     server_url = os.getenv("SERVER_URL", "13.212.116.103:8081")
     system_prompt = os.getenv("SYSTEM_PROMPT", "You are an assistant")
+    
+    # Set bearer token from environment variable or command line argument
+    app.bearer_token = bearer_token or os.getenv("BEARER_TOKEN")
+    if not app.bearer_token:
+        raise ValueError("Bearer token must be provided either through --bearer-token argument or BEARER_TOKEN environment variable")
 
     app.agent = FullAgentWrapper(
         agent_cls=CallbackAgent,
@@ -180,7 +230,12 @@ async def initialize() -> None:
 
     # Start the background refresh task in a separate thread
     executor.submit(refresh_users_task)
-    app.run(host='0.0.0.0', port=5001)
+    app.run(host='0.0.0.0', port=port)
 
 if __name__ == "__main__":
-    asyncio.run(initialize())
+    parser = argparse.ArgumentParser(description='AIP Personal Agents API Server')
+    parser.add_argument('--port', type=int, default=5001, help='Port to run the server on (default: 5001)')
+    parser.add_argument('--bearer-token', type=str, default="unibase_personal_agent", help='Bearer token for authentication')
+    args = parser.parse_args()
+    
+    asyncio.run(initialize(port=args.port, bearer_token=args.bearer_token))

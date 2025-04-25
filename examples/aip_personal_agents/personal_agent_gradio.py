@@ -39,13 +39,13 @@ def build_users(x_user: str) -> str:
         return generate_system_prompt(x_user)
     
     # check if tweets need to be retrieved
-    if not os.path.exists(f"outputs/{x_user}.json"):
+    if not os.path.exists(f"outputs/{x_user}_tweets.json"):
         print(f"Retrieving tweets for {x_user}")
         update_log(f"Retrieving tweets for {x_user}")
         retrieve_tweets(x_user)
     
     # generate profile if tweets exist
-    if os.path.exists(f"outputs/{x_user}.json"):
+    if os.path.exists(f"outputs/{x_user}_tweets.json"):
         update_log(f"Generating profile for {x_user}")
         generate_profile(x_user)
     

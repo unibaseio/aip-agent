@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 from typing import Any, Dict, List
 
 from core.generate import generate_profile
@@ -7,17 +8,34 @@ from core.retrieve import retrieve_tweets
 from core.summary import summarize
 from core.save import save_tweets
 
+def get_user_info(user_name: str) -> Any:
+    if os.path.exists(f"outputs/{user_name}_info.json"):
+        with open(f"outputs/{user_name}_info.json", 'r', encoding='utf-8') as f:
+            content = f.read()
+            # Remove the ```json markers if they exist
+            content = content.replace('```json\n', '').replace('\n```', '')
+            info =  json.loads(content)
+            return info
+    
+    if not os.path.exists(f"outputs/{user_name}_tweets.json"):
+        return None
+    
+    with open(f"outputs/{user_name}_tweets.json", 'r', encoding='utf-8') as f:
+        tweets = json.load(f)
+        info = tweets[-1].get("author", {})
+        with open(f"outputs/{user_name}_info.json", 'w', encoding='utf-8') as f:
+            json.dump(info, f)
+    return info
+
 def load_unfinished_users() -> Any:
     print(f"load unfinished users")
     users = []
     for file in os.listdir("outputs"):
-        if file.endswith(".json"):
-            # Remove '_profile_final.json' suffix to get the user name
-            if file.endswith("_profile_final.json"):
-                continue
+        if file.endswith("_tweets.json"):
+            # Remove '_summary.json' suffix to get the user name
             if file.endswith("_summary.json"):
                 continue
-            user_name = file[:-len(".json")]
+            user_name = file[:-len("_tweets.json")]
             users.append(user_name) 
     return users
 
@@ -57,7 +75,7 @@ def build_user(user_name: str):
         return 
     
     # check if tweets need to be retrieved
-    if not os.path.exists(f"outputs/{user_name}.json"):
+    if not os.path.exists(f"outputs/{user_name}_tweets.json"):
         print(f"Retrieving tweets for {user_name}")
         retrieve_tweets(user_name)
         save_tweets(user_name)
@@ -73,3 +91,21 @@ def build_user(user_name: str):
         res = summarize(user_name)
         with open(f"outputs/{user_name}_summary.json", "w") as f:
             f.write(res)
+
+if __name__ == "__main__":
+    for file in os.listdir("outputs"):
+        if file.endswith("_profile_final.json"):
+            # Remove '_profile_final.json' suffix to get the user name
+            user_name = file[:-len("_profile_final.json")]
+            # rename user.json to user_tweets.json
+            if os.path.exists(f"outputs/{user_name}.json"):
+                print(f"Renaming {user_name}.json to {user_name}_tweets.json")
+                os.rename(f"outputs/{user_name}.json", f"outputs/{user_name}_tweets.json")
+    
+    default_x_name = "VitalikButerin"
+    args = sys.argv[1:]
+    if len(args) > 0:
+        default_x_name = args[0]
+    print(f"Processing {default_x_name}")
+    info = get_user_info(default_x_name)
+    print(info)
