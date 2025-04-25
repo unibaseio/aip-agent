@@ -28,6 +28,7 @@ dependencies = [
  "apify-client>=1.9.3",
  "tiktoken>=0.9.0",
  "chess>=1.11.2",
+ "flask-cors>=5.0.1",
 ]
 [[project.authors]]
 name = "felix"
