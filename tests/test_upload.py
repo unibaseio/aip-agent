@@ -39,7 +39,7 @@ bps = []
 def test_upload():
     wallet_address = generate_random_eth_address()
     for token_address in tokens:
-        membase_id = "trader_" + names.get_first_name() + "_" + str(uuid.uuid4())[:4]
+        membase_id = "trader_" + names.get_first_name() + "_" + names.get_last_name()
         print(f"wallet_address: {wallet_address}, membase_id: {membase_id}")
         bp = TraderClient(BSC_MAINNET_SETTINGS, wallet_address, wallet_private_key, token_address, membase_id)
         bp.start_monitoring(7)
