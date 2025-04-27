@@ -15,22 +15,23 @@ uv run -m core.api --port=5001
   - Add `Authorization: Bearer <token>` header to all requests
   - Default token: "unibase_personal_agent"
   - Can be configured via `BEARER_TOKEN` environment variable or `--bearer-token` argument
+- Username is known as twitter handle
 
 ## API Endpoints
 
 ### 1. List Users
 
+- **Description**: Get a list of all available users
 - **Endpoint**: `/api/list_users`
 - **Method**: GET
 - **Headers**: 
   - `Authorization: Bearer <token>`
-- **Description**: Get a list of all available users
 - **Response Example**:
 
 ```json
 {
   "success": true,
-  "data": ["user1", "user2", "user3"]
+  "data": ["user1", "user2", "user3"] // each one is twitter username (also known as a handle)
 }
 ```
 
@@ -39,6 +40,7 @@ uv run -m core.api --port=5001
 
 ### 2. Get User Profile
 
+- **Description**: Get profile of username
 - **Endpoint**: `/api/get_profile`
 - **Method**: GET
 - **Headers**: 
@@ -77,15 +79,15 @@ uv run -m core.api --port=5001
   - If username parameter missing: 400 error
   - If server error occurs: 500 error with error message
 
-### 3. Get User Info
+### 3. Get XInfo
 
-- **Endpoint**: `/api/get_userinfo`
+- **Description**: Get twitter information of username
+- **Endpoint**: `/api/get_xinfo`
 - **Method**: GET
 - **Headers**: 
   - `Authorization: Bearer <token>`
 - **Parameters**:
   - `username`: Username (required)
-- **Description**: Get user information from external source
 - **Response Example**:
 
 ```json
@@ -127,8 +129,43 @@ uv run -m core.api --port=5001
   - If username parameter missing: 400 error
   - If server error occurs: 500 error with error message
 
-### 4. Generate User Profile
+### 4. Get Conversation History
 
+- **Description**: Get conversation history of username
+- **Endpoint**: `/api/get_conversation`
+- **Method**: GET
+- **Headers**: 
+  - `Authorization: Bearer <token>`
+- **Parameters**:
+  - `username`: Username (required)
+  - `conversation_id`: Optional conversation ID (default: ${membase_id}_${username})
+  - `recent_n_messages`: Optional number of recent messages to retrieve (default: 128)
+- **Response Example**:
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "role": "user",
+      "content": "Hello"
+    },
+    {
+      "role": "assistant",
+      "content": "Hi there!"
+    }
+  ]
+}
+```
+
+- **Error Cases**:
+  - If memory not found: 404 error
+  - If username parameter missing: 400 error
+  - If server error occurs: 500 error with error message
+
+### 5. Generate User Profile
+
+- **Description**: Generate profile for a new username
 - **Endpoint**: `/api/generate`
 - **Method**: POST
 - **Headers**: 
@@ -152,12 +189,13 @@ uv run -m core.api --port=5001
 ```
 
 - **Error Cases**:
-  - If username too long (>50 chars): 400 error
+  - If username too long (>15 chars): 400 error
   - If missing username: 400 error
   - If server error occurs: 500 error with error message
 
-### 5. Chat Interface
+### 6. Chat Interface
 
+- **Description**: Chat with user personal agent
 - **Endpoint**: `/api/chat`
 - **Method**: POST
 - **Headers**: 
@@ -199,16 +237,17 @@ uv run -m core.api --port=5001
 ## Notes
 
 1. All POST requests must use `application/json` format
-2. Username length cannot exceed 50 characters
+2. Username length cannot exceed 15 characters (Twitter handle limit)
 3. Profile generation is an asynchronous process and may require waiting time
-4. Chat interface supports conversation ID, which will be auto-generated if not provided (format: `membase_id_username`)
-5. User profiles are automatically refreshed every 5 minutes
+4. Chat interface supports conversation ID, which will be auto-generated if not provided (format: `${membase_id}_${username}`)
+5. User profiles are automatically refreshed every 10 minutes
 6. The server uses a thread pool with 4 workers for handling background tasks
+7. Conversation history can be retrieved with optional parameters for conversation ID and number of recent messages
 
 ## System Configuration
 
 - Server runs on port 5001 (configurable via `--port` argument)
-- Default server URL: "13.212.116.103:8081" (configurable via `SERVER_URL` environment variable)
+- Default grpc server URL: "13.212.116.103:8081" (configurable via `GRPC_SERVER_URL` environment variable)
 - System prompt can be configured via `SYSTEM_PROMPT` environment variable
 - Bearer token can be configured via `BEARER_TOKEN` environment variable or `--bearer-token` argument
 - Server runs on all interfaces (0.0.0.0) by default
