@@ -85,12 +85,46 @@ def retrieve_tweets(user_name: str, begin_date: Optional[str] = None, end_date: 
 
     return all_tweets
 
+def retrieve_mentioned_tweets(user_name: str, begin_date: Optional[str] = None):
+    # Initialize the ApifyClient with your API token
+    client = ApifyClient(os.getenv("APIFY_API_TOKEN"))
+
+    if begin_date is None:
+        # align to day
+        begin_date = datetime.now().strftime("%Y-%m-%d_00:00:00_UTC")
+
+    # align to day
+    end_date = (datetime.strptime(begin_date, "%Y-%m-%d_%H:%M:%S_UTC") + timedelta(days=1)).strftime("%Y-%m-%d_00:00:00_UTC")
+
+    print(f"Retrieving {user_name} mentioned tweets from {begin_date} to {end_date}")
+
+    # Prepare the Actor input
+    run_input = {
+        "@": user_name,
+        "maxItems": 10,
+        "queryType": "Latest",
+        "since": begin_date,
+        "until": end_date,
+    }
+
+    # Run the Actor and wait for it to finish
+    actor_id = "kaitoeasyapi/twitter-x-data-tweet-scraper-pay-per-result-cheapest"
+    run = client.actor(actor_id).call(run_input=run_input)
+
+    # Fetch and process new tweets
+    new_tweets = []
+    for item in client.dataset(run["defaultDatasetId"]).iterate_items():
+        print(item)
+        new_tweets.append(item) 
+
+    return new_tweets
+
 if __name__ == "__main__":
     args = sys.argv[1:]
     if len(args) > 0:
         default_x_name = args[0]
     print(f"Retrieving tweets for {default_x_name}")
-    retrieve_tweets(default_x_name)
+    retrieve_mentioned_tweets(default_x_name)
    
     
     

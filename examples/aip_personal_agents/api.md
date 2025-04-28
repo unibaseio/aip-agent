@@ -225,6 +225,46 @@ uv run -m core.api --port=5001
   - If missing required fields: 400 error
   - If server error occurs: 500 error with error message
 
+### 7. List All User Information
+
+- **Description**: Get a list of all available users with their complete information
+- **Endpoint**: `/api/list_info`
+- **Method**: GET
+- **Headers**: 
+  - `Authorization: Bearer <token>`
+- **Response Example**:
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "username": "user1",
+      "summary": {
+        // User summary details
+        "detailed_analysis": {},
+        "personal_brief": "",
+        "personal_tags": {
+          "keywords": [
+            "#Bitcoin",
+            "Strategic Reserve",
+            "BTC Yield",
+            "Trump administration",
+            "regulation"
+          ]
+        }
+      },
+      "xinfo": {
+        // Twitter information details
+      }
+    }
+  ]
+}
+```
+
+- **Error Cases**:
+  - If server error occurs: 500 error with error message
+
 ## Error Codes
 
 - 400: Bad Request (Invalid JSON format, missing required fields, username too long)
@@ -251,3 +291,5 @@ uv run -m core.api --port=5001
 - System prompt can be configured via `SYSTEM_PROMPT` environment variable
 - Bearer token can be configured via `BEARER_TOKEN` environment variable or `--bearer-token` argument
 - Server runs on all interfaces (0.0.0.0) by default
+- Thread pool size is fixed at 4 workers for background tasks
+- User profile refresh interval is set to 10 minutes

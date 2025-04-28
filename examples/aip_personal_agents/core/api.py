@@ -28,6 +28,8 @@ def refresh_users_task():
                 if username not in app.candidates:
                     build_user(username)
             app.users = load_users()
+            for username in app.users:
+                app.xinfo[username] = get_user_info(username)
         except Exception as e:
             print(f"Error refreshing users: {str(e)}")
         time.sleep(600)  # Refresh every 10 minutes
@@ -79,6 +81,26 @@ def validate_token(f):
         return f(*args, **kwargs)
     return decorated_function
 
+@app.route('/api/list_info', methods=['GET'])
+@validate_token
+def list_info():
+    """List all available users and their info"""
+    try:
+        res = []
+        for username in app.users:
+            xinfo = {
+                "username": username,
+            }    
+
+            xinfo["summary"] = app.users[username].get("summary", {})
+            if username in app.xinfo:
+                xinfo["xinfo"] = app.xinfo[username]
+
+            res.append(xinfo)   
+        return jsonify({'success': True, 'data': res})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @app.route('/api/list_users', methods=['GET'])
 @validate_token
 def list_users():
@@ -117,10 +139,10 @@ def get_xinfo():
         if not username:
             return jsonify({'success': False, 'error': 'Missing username parameter'}), 400
             
-        userinfo = get_user_info(username)
-        if not userinfo:
-            return jsonify({'success': False, 'error': 'Userinfo not found'}), 404
-        return jsonify({'success': True, 'data': userinfo})
+        xinfo = app.xinfo[username]
+        if not xinfo:
+            return jsonify({'success': False, 'error': 'Xinfo not found'}), 404
+        return jsonify({'success': True, 'data': xinfo})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
     
@@ -267,6 +289,11 @@ async def initialize(port: int = 5001, bearer_token: str = None) -> None:
         exit()
 
     app.users = load_users()
+    app.xinfo = {}
+
+    for username in app.users:
+        app.xinfo[username] = get_user_info(username)
+
     app.candidates = []
 
     # Start the background refresh task in a separate thread
