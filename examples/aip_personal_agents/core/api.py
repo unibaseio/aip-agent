@@ -153,12 +153,13 @@ def get_profile():
         username = request.args.get('username')
         if not username:
             return jsonify({'success': False, 'error': 'Missing username parameter'}), 400
-            
-        profile = app.users[username]
-        if not profile:
+
+        if username not in app.users:
             if username in app.candidates:
-                return jsonify({'success': False, 'data': "Building..."})    
+                return jsonify({'success': False, 'data': "Building..."}) 
             return jsonify({'success': False, 'error': 'User not found'}), 404
+        
+        profile = app.users[username]          
         return jsonify({'success': True, 'data': profile})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -171,12 +172,13 @@ def get_xinfo():
         username = request.args.get('username')
         if not username:
             return jsonify({'success': False, 'error': 'Missing username parameter'}), 400
-            
-        xinfo = app.xinfo[username]
-        if not xinfo:
+
+        if username not in app.xinfo:
             if username in app.candidates:
                 return jsonify({'success': False, 'data': "Building..."}) 
             return jsonify({'success': False, 'error': 'User xinfo not found'}), 404
+
+        xinfo = app.xinfo[username]        
         return jsonify({'success': True, 'data': xinfo})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
