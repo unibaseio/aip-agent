@@ -8,6 +8,9 @@ from core.post import load_profile
 
 def summarize_profile(user_name: str) -> str:
     profile = load_profile(user_name)
+    if profile is None:
+        return None
+    
     prompt_summary = f"""
     You are a professional social media analyst. 
 
@@ -64,7 +67,10 @@ def summarize_profile(user_name: str) -> str:
 
 def summarize(user_name: str):
     print(f"Summarize profile for {user_name}")
+
     summary = summarize_profile(user_name)
+    if summary is None:
+        return
     with open(f"outputs/{user_name}_summary.json", "w") as f:
         f.write(summary)
 

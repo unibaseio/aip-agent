@@ -93,6 +93,7 @@ uv run -m core.api --port=5001
   - If username parameter missing: 400 error
   - If xinfo not found: 404 error
   - If server error occurs: 500 error with error message
+  - If user has no tweets, personal_brief is "No enough information or still in building..."
 
 ### 3. List Users
 

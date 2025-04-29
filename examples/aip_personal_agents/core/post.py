@@ -1,12 +1,16 @@
 import os
 import sys
+import json
 from typing import Dict, Any
 
 from openai import OpenAI
 
 def load_profile(user_name: str) -> Dict[str, Any]:
     """Load profile from JSON file"""
-    import json
+    
+    if not os.path.exists(f"outputs/{user_name}_profile_final.json"):
+        return None
+
     with open(f"outputs/{user_name}_profile_final.json", 'r', encoding='utf-8') as f:
         content = f.read()
         # Remove the ```json markers if they exist

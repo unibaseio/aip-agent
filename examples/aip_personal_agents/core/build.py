@@ -24,7 +24,7 @@ def get_user_xinfo(user_name: str) -> Any:
 def create_user_xinfo(user_name: str):
     tweets = load_tweets(user_name)
     if len(tweets) == 0:
-        return None
+        return {}
     
     info = tweets[-1].get("author", {})
     with open(f"outputs/{user_name}_info.json", 'w', encoding='utf-8') as f:
@@ -45,27 +45,37 @@ def load_unfinished_users() -> Any:
 
 def load_user(user_name: str) -> Any:
     print(f"load user: {user_name}")
-    with open(f"outputs/{user_name}_profile_final.json", 'r', encoding='utf-8') as f:
-        content = f.read()
-        # Remove the ```json markers if they exist
-        content = content.replace('```json\n', '').replace('\n```', '')
-        profile =  json.loads(content)
+    if os.path.exists(f"outputs/{user_name}_profile_final.json"):
+        with open(f"outputs/{user_name}_profile_final.json", 'r', encoding='utf-8') as f:
+            content = f.read()
+            # Remove the ```json markers if they exist
+            content = content.replace('```json\n', '').replace('\n```', '')
+            profile =  json.loads(content)
+    else:
+        profile = {}
+
     if os.path.exists(f"outputs/{user_name}_summary.json"):
         with open(f"outputs/{user_name}_summary.json", 'r', encoding='utf-8') as f:
             content = f.read()
             content = content.replace('```json\n', '').replace('\n```', '')
             summary = json.loads(content)
     else:
-        summary = {}
+        summary = {
+            "detailed_analysis": {},
+            "personal_brief": "No enough information or still in building...",
+            "personal_tags": {
+                "keywords": []
+            }
+        }
     return {"profile": profile, "summary": summary}
 
 # user dict: name -> summary
 def load_users() -> Dict[str, Any]:
     users = {}
     for file in os.listdir("outputs"):
-        if file.endswith("_profile_final.json"):
-            # Remove '_profile_final.json' suffix to get the user name
-            user_name = file[:-len("_profile_final.json")]
+        if file.endswith("_tweets.json"):
+            # Remove '_tweets.json' suffix to get the user name
+            user_name = file[:-len("_tweets.json")]
             if user_name:  # Ensure we don't add empty names
                 users[user_name] = load_user(user_name)
     return users

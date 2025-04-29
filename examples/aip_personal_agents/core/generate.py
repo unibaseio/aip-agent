@@ -10,11 +10,10 @@ def generate_profile(user_name):
 
     tweets = load_tweets(user_name)
     if len(tweets) == 0:
-        raise Exception("no tweets") 
+        return 
     
     ordered_tweets = order_tweets(tweets)
     
-
     user_info = ordered_tweets[-1].get("author", {})
 
     filtered_tweets = filter_tweets(ordered_tweets)
