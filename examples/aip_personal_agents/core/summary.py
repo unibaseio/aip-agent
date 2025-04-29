@@ -2,13 +2,11 @@ import os
 import sys
 from typing import Dict, Any
 
-default_x_name = "elonmusk"
-
 from openai import OpenAI
 
 from core.post import load_profile
 
-def summarize(user_name: str) -> str:
+def summarize_profile(user_name: str) -> str:
     profile = load_profile(user_name)
     prompt_summary = f"""
     You are a professional social media analyst. 
@@ -64,15 +62,15 @@ def summarize(user_name: str) -> str:
     )
     return response.choices[0].message.content
 
-def main(user_name: str):
-    summary = summarize(user_name)
-    print(summary)
+def summarize(user_name: str):
+    print(f"Summarize profile for {user_name}")
+    summary = summarize_profile(user_name)
     with open(f"outputs/{user_name}_summary.json", "w") as f:
         f.write(summary)
 
 if __name__ == "__main__":
+    default_x_name = "elonmusk"
     args = sys.argv[1:]
     if len(args) > 0:
         default_x_name = args[0]
-    print(f"Summary for {default_x_name}")
-    main(default_x_name)
+    summarize(default_x_name)

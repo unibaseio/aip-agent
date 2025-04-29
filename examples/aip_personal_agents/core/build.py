@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 import os
 import sys
@@ -8,7 +9,7 @@ from core.retrieve import retrieve_tweets
 from core.summary import summarize
 from core.save import save_tweets
 
-def get_user_info(user_name: str) -> Any:
+def get_user_xinfo(user_name: str) -> Any:
     if os.path.exists(f"outputs/{user_name}_info.json"):
         with open(f"outputs/{user_name}_info.json", 'r', encoding='utf-8') as f:
             content = f.read()
@@ -17,6 +18,17 @@ def get_user_info(user_name: str) -> Any:
             info =  json.loads(content)
             return info
     
+    if not os.path.exists(f"outputs/{user_name}_tweets.json"):
+        return None
+    
+    with open(f"outputs/{user_name}_tweets.json", 'r', encoding='utf-8') as f:
+        tweets = json.load(f)
+        info = tweets[-1].get("author", {})
+        with open(f"outputs/{user_name}_info.json", 'w', encoding='utf-8') as f:
+            json.dump(info, f)
+    return info
+
+def create_user_xinfo(user_name: str):
     if not os.path.exists(f"outputs/{user_name}_tweets.json"):
         return None
     
@@ -78,7 +90,6 @@ def build_user(user_name: str):
     if not os.path.exists(f"outputs/{user_name}_tweets.json"):
         print(f"Retrieving tweets for {user_name}")
         retrieve_tweets(user_name)
-        save_tweets(user_name)
     
     # generate profile if tweets exist
     if not os.path.exists(f"outputs/{user_name}_profile_final.json"):
@@ -88,9 +99,20 @@ def build_user(user_name: str):
     # after profile is generated, summarize
     if not os.path.exists(f"outputs/{user_name}_summary.json"):
         print(f"Summary profile for {user_name}")
-        res = summarize(user_name)
-        with open(f"outputs/{user_name}_summary.json", "w") as f:
-            f.write(res)
+        summarize(user_name)
+
+def refresh_user(user_name: str):
+    date_str = datetime.now().strftime("%Y-%m-%d")
+    if os.path.exists(f"outputs/{user_name}_tweets_{date_str}.json"):
+        print(f"already retrieved at {date_str} for: {user_name}")
+        return
+    print(f"Refreshing user: {user_name} at: {date_str}")
+    retrieve_tweets(user_name)
+    save_tweets(user_name)
+    generate_profile(user_name)
+    summarize(user_name)
+    create_user_xinfo(user_name)
+
 
 if __name__ == "__main__":
     for file in os.listdir("outputs"):
@@ -107,5 +129,5 @@ if __name__ == "__main__":
     if len(args) > 0:
         default_x_name = args[0]
     print(f"Processing {default_x_name}")
-    info = get_user_info(default_x_name)
+    info = get_user_xinfo(default_x_name)
     print(info)

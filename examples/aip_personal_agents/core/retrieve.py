@@ -6,7 +6,9 @@ from apify_client import ApifyClient
 import os
 from typing import Optional, List, Dict
 
-default_x_name = "elonmusk"
+from core.format import get_reply_tweet_ids, build_text
+
+
 
 def load_existing_tweets(user_name: str) -> List[Dict]:
     """Load existing tweets from local file if it exists."""
@@ -77,8 +79,31 @@ def retrieve_tweets(user_name: str, begin_date: Optional[str] = None, end_date: 
             existing_ids.add(tweet_id)
 
     new_tweets.sort(key=lambda x: parse_date(x["createdAt"]))
+
     # Combine existing and new tweets
     all_tweets = existing_tweets + new_tweets
+
+    save_tweets(user_name, all_tweets)
+
+    print(f"Retrieving replied tweets for {user_name}")
+    replied_ids = get_reply_tweet_ids(all_tweets)
+    print(f"Retrieving {len(replied_ids)} replied tweets")
+    replied_tweets = {}
+    # Process 180 replied_ids at each request
+    batch_size = 180
+    for i in range(0, len(replied_ids), batch_size):
+        batch_ids = replied_ids[i:i + batch_size]
+        print(f"Retrieving batch {i//batch_size + 1} of {(len(replied_ids) + batch_size - 1)//batch_size}")
+        run_input = {
+            "tweetIDs": batch_ids,
+        }
+        run = client.actor(actor_id).call(run_input=run_input)
+        for item in client.dataset(run["defaultDatasetId"]).iterate_items():
+            replied_tweets[item["id"]] = item
+
+    for t in all_tweets:
+        if t.get("isReply") and t.get("inReplyToId") and  t["inReplyToId"] in replied_tweets:
+            t["inReplyToText"] = build_text(replied_tweets[t["inReplyToId"]])
 
     # Save the combined and sorted tweets
     save_tweets(user_name, all_tweets)
@@ -120,11 +145,12 @@ def retrieve_mentioned_tweets(user_name: str, begin_date: Optional[str] = None):
     return new_tweets
 
 if __name__ == "__main__":
+    default_x_name = "elonmusk"
     args = sys.argv[1:]
     if len(args) > 0:
         default_x_name = args[0]
     print(f"Retrieving tweets for {default_x_name}")
-    retrieve_mentioned_tweets(default_x_name)
+    retrieve_tweets(default_x_name)
    
     
     

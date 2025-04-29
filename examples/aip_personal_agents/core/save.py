@@ -1,26 +1,17 @@
 import json
 import os
+import sys
 from membase.knowledge.chroma import ChromaKnowledgeBase
 from membase.knowledge.document import Document
 
-default_x_name = "realDonaldTrump"
+from core.format import build_text, order_tweets
 
-def build_text(tweet):
-    base = tweet["text"].strip()
-
-    if tweet.get("quoted_tweet"):
-        quoted = tweet["quoted_tweet"]
-        quoted_text = quoted.get("text", "").strip()
-        quoted_user = quoted.get("author", {}).get("name", "unknown")
-        base += f"\n\nQuoted Tweet from @{quoted_user}:\n{quoted_text}"
-    
-    return base
-
-def format_tweet(tweet):
+def format_tweet_to_doc(tweet):
     doc = Document(
         doc_id=tweet["id"],
-        content=build_text(tweet),
+        content= tweet["author"]["name"] + " tweet: " + build_text(tweet),
         metadata={
+            "type": "tweet",
             "post_type": "reply" if tweet.get("isReply") else 
                         "quote" if tweet.get("isQuote") else 
                         "original",
@@ -30,29 +21,48 @@ def format_tweet(tweet):
             "quoteCount": tweet["quoteCount"],
             "viewCount": tweet["viewCount"],
             "created_at": tweet["createdAt"],
-            "author": tweet["author"]["name"],
             "url": tweet["url"],
             "lang": tweet["lang"],
+            "author": tweet["author"]["name"],
+            "username": tweet["author"]["userName"],
+            "followersCount": tweet["author"]["followers"],
+            "followingCount": tweet["author"]["following"],
         }
     )
     return doc
 
-def save_tweets(user_name):
+def save_tweets_to_collection(user_name, collection_name):
+    print(f"Saving tweets of {user_name} in kol database: {collection_name}")
     jsonfile = f"outputs/{user_name}_tweets.json"
     with open(jsonfile, 'r') as f:
         tweets = json.load(f)
-    
+
+    #tweets = order_tweets(tweets, True)
+
     rag = ChromaKnowledgeBase(
-        persist_directory=f"./chroma_db_{user_name}",
-        collection_name=user_name,
+        persist_directory=f"./chroma_db_kol",
+        collection_name=collection_name,
         membase_account=os.getenv("MEMBASE_ACCOUNT"),
         auto_upload_to_hub=True,
     )
   
     for tweet in tweets:
-        doc = format_tweet(tweet)
+        if rag.exists(tweet["id"]):
+            #print(f"Tweet {tweet['id']} already exists in {collection_name}")
+            continue
+        doc = format_tweet_to_doc(tweet)
         rag.add_documents([doc])
 
+def save_tweets(user_name):
+    print(f"Saving tweets for {user_name}")
+    save_tweets_to_collection(user_name, user_name)
+    common_collection_name = "kol_database"
+    save_tweets_to_collection(user_name, common_collection_name)
+
 if __name__ == "__main__":
+    default_x_name = "elonmusk"
+    args = sys.argv[1:]
+    if len(args) > 0:
+        default_x_name = args[0]
     save_tweets(default_x_name)
    

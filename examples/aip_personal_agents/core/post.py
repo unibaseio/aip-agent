@@ -2,8 +2,6 @@ import os
 import sys
 from typing import Dict, Any
 
-default_x_name = "elonmusk"
-
 from openai import OpenAI
 
 def load_profile(user_name: str) -> Dict[str, Any]:
@@ -98,6 +96,7 @@ def main(user_name: str):
     print(tweet)
 
 if __name__ == "__main__":
+    default_x_name = "elonmusk"
     args = sys.argv[1:]
     if len(args) > 0:
         default_x_name = args[0]

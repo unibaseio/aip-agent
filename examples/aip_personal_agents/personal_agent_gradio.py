@@ -147,6 +147,7 @@ async def main(address: str, x_account: str) -> None:
         x_account = x_account[1:]
     default_x_name = x_account
     description = build_users(x_account)
+    save_tweets(x_account)
 
     full_agent = FullAgentWrapper(
         agent_cls=CallbackAgent,

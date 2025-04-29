@@ -19,7 +19,82 @@ uv run -m core.api --port=5001
 
 ## API Endpoints
 
-### 1. List Users
+### 1. List All User Information
+
+- **Description**: Get a list of all available users with their complete information
+- **Endpoint**: `/api/list_info`
+- **Method**: GET
+- **Headers**: 
+  - `Authorization: Bearer <token>`
+- **Response Example**:
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "username": "user1",
+      "summary": {
+        // User summary details
+        "detailed_analysis": {},
+        "personal_brief": "",
+        "personal_tags": {
+          "keywords": [
+            "#Bitcoin",
+            "Strategic Reserve",
+            "BTC Yield",
+          ]
+        }
+      },
+      "xinfo": {
+        // Twitter information details
+      }
+    }
+  ]
+}
+```
+
+- **Error Cases**:
+  - If server error occurs: 500 error with error message
+
+### 2. Get Complete User Info
+
+- **Description**: Get complete information of username including profile, summary and xinfo
+- **Endpoint**: `/api/get_info`
+- **Method**: GET
+- **Headers**: 
+  - `Authorization: Bearer <token>`
+- **Parameters**:
+  - `username`: Username (required)
+- **Response Example**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "username": "user1",
+    "xinfo": {
+      // Twitter information details
+    },
+    "summary": {
+      "detailed_analysis": {},
+      "personal_brief": "",
+      "personal_tags": {
+        "keywords": []
+      }
+    }
+  }
+}
+```
+
+- **Error Cases**:
+  - If user is being built: `{"success": false, "data": "Building..."}`
+  - If user not found: 404 error
+  - If username parameter missing: 400 error
+  - If xinfo not found: 404 error
+  - If server error occurs: 500 error with error message
+
+### 3. List Users
 
 - **Description**: Get a list of all available users
 - **Endpoint**: `/api/list_users`
@@ -38,7 +113,7 @@ uv run -m core.api --port=5001
 - **Error Cases**:
   - If server error occurs: 500 error with error message
 
-### 2. Get User Profile
+### 4. Get User Profile
 
 - **Description**: Get profile of username
 - **Endpoint**: `/api/get_profile`
@@ -61,11 +136,6 @@ uv run -m core.api --port=5001
       "personal_brief": "",
       "personal_tags": {
         "keywords": [
-          "#Bitcoin",
-          "Strategic Reserve",
-          "BTC Yield",
-          "Trump administration",
-          "regulation"
         ]
       }
     }
@@ -79,7 +149,7 @@ uv run -m core.api --port=5001
   - If username parameter missing: 400 error
   - If server error occurs: 500 error with error message
 
-### 3. Get XInfo
+### 5. Get XInfo
 
 - **Description**: Get twitter information of username
 - **Endpoint**: `/api/get_xinfo`
@@ -125,11 +195,12 @@ uv run -m core.api --port=5001
 ```
 
 - **Error Cases**:
+  - If user is being built: `{"success": false, "data": "Building..."}`
   - If user info not found: 404 error
   - If username parameter missing: 400 error
   - If server error occurs: 500 error with error message
 
-### 4. Get Conversation History
+### 6. Get Conversation History
 
 - **Description**: Get conversation history of username
 - **Endpoint**: `/api/get_conversation`
@@ -163,7 +234,7 @@ uv run -m core.api --port=5001
   - If username parameter missing: 400 error
   - If server error occurs: 500 error with error message
 
-### 5. Generate User Profile
+### 7. Generate User Profile
 
 - **Description**: Generate profile for a new username
 - **Endpoint**: `/api/generate`
@@ -193,7 +264,7 @@ uv run -m core.api --port=5001
   - If missing username: 400 error
   - If server error occurs: 500 error with error message
 
-### 6. Chat Interface
+### 8. Chat Interface
 
 - **Description**: Chat with user personal agent
 - **Endpoint**: `/api/chat`
@@ -223,46 +294,6 @@ uv run -m core.api --port=5001
 - **Error Cases**:
   - If user profile not found: 404 error
   - If missing required fields: 400 error
-  - If server error occurs: 500 error with error message
-
-### 7. List All User Information
-
-- **Description**: Get a list of all available users with their complete information
-- **Endpoint**: `/api/list_info`
-- **Method**: GET
-- **Headers**: 
-  - `Authorization: Bearer <token>`
-- **Response Example**:
-
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "username": "user1",
-      "summary": {
-        // User summary details
-        "detailed_analysis": {},
-        "personal_brief": "",
-        "personal_tags": {
-          "keywords": [
-            "#Bitcoin",
-            "Strategic Reserve",
-            "BTC Yield",
-            "Trump administration",
-            "regulation"
-          ]
-        }
-      },
-      "xinfo": {
-        // Twitter information details
-      }
-    }
-  ]
-}
-```
-
-- **Error Cases**:
   - If server error occurs: 500 error with error message
 
 ## Error Codes

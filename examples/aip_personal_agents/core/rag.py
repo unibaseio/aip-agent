@@ -6,8 +6,15 @@ from membase.knowledge.document import Document
 
 default_x_name = "elonmusk"
 
+kol_rag = ChromaKnowledgeBase(
+    persist_directory="./chroma_db_kol",
+    collection_name="kol_database",
+    membase_account=os.getenv("MEMBASE_ACCOUNT"),
+    auto_upload_to_hub=True,
+)
+
 rag = ChromaKnowledgeBase(
-    persist_directory="./chroma_db_" + default_x_name,
+    persist_directory="./chroma_db_kol",
     collection_name=default_x_name,
     membase_account=os.getenv("MEMBASE_ACCOUNT"),
     auto_upload_to_hub=True,
@@ -23,7 +30,7 @@ def switch_user(
     print(f"Switching rag to user: {user_name}")
     if user_name not in rags:
         rag = ChromaKnowledgeBase(
-            persist_directory="./chroma_db_" + user_name,
+            persist_directory="./chroma_db_kol",
             collection_name=user_name,
             membase_account=os.getenv("MEMBASE_ACCOUNT"),
             auto_upload_to_hub=True,
@@ -64,6 +71,10 @@ def search_similar_posts(
     global rag
     print(f"Searching {rag._collection_name} for similar posts to: {query}")
     docs = rag.retrieve(query, top_k=num_results, metadata_filter=metadata_filter, content_filter=content_filter)
-
-    # transform docs to list,with content,metadata, and doc_id
+    print(f"Found {len(docs)} documents")
+    if len(docs) == 0:
+        global kol_rag
+        print(f"Searching {kol_rag._collection_name} for similar posts to: {query}")
+        docs = kol_rag.retrieve(query, top_k=num_results, metadata_filter=metadata_filter, content_filter=content_filter)
+    # transform docs to list, with content,metadata, and doc_id
     return [{"name": doc.doc_id, "content": doc.content, "metadata": doc.metadata} for doc in docs]

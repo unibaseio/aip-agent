@@ -1,7 +1,7 @@
 import json
 import sys
 
-from core.clean import filter_tweets, order_tweets
+from core.format import filter_tweets, order_tweets
 from core.generate_prompts import build_batches, call_batch
 from core.merge import merge_profiles
 
@@ -18,6 +18,16 @@ def generate_profile(user_name):
     user_info = ordered_tweets[-1].get("author", {})
 
     filtered_tweets = filter_tweets(ordered_tweets)
+    # print first reply and quote tweet
+    for t in filtered_tweets:
+        if t.get("post_type") == "reply":
+            print(t)
+            break
+
+    for t in filtered_tweets:
+        if t.get("post_type") == "quote":
+            print(t)
+            break        
 
     batches = build_batches(filtered_tweets)
     

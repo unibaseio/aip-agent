@@ -12,7 +12,9 @@ import argparse
 from membase.chain.chain import membase_id
 from aip_agent.agents.custom_agent import CallbackAgent
 from aip_agent.agents.full_agent import FullAgentWrapper
-from core.build import get_user_info, load_unfinished_users, load_user, load_users, build_user
+from core.build import get_user_xinfo, load_unfinished_users, load_user, load_users, build_user, refresh_user
+from core.rag import search_similar_posts, switch_user
+from core.save import save_tweets
 
 app = Flask(__name__)
 CORS(app)
@@ -28,8 +30,12 @@ def refresh_users_task():
                 if username not in app.candidates:
                     build_user(username)
             app.users = load_users()
-            for username in app.users:
-                app.xinfo[username] = get_user_info(username)
+            users = list(app.users.keys())
+            xinfo = {}
+            for username in users:
+                refresh_user(username)
+                xinfo[username] = get_user_xinfo(username)
+            app.xinfo = xinfo
         except Exception as e:
             print(f"Error refreshing users: {str(e)}")
         time.sleep(600)  # Refresh every 10 minutes
@@ -101,6 +107,34 @@ def list_info():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route('/api/get_info', methods=['GET'])
+@validate_token
+def get_info():
+    """Get info by username"""
+    try:
+        username = request.args.get('username')
+        if not username:
+            return jsonify({'success': False, 'error': 'Missing username parameter'}), 400
+
+        if username not in app.users:
+            if username in app.candidates:
+                return jsonify({'success': False, 'data': "Building..."})    
+            return jsonify({'success': False, 'error': 'User not found'}), 404
+
+        xinfo = app.xinfo[username]
+        if not xinfo:
+            return jsonify({'success': False, 'error': 'Xinfo not found'}), 404
+        
+        res = {
+            "username": username,
+            "xinfo": xinfo,
+            "summary": app.users[username].get("summary", {}),
+        }    
+
+        return jsonify({'success': True, 'data': res})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @app.route('/api/list_users', methods=['GET'])
 @validate_token
 def list_users():
@@ -123,9 +157,8 @@ def get_profile():
         profile = app.users[username]
         if not profile:
             if username in app.candidates:
-                return jsonify({'success': False, 'data': "building..."})    
-            else:
-                return jsonify({'success': False, 'error': 'Profile not found'}), 404
+                return jsonify({'success': False, 'data': "Building..."})    
+            return jsonify({'success': False, 'error': 'User not found'}), 404
         return jsonify({'success': True, 'data': profile})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -141,7 +174,9 @@ def get_xinfo():
             
         xinfo = app.xinfo[username]
         if not xinfo:
-            return jsonify({'success': False, 'error': 'Xinfo not found'}), 404
+            if username in app.candidates:
+                return jsonify({'success': False, 'data': "Building..."}) 
+            return jsonify({'success': False, 'error': 'User xinfo not found'}), 404
         return jsonify({'success': True, 'data': xinfo})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -223,6 +258,8 @@ def build_user_sync(username: str):
     try:
         build_user(username)
         app.users[username] = load_user(username)
+        # conflict write?
+        save_tweets(username)
     except Exception as e:
         print(f"Error building user {username}: {str(e)}")
     finally:
@@ -246,6 +283,8 @@ def chat():
         if username not in app.users:
             return jsonify({'success': False, 'error': 'User profile not found'}), 404
 
+        # TODO: may change due to another task
+        switch_user(username)
         profile = app.users[username]["profile"]
         profile_str = json.dumps(profile)
         description ="You are a digital twin of " + username + ", designed to mimic their personality, knowledge, and communication style. Your responses should be natural and consistent with the following characteristics. \n"
@@ -280,6 +319,7 @@ async def initialize(port: int = 5001, bearer_token: str = None) -> None:
         name=membase_id,
         description=system_prompt,
         host_address=grpc_server_url,
+        functions=[search_similar_posts]
     )
     
     try:
@@ -292,7 +332,7 @@ async def initialize(port: int = 5001, bearer_token: str = None) -> None:
     app.xinfo = {}
 
     for username in app.users:
-        app.xinfo[username] = get_user_info(username)
+        app.xinfo[username] = get_user_xinfo(username)
 
     app.candidates = []
 

@@ -44,6 +44,20 @@ Below is a list of tweets from a user:
 {tweets_here}
 ==== END TWEETS ====
 
+Important Twitter Field Explanations:
+- text: The main content of the tweet, including:
+  * Original tweet text
+  * Quoted tweet content (if any) with format: "Quoted from @username: [quoted text]"
+  * Reply content (if any) with format: "Reply to @username: [reply text]"
+- post_type: Type of tweet:
+  * "original": Original tweet
+  * "reply": Reply to another tweet
+  * "quote": Quote of another tweet
+- created_at: Timestamp when the tweet was posted
+- likeCount: Number of likes to the tweet
+- retweetCount: Number of retweets to the tweet
+- replyCount: Number of replies to the tweet
+
 Analyze these tweets and generate a detailed persona profile. Your analysis should be thorough, evidence-based, and include specific examples from the tweets when relevant.
 
 Return your analysis in the following structured JSON format:
