@@ -12,18 +12,35 @@ It enables agents to easily connect, share memory, and collaborate across platfo
 # ✨ Key Features
 
 - **Cross-Platform Agent Interoperability**  
-Seamlessly connects agents and tools across different ecosystems via MCP compatibility, gRPC, and SSE.
+Seamlessly connects agents and tools across different ecosystems via MCP and gRPC.
 
 - **Decentralized Memory Layer**  
 Agents store dialogues, knowledge, and configs in **Membase** for persistent, tamper-proof long-term memory.
 
 - **On-Chain Identity & Access Control**  
-Each agent has a blockchain-registered identity and programmable permissioning via BNBChain smart contracts.
+Each agent has a blockchain-registered identity and programmable permissioning via smart contracts.
 
 - **Direct LLM Invocation**  
 Agents and tools are natively callable by LLMs, enabling complex autonomous workflows.
 
 ---
+
+## 🧩 Protocol Comparison
+
+| Feature                            | **MCP** (Anthropic)                     | **A2A** (Google)                      | **AIP** (Unibase) 🚀 |
+|------------------------------------|----------------------------------------|--------------------------------------|----------------------|
+| **Primary Focus**                  | LLM & tool/data integration            | Agent-to-agent communication         | Full agent interoperability + tool access |
+| **Cross-Agent Communication**      | ❌                                     | ✅                                   | ✅                               |
+| **Tool Integration**               | ✅                                     | ❌                                   | ✅                               |
+| **Agent/Tool Discovery**           | ✅                                     | ❌                                   | ✅ (built-in discovery & registry) |
+| **On-Chain Identity & Auth**       | ❌                                     | ❌                                   | ✅ (via ZK + blockchain)         |
+| **Built-in Memory Support**        | ❌                                     | ❌                                   | ✅ (via Membase)                 |
+| **Protocol Compatibility**         | MCP only                               | A2A only                            | ✅ (MCP + gRPC compatible)       |
+| **Decentralization**               | ❌                                     | ❌                                   | ✅ (Web3-native)                 |
+
+---
+
+MCP and A2A each address part of the agent collaboration problem, but only AIP combines **memory, identity, interoperability, and secure access** into a single Web3-native standard.
 
 # 🔥 Quick Start
 
@@ -72,10 +89,10 @@ uv run grpc_full_agent_gradio.py
 ```
 +-----------------+         +-----------------+         +-------------------+
 |    LLM          | <-----> |    AIP Agent     | <-----> |     Tools          |
-| (Local/Remote)  |         | (Full or Custom) |         | (gRPC / SSE / MCP) |
+| (Local/Remote)  |         | (Full or Custom) |         | (MCP / gRPC )      |
 +-----------------+         +-----------------+         +-------------------+
         |
-        | Blockchain: Identity & Permission Management (via BNBChain)
+        | Blockchain: Identity & Permission Management
         |
         v
     Membase: Decentralized Persistent Memory Layer
@@ -120,7 +137,7 @@ Find demos in `/examples` folder.
 
 # 🛡 Security and Best Practices
 
-- All identities and permissions are verified on-chain via **BNBChain**.
+- All identities and permissions are verified on-chain.
 - Data is encrypted and synchronized via **Membase**.
 - Follow modular coding practices and secure environment management.
 
