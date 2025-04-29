@@ -1,10 +1,18 @@
 import json
 from datetime import datetime
+import os
 
-def load_tweets(name):
-    jsonfile = f"outputs/{name}_tweets.json"
-    with open(jsonfile, 'r') as f:
-        return json.load(f)
+def load_tweets(user_name):
+    """Load existing tweets from local file if it exists."""
+    file_path = f"outputs/{user_name}_tweets.json"
+    try:
+        if os.path.exists(file_path):
+            with open(file_path, "r") as f:
+                return json.load(f)
+    except Exception as e:
+        print(f"load tweets fail: {str(e)}")
+    
+    return []
 
 def order_tweets(tweets, reverse=False):
     # parse createdAt string to datetime object for proper sorting

@@ -8,6 +8,7 @@ from core.generate import generate_profile
 from core.retrieve import retrieve_tweets
 from core.summary import summarize
 from core.save import save_tweets
+from core.format import load_tweets
 
 def get_user_xinfo(user_name: str) -> Any:
     if os.path.exists(f"outputs/{user_name}_info.json"):
@@ -18,25 +19,16 @@ def get_user_xinfo(user_name: str) -> Any:
             info =  json.loads(content)
             return info
     
-    if not os.path.exists(f"outputs/{user_name}_tweets.json"):
-        return None
-    
-    with open(f"outputs/{user_name}_tweets.json", 'r', encoding='utf-8') as f:
-        tweets = json.load(f)
-        info = tweets[-1].get("author", {})
-        with open(f"outputs/{user_name}_info.json", 'w', encoding='utf-8') as f:
-            json.dump(info, f)
-    return info
+    return create_user_xinfo(user_name)
 
 def create_user_xinfo(user_name: str):
-    if not os.path.exists(f"outputs/{user_name}_tweets.json"):
+    tweets = load_tweets(user_name)
+    if len(tweets) == 0:
         return None
     
-    with open(f"outputs/{user_name}_tweets.json", 'r', encoding='utf-8') as f:
-        tweets = json.load(f)
-        info = tweets[-1].get("author", {})
-        with open(f"outputs/{user_name}_info.json", 'w', encoding='utf-8') as f:
-            json.dump(info, f)
+    info = tweets[-1].get("author", {})
+    with open(f"outputs/{user_name}_info.json", 'w', encoding='utf-8') as f:
+        json.dump(info, f)
     return info
 
 def load_unfinished_users() -> Any:
@@ -91,6 +83,11 @@ def build_user(user_name: str):
         print(f"Retrieving tweets for {user_name}")
         retrieve_tweets(user_name)
     
+    tweets = load_tweets(user_name)
+    if len(tweets) == 0:
+        print(f"Retrieving again tweets for {user_name}")
+        retrieve_tweets(user_name)
+        
     # generate profile if tweets exist
     if not os.path.exists(f"outputs/{user_name}_profile_final.json"):
         print(f"Generating profile for {user_name}")

@@ -1,19 +1,19 @@
 import json
 import sys
 
-from core.format import filter_tweets, order_tweets
+from core.format import filter_tweets, order_tweets, load_tweets
 from core.generate_prompts import build_batches, call_batch
 from core.merge import merge_profiles
 
 def generate_profile(user_name):
     print(f"Generating profile for {user_name}")
-    jsonfile = f"outputs/{user_name}_tweets.json"
-    with open(jsonfile, 'r') as f:
-        tweets = json.load(f)
+
+    tweets = load_tweets(user_name)
+    if len(tweets) == 0:
+        raise Exception("no tweets") 
     
     ordered_tweets = order_tweets(tweets)
-    if len(ordered_tweets) == 0:
-        raise Exception("no tweets") 
+    
 
     user_info = ordered_tweets[-1].get("author", {})
 

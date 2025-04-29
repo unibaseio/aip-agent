@@ -6,20 +6,12 @@ from apify_client import ApifyClient
 import os
 from typing import Optional, List, Dict
 
-from core.format import get_reply_tweet_ids, build_text
-
-
-
-def load_existing_tweets(user_name: str) -> List[Dict]:
-    """Load existing tweets from local file if it exists."""
-    file_path = f"outputs/{user_name}_tweets.json"
-    if os.path.exists(file_path):
-        with open(file_path, "r") as f:
-            return json.load(f)
-    return []
+from core.format import get_reply_tweet_ids, build_text, load_tweets
 
 def save_tweets(user_name: str, tweets: List[Dict]):
     """Save tweets to local file."""
+    if len(tweets) == 0:
+        return
     os.makedirs("outputs", exist_ok=True)
     # format to day
     date_str = datetime.now().strftime("%Y-%m-%d")
@@ -42,7 +34,7 @@ def retrieve_tweets(user_name: str, begin_date: Optional[str] = None, end_date: 
         return datetime.strptime(date_str, "%a %b %d %H:%M:%S %z %Y")
 
     # Load existing tweets
-    existing_tweets = load_existing_tweets(user_name)
+    existing_tweets = load_tweets(user_name)
     existing_tweets.sort(key=lambda x: parse_date(x["createdAt"]))
 
     # get latest tweet date of existing tweets
@@ -82,6 +74,8 @@ def retrieve_tweets(user_name: str, begin_date: Optional[str] = None, end_date: 
 
     # Combine existing and new tweets
     all_tweets = existing_tweets + new_tweets
+    if len(all_tweets) == 0:
+        return 
 
     save_tweets(user_name, all_tweets)
 

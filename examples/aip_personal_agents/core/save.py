@@ -4,7 +4,7 @@ import sys
 from membase.knowledge.chroma import ChromaKnowledgeBase
 from membase.knowledge.document import Document
 
-from core.format import build_text, order_tweets
+from core.format import build_text, load_tweets, order_tweets
 
 def format_tweet_to_doc(tweet):
     doc = Document(
@@ -33,9 +33,8 @@ def format_tweet_to_doc(tweet):
 
 def save_tweets_to_collection(user_name, collection_name):
     print(f"Saving tweets of {user_name} in kol database: {collection_name}")
-    jsonfile = f"outputs/{user_name}_tweets.json"
-    with open(jsonfile, 'r') as f:
-        tweets = json.load(f)
+   
+    tweets = load_tweets(user_name)
 
     #tweets = order_tweets(tweets, True)
 
