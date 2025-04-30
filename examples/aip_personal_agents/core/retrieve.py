@@ -8,7 +8,7 @@ from typing import Optional, List, Dict
 
 from core.format import get_reply_tweet_ids, build_text, load_tweets
 
-def save_tweets(user_name: str, tweets: List[Dict]):
+def save_tweets_local(user_name: str, tweets: List[Dict]):
     """Save tweets to local file."""
     if len(tweets) == 0:
         return
@@ -77,7 +77,7 @@ def retrieve_tweets(user_name: str, begin_date: Optional[str] = None, end_date: 
     if len(all_tweets) == 0:
         return 
 
-    save_tweets(user_name, all_tweets)
+    save_tweets_local(user_name, all_tweets)
 
     print(f"Retrieving replied tweets for {user_name}")
     replied_ids = get_reply_tweet_ids(all_tweets)
@@ -100,7 +100,7 @@ def retrieve_tweets(user_name: str, begin_date: Optional[str] = None, end_date: 
             t["inReplyToText"] = build_text(replied_tweets[t["inReplyToId"]])
 
     # Save the combined and sorted tweets
-    save_tweets(user_name, all_tweets)
+    save_tweets_local(user_name, all_tweets)
 
     return all_tweets
 

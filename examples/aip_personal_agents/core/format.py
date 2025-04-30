@@ -37,7 +37,7 @@ def build_text(tweet):
         quoted_user = quoted.get("author", {}).get("userName", "unknown")
         base += f"\nQuoted from @{quoted_user}:\n{quoted_text}"
     
-    if tweet.get("inReplyToId"):
+    if tweet.get("inReplyToId") and tweet.get("inReplyToText"):
         reply_user = tweet.get("inReplyToUsername", "unknown")
         reply_text = tweet.get("inReplyToText", "").strip()
         base += f"\nReply to @{reply_user}: \n{reply_text}"

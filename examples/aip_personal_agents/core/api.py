@@ -193,7 +193,7 @@ def get_conversation():
             return jsonify({'success': False, 'error': 'Missing username parameter'}), 400
 
         conversation_id = request.args.get('conversation_id')
-        if not conversation_id:
+        if conversation_id is None or conversation_id == "":
             conversation_id = membase_id + "_" + username
         
         recent_n_messages = request.args.get('recent_n_messages')
@@ -279,7 +279,7 @@ def chat():
         message = data['message']
             
         conversation_id = data.get('conversation_id', None)
-        if not conversation_id:
+        if conversation_id is None or conversation_id == "":
             conversation_id = membase_id + "_" + username
 
         if username not in app.users:

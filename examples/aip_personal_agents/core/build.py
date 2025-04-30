@@ -111,14 +111,14 @@ def build_user(user_name: str):
 def refresh_user(user_name: str):
     date_str = datetime.now().strftime("%Y-%m-%d")
     if os.path.exists(f"outputs/{user_name}_tweets_{date_str}.json"):
-        print(f"already retrieved at {date_str} for: {user_name}")
+        print(f"Already refreshed at {date_str} for: {user_name}")
         return
     print(f"Refreshing user: {user_name} at: {date_str}")
     retrieve_tweets(user_name)
-    save_tweets(user_name)
     generate_profile(user_name)
     summarize(user_name)
     create_user_xinfo(user_name)
+    save_tweets(user_name)
 
 
 if __name__ == "__main__":
