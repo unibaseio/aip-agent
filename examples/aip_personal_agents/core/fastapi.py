@@ -1,13 +1,15 @@
 import asyncio
 from datetime import datetime
-from flask import Flask, request, jsonify
-from flask_cors import CORS
+from fastapi import FastAPI, Request, HTTPException, Depends, Header, Security
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import os
 import json
 from concurrent.futures import ThreadPoolExecutor
 from functools import wraps
 import time
 import argparse
+from typing import Optional, List, Dict, Any
 
 from membase.chain.chain import membase_id
 from aip_agent.agents.custom_agent import CallbackAgent
@@ -16,15 +18,28 @@ from core.build import get_user_xinfo, load_unfinished_users, load_user, load_us
 from core.rag import search_similar_posts, switch_user
 from core.save import save_tweets
 
-app = Flask(__name__)
-CORS(app)
+app = FastAPI(
+    title="TwinX API",
+)
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Create security scheme
+security = HTTPBearer()
 
 # Background task to refresh users periodically
 def refresh_users_task():
     """Background task to periodically refresh users list"""
     while True:
         try:
-            print(f"Refreshed users list at {datetime.now()}")
+            print(f"Refreshing users list at {datetime.now()}")
             unfinished_users = load_unfinished_users()
             for username in unfinished_users:
                 if username not in app.candidates:
@@ -36,6 +51,7 @@ def refresh_users_task():
                 refresh_user(username)
                 xinfo[username] = get_user_xinfo(username)
             app.xinfo = xinfo
+            print(f"Users list refreshed at {datetime.now()}")
         except Exception as e:
             print(f"Error refreshing users: {str(e)}")
         time.sleep(600)  # Refresh every 10 minutes
@@ -43,53 +59,37 @@ def refresh_users_task():
 # Create a thread pool executor
 executor = ThreadPoolExecutor(max_workers=4)
 
-def validate_json(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if not request.is_json:
-            return jsonify({'success': False, 'error': 'Content-Type must be application/json'}), 415
+# Dependency for token validation
+async def validate_token(credentials: HTTPAuthorizationCredentials = Security(security)):
+    """Validate bearer token"""
+    if not credentials:
+        raise HTTPException(status_code=401, detail="Missing Authorization header")
+    
+    token = credentials.credentials
+    if token != app.bearer_token:
+        raise HTTPException(status_code=403, detail="Invalid bearer token")
+    
+    return token
+
+# Dependency for required fields validation
+def validate_required_fields(required_fields: List[str]):
+    async def dependency(request: Request):
         try:
-            request.get_json()
-        except Exception as e:
-            return jsonify({'success': False, 'error': 'Invalid JSON format'}), 400
-        return f(*args, **kwargs)
-    return decorated_function
-
-def validate_required_fields(required_fields):
-    def decorator(f):
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            data = request.get_json()
-            missing_fields = [field for field in required_fields if field not in data]
-            if missing_fields:
-                return jsonify({
-                    'success': False,
-                    'error': f'Missing required fields: {", ".join(missing_fields)}'
-                }), 400
-            return f(*args, **kwargs)
-        return decorated_function
-    return decorator
-
-def validate_token(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        token = request.headers.get('Authorization')
-        if not token:
-            return jsonify({'success': False, 'error': 'Missing Authorization header'}), 401
-        
-        # Remove 'Bearer ' prefix if present
-        if token.startswith('Bearer '):
-            token = token[7:]
+            data = await request.json()
+        except Exception:
+            raise HTTPException(status_code=400, detail="Invalid JSON format")
             
-        if token != app.bearer_token:
-            return jsonify({'success': False, 'error': 'Invalid bearer token'}), 403
-            
-        return f(*args, **kwargs)
-    return decorated_function
+        missing_fields = [field for field in required_fields if field not in data]
+        if missing_fields:
+            raise HTTPException(
+                status_code=400,
+                detail=f'Missing required fields: {", ".join(missing_fields)}'
+            )
+        return data
+    return dependency
 
-@app.route('/api/list_info', methods=['GET'])
-@validate_token
-def list_info():
+@app.get("/api/list_info")
+async def list_info(token: str = Depends(validate_token)):
     """List all available users and their info"""
     try:
         res = []
@@ -103,27 +103,25 @@ def list_info():
                 xinfo["xinfo"] = app.xinfo[username]
 
             res.append(xinfo)   
-        return jsonify({'success': True, 'data': res})
+        return {"success": True, "data": res}
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        raise HTTPException(status_code=500, detail=str(e))
 
-@app.route('/api/get_info', methods=['GET'])
-@validate_token
-def get_info():
+@app.get("/api/get_info")
+async def get_info(username: str, token: str = Depends(validate_token)):
     """Get info by username"""
     try:
-        username = request.args.get('username')
         if not username:
-            return jsonify({'success': False, 'error': 'Missing username parameter'}), 400
+            raise HTTPException(status_code=400, detail="Missing username parameter")
 
         if username not in app.users:
             if username in app.candidates:
-                return jsonify({'success': False, 'data': "Building..."})    
-            return jsonify({'success': False, 'error': 'User not found'}), 404
+                return {"success": False, "data": "Building..."}    
+            raise HTTPException(status_code=404, detail="User not found")
 
         xinfo = app.xinfo[username]
         if not xinfo:
-            return jsonify({'success': False, 'error': 'Xinfo not found'}), 404
+            raise HTTPException(status_code=404, detail="Xinfo not found")
         
         res = {
             "username": username,
@@ -131,83 +129,71 @@ def get_info():
             "summary": app.users[username].get("summary", {}),
         }    
 
-        return jsonify({'success': True, 'data': res})
+        return {"success": True, "data": res}
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        raise HTTPException(status_code=500, detail=str(e))
 
-@app.route('/api/list_users', methods=['GET'])
-@validate_token
-def list_users():
+@app.get("/api/list_users")
+async def list_users(token: str = Depends(validate_token)):
     """List all available users"""
     try:
         accounts = list(app.users.keys())
-        return jsonify({'success': True, 'data': accounts})
+        return {"success": True, "data": accounts}
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        raise HTTPException(status_code=500, detail=str(e))
 
-@app.route('/api/get_profile', methods=['GET'])
-@validate_token
-def get_profile():
+@app.get("/api/get_profile")
+async def get_profile(username: str, token: str = Depends(validate_token)):
     """Get a specific profile by username"""
     try:
-        username = request.args.get('username')
         if not username:
-            return jsonify({'success': False, 'error': 'Missing username parameter'}), 400
+            raise HTTPException(status_code=400, detail="Missing username parameter")
 
         if username not in app.users:
             if username in app.candidates:
-                return jsonify({'success': False, 'data': "Building..."}) 
-            return jsonify({'success': False, 'error': 'User not found'}), 404
+                return {"success": False, "data": "Building..."} 
+            raise HTTPException(status_code=404, detail="User not found")
         
         profile = app.users[username]          
-        return jsonify({'success': True, 'data': profile})
+        return {"success": True, "data": profile}
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        raise HTTPException(status_code=500, detail=str(e))
 
-@app.route('/api/get_xinfo', methods=['GET'])
-@validate_token
-def get_xinfo():
+@app.get("/api/get_xinfo")
+async def get_xinfo(username: str, token: str = Depends(validate_token)):
     """Get x info by username"""
     try:
-        username = request.args.get('username')
         if not username:
-            return jsonify({'success': False, 'error': 'Missing username parameter'}), 400
+            raise HTTPException(status_code=400, detail="Missing username parameter")
 
         if username not in app.xinfo:
             if username in app.candidates:
-                return jsonify({'success': False, 'data': "Building..."}) 
-            return jsonify({'success': False, 'error': 'User xinfo not found'}), 404
+                return {"success": False, "data": "Building..."} 
+            raise HTTPException(status_code=404, detail="User xinfo not found")
 
         xinfo = app.xinfo[username]        
-        return jsonify({'success': True, 'data': xinfo})
+        return {"success": True, "data": xinfo}
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-    
-@app.route('/api/get_conversation', methods=['GET'])
-@validate_token
-def get_conversation():
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/get_conversation")
+async def get_conversation(
+    username: str,
+    conversation_id: Optional[str] = None,
+    recent_n_messages: Optional[int] = 128,
+    token: str = Depends(validate_token)
+):
     """Get conversation by username"""
     try:
-        username = request.args.get('username')
         if not username:
-            return jsonify({'success': False, 'error': 'Missing username parameter'}), 400
+            raise HTTPException(status_code=400, detail="Missing username parameter")
 
-        conversation_id = request.args.get('conversation_id')
         if conversation_id is None or conversation_id == "":
             conversation_id = membase_id + "_" + username
-        
-        recent_n_messages = request.args.get('recent_n_messages')
-        if not recent_n_messages:
-            recent_n_messages = 128
-        else:
-            try:
-                recent_n_messages = int(recent_n_messages)
-            except Exception as e:
-                return jsonify({'success': False, 'error': str(e)}), 400
 
         user_memory = app.agent._memory.get_memory(conversation_id)
         if not user_memory:
-            return jsonify({'success': False, 'error': 'memory not found'}), 404
+            raise HTTPException(status_code=404, detail="memory not found")
         app.agent._memory.load_from_hub(conversation_id)
 
         messages = user_memory.get(recent_n=recent_n_messages)
@@ -218,22 +204,21 @@ def get_conversation():
                 "content": msg.content
             })
 
-        return jsonify({'success': True, 'data': res})
+        return {"success": True, "data": res}
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        raise HTTPException(status_code=500, detail=str(e))
 
-@app.route('/api/generate', methods=['POST'])
-@validate_json
-@validate_required_fields(['username'])
-@validate_token
-def generate_profile_api():
+@app.post("/api/generate")
+async def generate_profile_api(
+    token: str = Depends(validate_token),
+    data: Dict[str, Any] = Depends(validate_required_fields(['username']))
+):
     """Generate a new profile based on username"""
     try:
-        data = request.get_json()
         username = data['username']
         
         if len(username) > 15:  # Add length validation (twitter username is no longer than 15 characters) 
-            return jsonify({'success': False, 'error': 'Username too long'}), 400
+            raise HTTPException(status_code=400, detail="Username too long")
             
         if username not in app.users:
             if username not in app.candidates:
@@ -244,16 +229,13 @@ def generate_profile_api():
                         json.dump([], f)
 
                 executor.submit(build_user_sync, username)
-                return jsonify({'success': True, 'data': "start building..."})
+                return {"success": True, "data": "start building..."}
             else:
-                return jsonify({'success': True, 'data': "building..."})
+                return {"success": True, "data": "building..."}
         else:
-            return jsonify({'success': True, 'data': "already built"})
+            return {"success": True, "data": "already built"}
     except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e),
-        }), 500
+        raise HTTPException(status_code=500, detail=str(e))
 
 def build_user_sync(username: str):
     """Synchronously build user profile in a thread"""
@@ -267,14 +249,13 @@ def build_user_sync(username: str):
     finally:
         app.candidates.remove(username)
 
-@app.route('/api/chat', methods=['POST'])
-@validate_json
-@validate_required_fields(['username', 'message'])
-@validate_token
-def chat():
+@app.post("/api/chat")
+async def chat(
+    token: str = Depends(validate_token),
+    data: Dict[str, Any] = Depends(validate_required_fields(['username', 'message']))
+):
     """Chat with a specific profile using username"""
     try:
-        data = request.get_json()
         username = data['username']
         message = data['message']
             
@@ -283,7 +264,7 @@ def chat():
             conversation_id = membase_id + "_" + username
 
         if username not in app.users:
-            return jsonify({'success': False, 'error': 'User profile not found'}), 404
+            raise HTTPException(status_code=404, detail="User profile not found")
 
         # TODO: may change due to another task
         switch_user(username)
@@ -291,22 +272,19 @@ def chat():
         profile_str = json.dumps(profile)
         description = "You act as a digital twin of " + username + ", designed to mimic personality, knowledge, and communication style. \n"
         description = description + "You donot need to mention that you are a digital twin. \n"
-        description = description + "Your responses should be natural and consistent with the following characteristics. \n"
+        description = description + "Your responses should be natural and consistent with the following characteristics: \n"
         description = description + profile_str
         
         # Run the async operation synchronously
-        response = asyncio.run(app.agent.process_query(
+        response = await app.agent.process_query(
             message,
             use_history=False,
             system_prompt=description,
             conversation_id=conversation_id
-        ))
-        return jsonify({'success': True, 'data': response})
+        )
+        return {"success": True, "data": response}
     except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e),
-        }), 500
+        raise HTTPException(status_code=500, detail=str(e))
 
 async def initialize(port: int = 5001, bearer_token: str = None) -> None:
     """Initialize"""
@@ -345,12 +323,22 @@ async def initialize(port: int = 5001, bearer_token: str = None) -> None:
 
     # Start the background refresh task in a separate thread
     executor.submit(refresh_users_task)
-    app.run(host='0.0.0.0', port=port)
+    print("Background refresh task started")
+
+    # Start uvicorn server
+    config = uvicorn.Config(app, host="0.0.0.0", port=port, log_level="info")
+    server = uvicorn.Server(config)
+    print(f"Starting uvicorn server on port {port}...")
+    await server.serve()
 
 if __name__ == "__main__":
+    import uvicorn
     parser = argparse.ArgumentParser(description='AIP Personal Agent API Server')
     parser.add_argument('--port', type=int, default=5001, help='Port to run the server on (default: 5001)')
     parser.add_argument('--bearer-token', type=str, default="unibase_personal_agent", help='Bearer token for authentication')
     args = parser.parse_args()
     
+    print(f"Initializing TwinX API on port {args.port}")
     asyncio.run(initialize(port=args.port, bearer_token=args.bearer_token))
+    
+    

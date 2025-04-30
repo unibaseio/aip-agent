@@ -114,7 +114,9 @@ def refresh_user(user_name: str):
         print(f"Already refreshed at {date_str} for: {user_name}")
         return
     print(f"Refreshing user: {user_name} at: {date_str}")
-    retrieve_tweets(user_name)
+    tweets = retrieve_tweets(user_name)
+    if tweets is None:
+        return
     generate_profile(user_name)
     summarize(user_name)
     create_user_xinfo(user_name)

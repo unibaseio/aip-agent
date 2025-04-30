@@ -75,9 +75,12 @@ def retrieve_tweets(user_name: str, begin_date: Optional[str] = None, end_date: 
     # Combine existing and new tweets
     all_tweets = existing_tweets + new_tweets
     if len(all_tweets) == 0:
-        return 
+        return None
 
     save_tweets_local(user_name, all_tweets)
+
+    if len(all_tweets) == 0:
+        return None
 
     print(f"Retrieving replied tweets for {user_name}")
     replied_ids = get_reply_tweet_ids(all_tweets)

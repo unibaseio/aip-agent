@@ -3,7 +3,8 @@
 ## Run
 
 ```bash
-uv run -m core.api --port=5001
+# start fastapi
+uv run -m core.fastapi --port=5001
 ```
 
 ## Basic Information

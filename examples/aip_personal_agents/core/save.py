@@ -36,6 +36,7 @@ def save_tweets_to_collection(user_name, collection_name):
    
     tweets = load_tweets(user_name)
 
+    # TODO: no check existence of all tweets
     #tweets = order_tweets(tweets, True)
 
     rag = ChromaKnowledgeBase(
