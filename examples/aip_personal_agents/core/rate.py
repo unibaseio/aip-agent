@@ -140,7 +140,8 @@ def estimate_tweets(user_name):
             "engagement_score": 0,
             "influence_score": 0,
             "project_score": 0,
-            "quality_score": 0
+            "quality_score": 0,
+            "total_score": 0
         }
     
     # statistics
