@@ -9,6 +9,7 @@ from core.retrieve import retrieve_tweets
 from core.summary import summarize
 from core.save import save_tweets
 from core.format import load_tweets
+from core.rate import estimate
 
 def get_user_xinfo(user_name: str) -> Any:
     if os.path.exists(f"outputs/{user_name}_info.json"):
@@ -67,7 +68,14 @@ def load_user(user_name: str) -> Any:
                 "keywords": []
             }
         }
-    return {"profile": profile, "summary": summary}
+    if os.path.exists(f"outputs/{user_name}_airdrop_score.json"):
+        with open(f"outputs/{user_name}_airdrop_score.json", 'r', encoding='utf-8') as f:
+            content = f.read()
+            content = content.replace('```json\n', '').replace('\n```', '')
+            scores = json.loads(content)
+    else:
+        scores = {}
+    return {"profile": profile, "summary": summary, "scores": scores}
 
 # user dict: name -> summary
 def load_users() -> Dict[str, Any]:
@@ -84,7 +92,7 @@ def build_user(user_name: str):
     print(f"build user: {user_name}")
 
     # check if profile already exists
-    if os.path.exists(f"outputs/{user_name}_summary.json"):
+    if os.path.exists(f"outputs/{user_name}_airdrop_score.json"):
         print(f"Profile for {user_name} already exists")
         return 
     
@@ -108,6 +116,10 @@ def build_user(user_name: str):
         print(f"Summary profile for {user_name}")
         summarize(user_name)
 
+    if not os.path.exists(f"outputs/{user_name}_airdrop_score.json"):
+        print(f"Airdrop score for {user_name}")
+        estimate(user_name)
+
 def refresh_user(user_name: str):
     date_str = datetime.now().strftime("%Y-%m-%d")
     if os.path.exists(f"outputs/{user_name}_tweets_{date_str}.json"):
@@ -120,6 +132,7 @@ def refresh_user(user_name: str):
     generate_profile(user_name)
     summarize(user_name)
     create_user_xinfo(user_name)
+    estimate(user_name)
     save_tweets(user_name)
 
 

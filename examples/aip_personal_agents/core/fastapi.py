@@ -99,6 +99,7 @@ async def list_info(token: str = Depends(validate_token)):
             }    
 
             xinfo["summary"] = app.users[username].get("summary", {})
+            xinfo["scores"] = app.users[username].get("scores", {})
             if username in app.xinfo:
                 xinfo["xinfo"] = app.xinfo[username]
 
@@ -127,6 +128,7 @@ async def get_info(username: str, token: str = Depends(validate_token)):
             "username": username,
             "xinfo": xinfo,
             "summary": app.users[username].get("summary", {}),
+            "scores": app.users[username].get("scores", {}),
         }    
 
         return {"success": True, "data": res}

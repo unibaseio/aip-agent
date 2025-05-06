@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 
 def load_tweets(user_name):
@@ -20,6 +20,18 @@ def order_tweets(tweets, reverse=False):
         return datetime.strptime(date_str, "%a %b %d %H:%M:%S %z %Y")
     
     return sorted(tweets, key=lambda x: parse_date(x["createdAt"]), reverse=reverse)
+
+def load_tweets_within(user_name: str, days: int):
+    tweets = load_tweets(user_name)
+    
+    # filter tweets to get latest 3m 
+    three_months_ago = datetime.now().astimezone() - timedelta(days=days)
+    recent_tweets = [
+        tweet for tweet in tweets 
+        if datetime.strptime(tweet["createdAt"], "%a %b %d %H:%M:%S %z %Y") > three_months_ago
+    ]
+    
+    return order_tweets(recent_tweets)
 
 def clean_text(text):
     import re
@@ -56,12 +68,14 @@ def filter_tweets(tweets):
                         "quote" if t.get("isQuote") else 
                         "original",
             "created_at": t["createdAt"],
-            "likeCount": t["likeCount"],
-            "retweetCount": t["retweetCount"],
-            "replyCount": t["replyCount"],
+            "like_count": t["likeCount"],
+            "retweet_count": t["retweetCount"],
+            "reply_count": t["replyCount"],
+            "quote_count": t["quoteCount"],
+            "view_count": t["viewCount"]
         }
         for t in tweets
-        if len(t["text"]) > 10 or (t["likeCount"] + t["retweetCount"] + t["replyCount"] > 1)
+        if len(t["text"]) > 10 or (t["likeCount"] + t["retweetCount"] + t["replyCount"] + t["viewCount"] + t["quoteCount"]> 1)
     ]
 
 def get_reply_tweet_ids(tweets):

@@ -7,6 +7,11 @@
 uv run -m core.fastapi --port=5001
 ```
 
+## Environment Variables
+
+- `GRPC_SERVER_URL`: gRPC server URL (default: "13.212.116.103:8081")
+- `BEARER_TOKEN`: Authentication token (default: "unibase_personal_agent")
+
 ## Basic Information
 
 - Base URL: `http://localhost:5001`
@@ -17,6 +22,33 @@ uv run -m core.fastapi --port=5001
   - Default token: "unibase_personal_agent"
   - Can be configured via `BEARER_TOKEN` environment variable or `--bearer-token` argument
 - Username is known as twitter handle
+- All POST requests must use `application/json` format
+- Username length cannot exceed 15 characters (Twitter handle limit)
+
+## Response Format
+
+All API responses follow a standard format:
+
+```json
+{
+  "success": true|false,
+  "data": <response_data>|"error_message"
+}
+```
+
+- `success`: Boolean indicating if the request was successful
+- `data`: Response data for successful requests, error message for failed requests
+
+## Error Handling
+
+The API uses standard HTTP status codes:
+
+- 400: Bad Request (Invalid JSON format, missing required fields, username too long)
+- 401: Unauthorized (Missing Authorization header)
+- 403: Forbidden (Invalid bearer token)
+- 404: Not Found (User/profile not found)
+- 415: Unsupported Media Type (Content-Type must be application/json)
+- 500: Internal Server Error
 
 ## API Endpoints
 
@@ -49,6 +81,14 @@ uv run -m core.fastapi --port=5001
       },
       "xinfo": {
         // Twitter information details
+      },
+      "scores": {
+        "engagement_score": 22,
+        "influence_score": 23,
+        "project_score": 0,
+        "quality_score": 22,
+        "total_score": 67,
+        "factor": 1
       }
     }
   ]
@@ -83,6 +123,9 @@ uv run -m core.fastapi --port=5001
       "personal_tags": {
         "keywords": []
       }
+    },
+    "scores": {
+      "total_score": 100,
     }
   }
 }
@@ -298,25 +341,6 @@ uv run -m core.fastapi --port=5001
   - If missing required fields: 400 error
   - If server error occurs: 500 error with error message
 
-## Error Codes
-
-- 400: Bad Request (Invalid JSON format, missing required fields, username too long)
-- 401: Unauthorized (Missing Authorization header)
-- 403: Forbidden (Invalid bearer token)
-- 404: User Not Found
-- 415: Unsupported Media Type (Content-Type must be application/json)
-- 500: Internal Server Error
-
-## Notes
-
-1. All POST requests must use `application/json` format
-2. Username length cannot exceed 15 characters (Twitter handle limit)
-3. Profile generation is an asynchronous process and may require waiting time
-4. Chat interface supports conversation ID, which will be auto-generated if not provided (format: `${membase_id}_${username}`)
-5. User profiles are automatically refreshed every 10 minutes
-6. The server uses a thread pool with 4 workers for handling background tasks
-7. Conversation history can be retrieved with optional parameters for conversation ID and number of recent messages
-
 ## System Configuration
 
 - Server runs on port 5001 (configurable via `--port` argument)
@@ -326,3 +350,85 @@ uv run -m core.fastapi --port=5001
 - Server runs on all interfaces (0.0.0.0) by default
 - Thread pool size is fixed at 4 workers for background tasks
 - User profile refresh interval is set to 10 minutes
+
+## Rate Limiting
+
+Currently, there are no explicit rate limits implemented. However, it's recommended to:
+
+- Space out requests appropriately
+- Handle 500 errors gracefully
+- Implement retry logic with exponential backoff
+
+## Best Practices
+
+1. Error Handling
+   - Always check the `success` field in responses
+   - Implement proper error handling for all status codes
+   - Use appropriate retry mechanisms for transient errors
+
+2. Authentication
+   - Store bearer token securely
+   - Rotate tokens periodically
+   - Never expose tokens in client-side code
+
+3. Profile Generation
+   - Handle "Building..." status appropriately
+   - Implement polling mechanism for profile status
+   - Cache generated profiles when possible
+
+4. Conversation Management
+   - Use consistent conversation IDs
+   - Implement proper message history management
+   - Handle conversation limits appropriately
+
+## Examples
+
+### Python Example
+
+```python
+import requests
+
+BASE_URL = "http://localhost:5001"
+TOKEN = "your_bearer_token"
+
+headers = {
+    "Authorization": f"Bearer {TOKEN}",
+    "Content-Type": "application/json"
+}
+
+# List all users
+response = requests.get(f"{BASE_URL}/api/list_users", headers=headers)
+users = response.json()["data"]
+
+# Get user info
+username = "example_user"
+response = requests.get(f"{BASE_URL}/api/get_info?username={username}", headers=headers)
+user_info = response.json()["data"]
+
+# Chat with user
+chat_data = {
+    "username": username,
+    "message": "Hello!",
+    "conversation_id": "optional_conversation_id"
+}
+response = requests.post(f"{BASE_URL}/api/chat", headers=headers, json=chat_data)
+chat_response = response.json()["data"]
+```
+
+### cURL Example
+
+```bash
+# List all users
+curl -X GET "http://localhost:5001/api/list_users" \
+     -H "Authorization: Bearer your_bearer_token"
+
+# Get user info
+curl -X GET "http://localhost:5001/api/get_info?username=example_user" \
+     -H "Authorization: Bearer your_bearer_token"
+
+# Chat with user
+curl -X POST "http://localhost:5001/api/chat" \
+     -H "Authorization: Bearer your_bearer_token" \
+     -H "Content-Type: application/json" \
+     -d '{"username": "example_user", "message": "Hello!"}'
+```

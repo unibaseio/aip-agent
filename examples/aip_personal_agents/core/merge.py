@@ -25,12 +25,23 @@ Guidelines:
 6. If a field has multiple values, combine them logically
 7. Keep the most specific and detailed information
 
-Input profiles:
-==== BEGIN ====
-{merged_text}
-==== END ====
+JSON Format Requirements:
+1. Output must be a valid JSON object
+2. All keys must be enclosed in double quotes
+3. All string values must be enclosed in double quotes
+4. Use proper JSON escaping for special characters
+5. No trailing commas
+6. No comments
+7. No single quotes
+8. No unquoted keys or values
+9. Ensure all arrays and objects are properly closed
 
-Return a single, merged user profile in JSON format (no additional text or explanations):"""
+Input profiles:
+==== BEGIN PROFILES ====
+{merged_text}
+==== END PROFILES ====
+
+Return a single, merged user profile in valid JSON format (no additional text or explanations). The output must be parseable by any standard JSON parser:"""
 
     
     response = client.chat.completions.create(
