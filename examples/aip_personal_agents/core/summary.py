@@ -73,11 +73,21 @@ def summarize(user_name: str):
     if summary is None:
         return
     try:
-        json.loads(summary)
+        if not summary or not isinstance(summary, str):
+            raise ValueError(f"Invalid summary result: {summary}")
+        
+        content = summary.replace('```json\n', '').replace('\n```', '')
+        json.loads(content)
         with open(f"outputs/{user_name}_summary.json", "w") as f:
             f.write(summary)
+        print(f"Successfully summarized profile for {user_name}")
     except json.JSONDecodeError as e:
         print(f"Error Summary: Invalid JSON format - {str(e)}")
+        print("Raw content:", summary)
+        raise
+    except ValueError as e:
+        print(f"Error Summary: {str(e)}")
+        print("Raw content:", summary)
         raise
 
 if __name__ == "__main__":

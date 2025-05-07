@@ -37,17 +37,28 @@ def generate_profile(user_name):
         results.append(result)
 
     merged_text = "\n\n".join(results)
-    final = merge_profiles(merged_text)
+    profile_final = merge_profiles(merged_text)
     # check final is valid json, then write
     try:
-        # Validate JSON format
-        json.loads(final)
-        with open(f"outputs/{user_name}_profile_final.json", "w") as f:
-            f.write(final)
-    except json.JSONDecodeError as e:
-        print(f"Error: Invalid JSON format - {str(e)}")
-        raise
+        if not profile_final or not isinstance(profile_final, str):
+            raise ValueError(f"Invalid merge_profiles result: {profile_final}")
+        
+        content = profile_final.replace('```json\n', '').replace('\n```', '')
 
+        # Validate JSON format and parse it
+        json.loads(content)
+        # Write the validated JSON to file
+        with open(f"outputs/{user_name}_profile_final.json", "w") as f:
+            f.write(profile_final)
+        print(f"Successfully generated profile for {user_name}")
+    except json.JSONDecodeError as e:
+        print(f"Error: Invalid JSON format in the generated profile - {str(e)}")
+        print("Raw content:", profile_final)
+        raise
+    except ValueError as e:
+        print(f"Error: {str(e)}")
+        raise
+    
 if __name__ == "__main__":
     default_x_name = "VitalikButerin"
     args = sys.argv[1:]

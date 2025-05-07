@@ -12,6 +12,9 @@ model_name = "gpt-4o"
 # combine multiple profiles (oldest to newest) into a single profile
 def merge_profiles(merged_text: str):
     print("Merging profiles")
+    if not merged_text or not isinstance(merged_text, str):
+        raise ValueError("Invalid input: merged_text must be a non-empty string")
+        
     # result should be a json object
     # oldest to newest, newest has the highest priority
     prompt = f"""You are a professional profile analyzer. Your task is to merge multiple partial user profile JSONs into a single, comprehensive, and coherent user persona.
