@@ -83,12 +83,13 @@ The API uses standard HTTP status codes:
         // Twitter information details
       },
       "scores": {
+        "total_score": 67,
         "engagement_score": 22,
         "influence_score": 23,
         "project_score": 0,
         "quality_score": 22,
-        "total_score": 67,
-        "factor": 1
+        "authenticity_factor": 1,
+        "detail": {}
       }
     }
   ]

@@ -8,112 +8,206 @@ import json
 from core.format import filter_tweets, load_tweets_within, load_tweets, order_tweets
 from core.generate_prompts import build_batches
 
-def estimate_tweet_quality_llm(tweets):
-    """Calculate quality scores for a batch of tweets using LLM (0-25)"""
+def estimate_by_llm(tweets, userinfo, project_accounts: list):
+    """Calculate quality, influence, engagement and authenticity scores for a batch of tweets using LLM"""
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
     
-    prompt = f"""You are a tweet quality analyzer. Your task is to evaluate the overall quality of this collection of tweets and provide scores for each aspect.
+    prompt = f"""You are a comprehensive tweet analyzer. Your task is to evaluate the quality, influence, engagement, and authenticity of this collection of tweets.
 
-Evaluate these aspects for the entire collection:
-1. Content Quality (0-10)
-   - Overall originality and uniqueness of the content
-   - Collective information value
-   - Topic consistency and relevance
-   - Clarity of messages across tweets
+User Information:
+{json.dumps(userinfo, indent=2)}
 
-2. Language & Grammar (0-3)
-   - Overall writing quality
-   - Consistent writing style
-   - Appropriate tone throughout
-
-3. Professionalism (0-7)
-   - Professional tone across tweets
-   - Content appropriateness
-   - Brand consistency
-   - Effective media usage
-
-4. Value to Readers (0-5)
-   - Overall educational value
-   - Entertainment value
-   - Actionable insights
-   - Community engagement potential
+Official Project Accounts (These are the official accounts that we want to evaluate user's interaction with):
+{json.dumps(project_accounts, indent=2)}
 
 Tweets to analyze:
 {json.dumps(tweets, indent=2)}
 
+Evaluate these aspects for the entire collection:
+
+1. Quality Score (0-25)
+   A. Content Quality (0-12)
+      - Overall originality and uniqueness
+      - Collective information value
+      - Topic consistency and relevance
+      - Clarity of messages
+      - Tweet quantity and consistency:
+        * 0-2 points: Less than 10 tweets
+        * 2-4 points: 10-30 tweets
+        * 4-7 points: 30-60 tweets
+        * 7-10 points: 60-100 tweets
+        * 10-12 points: More than 100 tweets
+
+   B. Language & Grammar (0-3)
+      - Overall writing quality
+      - Consistent writing style
+      - Appropriate tone
+
+   C. Professionalism (0-5)
+      - Professional tone
+      - Content appropriateness
+      - Brand consistency
+      - Effective media usage
+
+   D. Value to Readers (0-5)
+      - Educational value
+      - Entertainment value
+      - Actionable insights
+      - Community engagement potential
+
+2. Influence Score (0-25)
+   Consider:
+   - Overall engagement metrics (likes, retweets, quotes, replies)
+   - Content reach and visibility
+   - Audience interaction quality
+   - Viral potential
+   - Tweet quantity and consistency
+   - Account verification status
+   - Follower count and growth
+
+   Scoring guidelines:
+   * 0-3: Very poor engagement 
+      - Average < 10 interactions per tweet
+      - Less than 10 tweets
+      - Inconsistent posting pattern
+      - Low follower count
+   
+   * 4-8: Poor engagement
+      - 10-50 interactions per tweet
+      - 10-30 tweets
+      - Irregular posting pattern
+      - Moderate follower count
+   
+   * 9-13: Average engagement
+      - 50-100 interactions per tweet
+      - 30-60 tweets
+      - Regular posting pattern
+      - Good follower count
+   
+   * 14-20: Good engagement
+      - 100-500 interactions per tweet
+      - 60-100 tweets
+      - Consistent posting pattern
+      - High follower count
+   
+   * 21-25: Excellent engagement
+      - >500 interactions per tweet
+      - >100 tweets
+      - Very consistent posting pattern
+      - Verified account with large following
+
+3. Engagement Score (0-25)
+   Evaluate:
+   - Conversation quality and depth
+   - Community building effectiveness
+   - Content relevance and value
+   - Interaction patterns and consistency
+   - Tweet frequency and regularity
+   - Account age and activity history
+
+   Scoring guidelines:
+   * 0-3: Very poor engagement
+      - One-way communication, no meaningful interactions
+      - Less than 10 tweets
+      - No consistent posting pattern
+      - New account
+   
+   * 4-8: Poor engagement
+      - Limited meaningful interactions, basic community presence
+      - 10-30 tweets
+      - Irregular posting pattern
+      - Young account
+   
+   * 9-13: Average engagement
+      - Some meaningful interactions, moderate community participation
+      - 30-60 tweets
+      - Regular posting pattern
+      - Established account
+   
+   * 14-20: Good engagement
+      - Active community participation, quality discussions
+      - 60-100 tweets
+      - Consistent posting pattern
+      - Long-standing account
+   
+   * 21-25: Excellent engagement
+      - Exceptional community building, deep meaningful interactions
+      - >100 tweets
+      - Very consistent posting pattern
+      - Veteran account with strong community presence
+
+4. Authenticity Score (0-1)
+   Evaluate:
+   A. Content Authenticity (0-0.4)
+      - Original content vs reposted content
+      - Personal experiences and opinions
+      - Natural language patterns
+      - Topic consistency and relevance
+      - Account verification status
+      - Account age and history
+
+   B. Engagement Patterns (0-0.2)
+      - Natural interaction patterns
+      - Conversation flow
+      - Response quality
+      - Follower to following ratio
+      - Account growth patterns
+
+   C. Account Behavior (0-0.4)
+      - Posting frequency and patterns
+      - Content diversity
+      - Spam-like behavior indicators
+      - Account verification status
+      - Account age and activity history
+      - Profile completeness
+    
+5. Project Score (0-25)
+   Evaluate ONLY the user's interaction with official project accounts:
+   - Mentions of official project accounts in tweets
+   - Replies to official project accounts' tweets
+   - Retweets/quotes of official project accounts' tweets
+
+   Scoring guidelines:
+   * 0-8: Low interaction with official accounts
+      - Few or no interactions with official project accounts
+   
+   * 9-16: Medium interaction with official accounts
+      - Regular interactions with official project accounts
+   
+   * 17-25: High interaction with official accounts
+      - Frequent and meaningful interactions with official project accounts
+
 Provide your analysis in this exact JSON format:
 {{
-    "total_score": <number between 0-25>,
-    "sub_scores": {{
-        "content_quality": <number between 0-10>,
+    "quality_score": <number between 0-25>,
+    "quality_sub_scores": {{
+        "content_quality": <number between 0-12>,
         "language_grammar": <number between 0-3>,
-        "professionalism": <number between 0-7>,
+        "professionalism": <number between 0-5>,
         "value_to_readers": <number between 0-5>
     }},
-    "explanation": "<brief explanation of the overall score>"
-}}
-
-Important:
-- All scores must be numbers within their specified ranges
-- Total score should equal the sum of all sub-scores
-- Provide a brief explanation for the overall score
-- Ensure the response is valid JSON"""
-
-    try:
-        response = client.chat.completions.create(
-            model="gpt-4.1",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.3
-        )
-        result = json.loads(response.choices[0].message.content)
-        return result
-    except Exception as e:
-        print(f"Error in LLM quality scoring: {str(e)}")
-        return {
-            "total_score": 0,
-            "sub_scores": {
-                "content_quality": 0,
-                "language_grammar": 0,
-                "professionalism": 0,
-                "value_to_readers": 0
-            },
-            "explanation": "Error occurred during scoring"
-        }
-
-def estimate_influence_llm(tweets):
-    """Calculate influence and engagement scores for a batch of tweets using LLM (0-25 each)"""
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-    
-    prompt = f"""You are a social media influence analyzer. Your task is to evaluate the influence and engagement of this collection of tweets.
-
-Evaluate these aspects for the entire collection:
-1. Influence Score (0-25)
-   - Overall reach and visibility
-   - Impact of content
-   - Audience size and quality
-   - Content virality potential
-   - Brand authority
-
-2. Engagement Score (0-25)
-   - Community interaction level
-   - Response quality
-   - Discussion generation
-   - User participation
-   - Content resonance
-
-Tweets to analyze:
-{json.dumps(tweets, indent=2)}
-
-Provide your analysis in this exact JSON format:
-{{
     "influence_score": <number between 0-25>,
     "engagement_score": <number between 0-25>,
-    "explanation": "<brief explanation of both scores>"
+    "project_score": <number between 0-25>,
+    "authenticity_score": <number between 0-1>,
+    "authenticity_sub_scores": {{
+        "content_authenticity": <number between 0-0.4>,
+        "engagement_patterns": <number between 0-0.3>,
+        "account_behavior": <number between 0-0.3>
+    }},
+    "explanation": "<brief explanation of all scores>"
 }}
 
 Important:
 - All scores must be numbers within their specified ranges
-- Provide a brief explanation for both scores
+- Scores can include decimal points for more precise evaluation
+- Consider all metrics together, not individually
+- Be generous with high scores for good accounts (14-25)
+- Be strict with low scores for poor accounts (0-8)
+- Consider both quality and quantity of tweets
+- Consider account age, verification status, and follower count
+- Pay special attention to interactions with project accounts
+- Provide a brief explanation for all scores
 - Ensure the response is valid JSON"""
 
     try:
@@ -125,228 +219,266 @@ Important:
         result = json.loads(response.choices[0].message.content)
         return result
     except Exception as e:
-        print(f"Error in LLM influence scoring: {str(e)}")
-        return {
-            "influence_score": 0,
-            "engagement_score": 0,
-            "explanation": "Error occurred during scoring"
-        }
+        print(f"Error in LLM scoring: {str(e)}")
+        raise e
 
-def estimate_tweets(user_name):
-    recent_tweets = load_tweets_within(user_name, 90)
-    
-    if not recent_tweets or len(recent_tweets) == 0:
-        return {
-            "engagement_score": 0,
-            "influence_score": 0,
-            "project_score": 0,
-            "quality_score": 0,
-            "total_score": 0
-        }
-    
+def estimate_legacy(recent_tweets, dedicated_accounts):
     # statistics
     total_retweets = sum(tweet["retweetCount"] for tweet in recent_tweets)
     total_replies = sum(tweet["replyCount"] for tweet in recent_tweets)
     total_likes = sum(tweet["likeCount"] for tweet in recent_tweets)
-    total_views = sum(tweet.get("viewCount", 0) for tweet in recent_tweets)
     total_quotes = sum(tweet.get("quoteCount", 0) for tweet in recent_tweets)
     tweet_count = len(recent_tweets)
+
+    # Get user info from the most recent tweet
+    user_info = recent_tweets[-1].get("author", {})
     
-    # Calculate tweet quality score (0-25)
-    quality_score = 0
+    # Calculate authenticity factor
+    authenticity_factor = 1.0
+    if user_info.get("isBlueVerified", False):
+        print(f"User is blue verified")
+        authenticity_factor = 1.0
+    elif int(user_info.get("followers", 0)) > 10000:
+        print(f"User has followers: {user_info['followers']}")
+        authenticity_factor = 1.0
+    else:
+        # Calculate register duration
+        create_at = datetime.strptime(user_info["createdAt"], "%a %b %d %H:%M:%S %z %Y")
+        now = datetime.now().astimezone()
+        duration = now - create_at
+        days = duration.days
+        print(f"User register duration: {days} days")
+        
+        # Calculate authenticity factor based on registration duration
+        factor = 0.05
+        if days > 365*3:
+            factor += 0.35
+        elif days > 365 * 2:  
+            factor += 0.25
+        elif days > 365:  
+            factor += 0.15
+        elif days > 180:
+            factor += 0.05
+
+        # Add points based on total tweets
+        if tweet_count > 500:
+            factor += 0.6
+        elif tweet_count > 200:
+            factor += 0.45
+        elif tweet_count > 100:
+            factor += 0.3
+        elif tweet_count > 50:
+            factor += 0.2
+        elif tweet_count > 20:
+            factor += 0.1
+        elif tweet_count > 10:
+            factor += 0.05
+        
+        authenticity_factor = factor
+        print(f"User authenticity factor: {factor}")
+
+    # Initialize scores
     influence_score = 0
     engagement_score = 0
+    project_score = 0
+    quality_score = 0
 
-    ordered_tweets = order_tweets(recent_tweets, reverse=True)
-    filtered_tweets = filter_tweets(ordered_tweets)
-    batches = build_batches(filtered_tweets)
-    if len(batches) > 0:
-        quality_scores = estimate_tweet_quality_llm(batches[0])
-        print(quality_scores)
-        quality_score = quality_scores["total_score"]
+    # Calculate influence score (0-25)
+    # Based on likes, retweets and views
+    avg_interaction = (total_likes + total_retweets + total_quotes) / tweet_count
 
-        result = estimate_influence_llm(batches[0])
-        print(result)
-        influence_score = result["influence_score"]
-        engagement_score = result["engagement_score"]
+    if avg_interaction > 1000:
+        influence_score += 25
+    elif avg_interaction > 500:
+        influence_score += 20
+    elif avg_interaction > 100:
+        influence_score += 15
+    elif avg_interaction > 50:
+        influence_score += 10
+    elif avg_interaction > 10:
+        influence_score += 5
+    elif avg_interaction > 3:
+        influence_score += 2
 
-    else:
-        # Calculate influence score (0-25)
-        # Based on likes, retweets and views
-        avg_likes = total_likes / tweet_count
-        avg_retweets = total_retweets / tweet_count
-        avg_views = total_views / tweet_count
-    
-    
-        if avg_likes > 1000:
-            influence_score += 10
-        elif avg_likes > 500:
-            influence_score += 7
-        elif avg_likes > 100:
-            influence_score += 5
-        elif avg_likes > 50:
-            influence_score += 3
-    
-        if avg_retweets > 500:
-            influence_score += 10
-        elif avg_retweets > 200:
-            influence_score += 7
-        elif avg_retweets > 50:
-            influence_score += 5
-        elif avg_retweets > 20:
-            influence_score += 3
-    
-        if avg_views > 10000:
-            influence_score += 5
-        elif avg_views > 5000:
-            influence_score += 3
-        elif avg_views > 1000:
-            influence_score += 2
-        elif avg_views > 500:
-            influence_score += 1
-    
-        # Calculate engagement score (0-25)
-        # Based on quotes and replies
-        avg_quotes = total_quotes / tweet_count
-        avg_replies = total_replies / tweet_count
-    
-    
-        if avg_quotes > 100:
-            engagement_score += 15
-        elif avg_quotes > 50:
-            engagement_score += 10
-        elif avg_quotes > 20:
-            engagement_score += 7
-        elif avg_quotes > 10:
-            engagement_score += 5
-    
-        if avg_replies > 50:
-            engagement_score += 10
-        elif avg_replies > 20:
-            engagement_score += 7
-        elif avg_replies > 10:
-            engagement_score += 5
-        elif avg_replies > 5:
-            engagement_score += 3
-    
     # Calculate project participation score (0-25)
     # Based on interactions with dedicated users
     mention_count = 0
     retweet_count = 0
     reply_count = 0
-    dedicated_users = {"beeperfun", "beeper_agent"}
-    
+
+    engagement_count = 0
     for tweet in recent_tweets:
+        if tweet.get("quoted_tweet"):
+            engagement_count += 1
+
         if tweet.get("inReplyToUsername"):
+            engagement_count += 1
             replied_user = tweet.get("inReplyToUsername")
-            for username in dedicated_users:
+            for username in dedicated_accounts:
                 if username == replied_user:
                     reply_count += 1
                     break
         if tweet.get("quoted_tweet"):
             quoted_user = tweet["quoted_tweet"].get("author", {}).get("userName", "unknown")
-            for username in dedicated_users:
+            for username in dedicated_accounts:
                 if username == quoted_user:
                     retweet_count += 1
                     break
         text = tweet["text"]
-        for username in dedicated_users:
+        for username in dedicated_accounts:
             username = "@" + username
             if username in text:
                 mention_count += 1
                 break
-    
-    project_score = 0
-    if mention_count > 10:
-        project_score += 10
-    elif mention_count > 5:
-        project_score += 7
+
+    # Calculate engagement score (0-25)
+    if engagement_count > 100:
+        engagement_score += 25
+    elif engagement_count > 50:
+        engagement_score += 15
+    elif engagement_count > 20:
+        engagement_score += 10
+    elif engagement_count > 5:
+        engagement_score += 5          
+
+    if mention_count > 5:
+        project_score += 8
     elif mention_count > 3:
         project_score += 5
-    elif mention_count > 1:
+    elif mention_count >= 1:
         project_score += 3
-    
+
     if retweet_count > 5:
-        project_score += 8
+        project_score += 10
     elif retweet_count > 3:
         project_score += 5
-    elif retweet_count > 1:
+    elif retweet_count >= 1:
         project_score += 3
-    
+
     if reply_count > 5:
         project_score += 7
     elif reply_count > 3:
         project_score += 5
-    elif reply_count > 1:
+    elif reply_count >= 1:
         project_score += 3
-    
+
+    # Calculate quality score (0-25)
+    # Based on tweet count and engagement
+    if tweet_count > 100:
+        quality_score += 10
+    elif tweet_count > 60:
+        quality_score += 7
+    elif tweet_count > 30:
+        quality_score += 5
+    elif tweet_count > 10:
+        quality_score += 3
+
+    # Add quality points based on engagement
+    if avg_interaction > 100:
+        quality_score += 15
+    elif avg_interaction > 50:
+        quality_score += 10
+    elif avg_interaction > 20:
+        quality_score += 5
+
     total_score = engagement_score + influence_score + project_score + quality_score
+    total_score = round(total_score * authenticity_factor, 2)
 
     return {
         "engagement_score": round(engagement_score, 2),
         "influence_score": round(influence_score, 2),
         "project_score": round(project_score, 2),
         "quality_score": round(quality_score, 2),
-        "total_score": round(total_score, 2)
+        "total_score": total_score,
+        "authenticity_factor": round(authenticity_factor, 2),
+        "detail": {
+            "explanation": "Calculated using legacy scoring system",
+            "quality_sub_scores": {
+                "content_quality": quality_score,
+                "language_grammar": 0,
+                "professionalism": 0,
+                "value_to_readers": 0
+            },
+            "authenticity_sub_scores": {
+                "content_authenticity": authenticity_factor,
+                "engagement_patterns": 1.0,
+                "account_behavior": 1.0
+            }
+        }
     }
 
+def estimate_tweets(user_name):
+    recent_tweets = load_tweets_within(user_name, 90)
+    
+    if not recent_tweets or len(recent_tweets) == 0:
+        return {
+            "total_score": 0,
+            "engagement_score": 0,
+            "influence_score": 0,
+            "project_score": 0,
+            "quality_score": 0,    
+            "project_score": 0,
+            "authenticity_factor": 0,
+            "detail": {}
+        }
+    
+    # Calculate tweet quality score (0-25)
+    quality_score = 0
+    influence_score = 0
+    engagement_score = 0
+    project_score = 0
+    authenticity_factor = 0
+    detail = {}
 
-def real_factor(user_name):
-    tweets = load_tweets(user_name)
-    if not tweets or len(tweets) == 0:
-        return 0
+    dedicated_accounts = ["beeperfun", "beeper_agent"]
+
+    ordered_tweets = order_tweets(recent_tweets, reverse=True)
+    user_info = ordered_tweets[0].get("author", {})
+    filtered_tweets = filter_tweets(ordered_tweets)
+    batches = build_batches(filtered_tweets)
+    if len(batches) == 0:
+        return estimate_legacy(recent_tweets, dedicated_accounts)
     
-    tweet_count = len(tweets)
-    user_info = tweets[-1].get("author", {})
-    if user_info["isBlueVerified"] == True:
-        print(f"{user_name} is blue verified")
-        return 1
-    if int(user_info["followers"]) > 10000:
-        print(f"{user_name} has followes: {user_info['followers']}")
-        return 1
-    
-    create_at = datetime.strptime(user_info["createdAt"], "%a %b %d %H:%M:%S %z %Y")
-    # Calculate register duration: now-create_at
-    now = datetime.now().astimezone()
-    duration = now - create_at
-    days = duration.days
-    print(f"{user_name} register duration: {days} days")
-    
-    # Calculate authenticity factor
-    factor = 0.05
-    
-    # Score based on registration duration
-    if days > 365*5:
-        factor += 0.4
-    elif days > 365 * 2:  
-        factor += 0.25
-    elif days > 365:  
-        factor += 0.15
-    
-    # Score based on total tweets
-    if tweet_count > 1000:
-        factor += 0.55
-    elif tweet_count > 500:
-        factor += 0.4
-    elif tweet_count > 200:
-        factor += 0.3
-    elif tweet_count > 100:
-        factor += 0.2
-    elif tweet_count > 50:
-        factor += 0.1
-    
-    print(f"{user_name} real factor: {factor}")
-    return factor
+    legacy_scores = estimate_legacy(recent_tweets, dedicated_accounts)
+    print(f"{user_name} legacy score is {legacy_scores}")
+
+    try:
+        result = estimate_by_llm(batches[0], user_info, dedicated_accounts)
+        print(result)
+        quality_score = result["quality_score"]
+        influence_score = result["influence_score"]
+        engagement_score = result["engagement_score"]
+        project_score = result["project_score"]
+        authenticity_factor = result["authenticity_score"]
+        detail["explanation"] = result["explanation"]
+        detail["quality_sub_scores"] = result["quality_sub_scores"]
+        detail["authenticity_sub_scores"] = result["authenticity_sub_scores"]
+    except:
+        return estimate_legacy(recent_tweets, dedicated_accounts)
+
+    if user_info.get("isBlueVerified", False):
+        print(f"User is blue verified")
+        authenticity_factor = 1.0
+    elif int(user_info.get("followers", 0)) > 10000:
+        print(f"User has followers: {user_info['followers']}")
+        authenticity_factor = 1.0
+
+    total_score = engagement_score + influence_score + project_score + quality_score
+    total_score = round(total_score*authenticity_factor, 2)
+
+    return {
+        "engagement_score": round(engagement_score, 2),
+        "influence_score": round(influence_score, 2),
+        "project_score": round(project_score, 2),
+        "quality_score": round(quality_score, 2),
+        "total_score": round(total_score, 2),
+        "authenticity_factor": round(authenticity_factor,2),
+        "detail": detail
+    }
 
 def estimate(user_name):
     scores = estimate_tweets(user_name)
-    print(scores)
-    fac = real_factor(user_name)
-    print(fac)
-    scores["factor"] = fac
-    scores["total_score"] = round(scores["total_score"]*fac,2)
-
-    print(f"Score {user_name} is {scores}")
+    print(f"{user_name} score is {scores}")
 
     # Create outputs directory if it doesn't exist
     os.makedirs("outputs", exist_ok=True)
