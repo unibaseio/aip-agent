@@ -37,11 +37,9 @@ def load_unfinished_users() -> Any:
     users = []
     for file in os.listdir("outputs"):
         if file.endswith("_tweets.json"):
-            # Remove '_summary.json' suffix to get the user name
-            if file.endswith("_summary.json"):
-                continue
             user_name = file[:-len("_tweets.json")]
-            users.append(user_name) 
+            if not os.path.exists(f"outputs/{user_name}_summary.json"):
+                users.append(user_name) 
     return users
 
 def load_user(user_name: str) -> Any:

@@ -267,6 +267,7 @@ def build_user_sync(username: str):
     try:
         build_user(username)
         app.users[username] = load_user(username)
+        app.xinfo[username] = get_user_xinfo(username)
         # conflict write?
         save_tweets(username)
     except Exception as e:
