@@ -91,9 +91,11 @@ def build_user(user_name: str):
     print(f"build user: {user_name}")
 
     # check if profile already exists
-    if os.path.exists(f"outputs/{user_name}_airdrop_score.json"):
-        print(f"Profile for {user_name} already exists")
-        return 
+    if os.path.exists(f"outputs/{user_name}_summary.json"):
+        if os.path.exists(f"outputs/{user_name}_profile_final.json"):
+            if os.path.exists(f"outputs/{user_name}_airdrop_score.json"):
+                print(f"Profiles for {user_name} already exists")
+                return 
     
     # check if tweets need to be retrieved
     if not os.path.exists(f"outputs/{user_name}_tweets.json"):
