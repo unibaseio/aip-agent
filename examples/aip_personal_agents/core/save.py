@@ -36,9 +36,6 @@ def save_tweets_to_collection(user_name, collection_name):
    
     tweets = load_tweets(user_name)
 
-    # TODO: no check existence of all tweets
-    #tweets = order_tweets(tweets, True)
-
     rag = ChromaKnowledgeBase(
         persist_directory=f"./chroma_db_kol",
         collection_name=collection_name,
@@ -46,10 +43,19 @@ def save_tweets_to_collection(user_name, collection_name):
         auto_upload_to_hub=True,
     )
   
+    tweets = order_tweets(tweets, True)
     for tweet in tweets:
         if rag.exists(tweet["id"]):
             #print(f"Tweet {tweet['id']} already exists in {collection_name}")
-            continue
+            break
+        doc = format_tweet_to_doc(tweet)
+        rag.add_documents([doc])
+    
+    tweets = order_tweets(tweets, False)
+    for tweet in tweets:
+        if rag.exists(tweet["id"]):
+            #print(f"Tweet {tweet['id']} already exists in {collection_name}")
+            break
         doc = format_tweet_to_doc(tweet)
         rag.add_documents([doc])
 
