@@ -109,12 +109,18 @@ def build_user(user_name: str):
     # generate profile if tweets exist
     if not os.path.exists(f"outputs/{user_name}_profile_final.json"):
         print(f"Generating profile for {user_name}")
-        generate_profile(user_name)
-    
+        try:
+            generate_profile(user_name)
+        except Exception as e:
+            print(f"Generating profile for {user_name} fail: {str(e)}")
+
     # after profile is generated, summarize
     if not os.path.exists(f"outputs/{user_name}_summary.json"):
         print(f"Summary profile for {user_name}")
-        summarize(user_name)
+        try:
+            summarize(user_name)
+        except json.JSONDecodeError:
+            os.remove(f"outputs/{user_name}_profile_final.json")
 
     if not os.path.exists(f"outputs/{user_name}_airdrop_score.json"):
         print(f"Airdrop score for {user_name}")
@@ -129,8 +135,18 @@ def refresh_user(user_name: str):
     tweets = retrieve_tweets(user_name)
     if tweets is None:
         return
-    generate_profile(user_name)
-    summarize(user_name)
+    try:
+        generate_profile(user_name)
+    except Exception as e:
+        print(f"Generating profile for {user_name} fail: {str(e)}")
+        return
+
+    try:
+        summarize(user_name)
+    except json.JSONDecodeError:
+        os.remove(f"outputs/{user_name}_profile_final.json")
+        return
+    
     create_user_xinfo(user_name)
     estimate(user_name)
     save_tweets(user_name)

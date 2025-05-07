@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 from typing import Dict, Any
@@ -71,8 +72,13 @@ def summarize(user_name: str):
     summary = summarize_profile(user_name)
     if summary is None:
         return
-    with open(f"outputs/{user_name}_summary.json", "w") as f:
-        f.write(summary)
+    try:
+        json.loads(summary)
+        with open(f"outputs/{user_name}_summary.json", "w") as f:
+            f.write(summary)
+    except json.JSONDecodeError as e:
+        print(f"Error Summary: Invalid JSON format - {str(e)}")
+        raise
 
 if __name__ == "__main__":
     default_x_name = "elonmusk"
