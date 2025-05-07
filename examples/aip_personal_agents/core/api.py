@@ -27,7 +27,14 @@ def refresh_users_task():
             print(f"Refreshed users list at {datetime.now()}")
             unfinished_users = load_unfinished_users()
             for username in unfinished_users:
-                if username not in app.candidates:
+                if username in app.candidates:
+                    continue
+                if username not in app.refresh_counts:
+                    app.refresh_counts[username] = 0
+                app.refresh_counts[username] += 1
+                if app.refresh_counts[username] < 3:
+                    build_user(username)
+                if app.refresh_counts[username] % 10 == 0:  # Only build every 10 attempts
                     build_user(username)
             app.users = load_users()
             users = list(app.users.keys())
@@ -339,6 +346,7 @@ async def initialize(port: int = 5001, bearer_token: str = None) -> None:
             app.xinfo[username] = get_user_xinfo(username)
 
         app.candidates = []
+        app.refresh_counts = {}
     except Exception as e:
         print(f"Error loading users: {str(e)}")
         exit()
