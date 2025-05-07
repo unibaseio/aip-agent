@@ -40,6 +40,7 @@ def load_unfinished_users() -> Any:
             user_name = file[:-len("_tweets.json")]
             if not os.path.exists(f"outputs/{user_name}_summary.json"):
                 users.append(user_name) 
+    print(f"load unfinished users: {users}")
     return users
 
 def load_user(user_name: str) -> Any:
