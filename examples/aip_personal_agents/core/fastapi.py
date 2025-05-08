@@ -10,6 +10,8 @@ from functools import wraps
 import time
 import argparse
 from typing import Optional, List, Dict, Any
+from threading import Lock
+import queue
 
 from membase.chain.chain import membase_id
 from aip_agent.agents.custom_agent import CallbackAgent
@@ -34,6 +36,10 @@ app.add_middleware(
 # Create security scheme
 security = HTTPBearer()
 
+# Create separate thread pool executors
+build_executor = ThreadPoolExecutor(max_workers=6)  # For build_user_sync
+refresh_executor = ThreadPoolExecutor(max_workers=1)  # For refresh_users_task
+
 # Background task to refresh users periodically
 def refresh_users_task():
     """Background task to periodically refresh users list"""
@@ -43,13 +49,12 @@ def refresh_users_task():
             unfinished_users = load_unfinished_users()
             for username in unfinished_users:
                 if username in app.candidates:
+                    print(f"Skipping: {username} because it's in candidates")
                     continue
                 if username not in app.refresh_counts:
                     app.refresh_counts[username] = 0
                 app.refresh_counts[username] += 1
-                if app.refresh_counts[username] < 3:
-                    build_user(username)
-                if app.refresh_counts[username] % 10 == 0:  # Only build every 10 attempts
+                if app.refresh_counts[username] < 3 or app.refresh_counts[username] % 10 == 0:
                     build_user(username)
             app.users = load_users()
             users = list(app.users.keys())
@@ -64,9 +69,6 @@ def refresh_users_task():
         except Exception as e:
             print(f"Error refreshing users: {str(e)}")
         time.sleep(600)  # Refresh every 10 minutes
-
-# Create a thread pool executor
-executor = ThreadPoolExecutor(max_workers=4)
 
 # Dependency for token validation
 async def validate_token(credentials: HTTPAuthorizationCredentials = Security(security)):
@@ -239,7 +241,7 @@ async def generate_profile_api(
                     with open(f"outputs/{username}_tweets.json", "w") as f:
                         json.dump([], f)
 
-                executor.submit(build_user_sync, username)
+                build_executor.submit(build_user_sync, username)
                 return {"success": True, "data": "start building..."}
             else:
                 return {"success": True, "data": "building..."}
@@ -248,18 +250,47 @@ async def generate_profile_api(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+# Add after app initialization
+app.build_locks = {}  # Store build locks for each user
+app.current_builds = 0  # Current number of builds in progress
+app.build_lock = Lock()  # Lock for protecting current_builds
+app.max_concurrent_builds = 4  # Maximum number of concurrent builds
+
 def build_user_sync(username: str):
-    """Synchronously build user profile in a thread"""
-    try:
-        build_user(username)
-        app.users[username] = load_user(username)
-        app.xinfo[username] = get_user_xinfo(username)
-        # conflict write?
-        save_tweets(username)
-    except Exception as e:
-        print(f"Error building user {username}: {str(e)}")
-    finally:
-        app.candidates.remove(username)
+    """Synchronously build user profile with concurrency control"""
+    # If already building, return directly
+    if username in app.build_locks and app.build_locks[username].locked():
+        print(f"Build already in progress for {username}")
+        return
+
+    # Check if we've reached max concurrent builds
+    with app.build_lock:
+        if app.current_builds >= app.max_concurrent_builds:
+            print(f"Max concurrent builds reached, skipping {username}")
+            if username in app.candidates:
+                app.candidates.remove(username)
+            return
+        app.current_builds += 1
+
+    # Get build lock for this user
+    if username not in app.build_locks:
+        app.build_locks[username] = Lock()
+    
+    with app.build_locks[username]:
+        try:
+            print(f"Starting build for {username}")
+            build_user(username)
+            app.users[username] = load_user(username)
+            app.xinfo[username] = get_user_xinfo(username)
+            save_tweets(username)
+            print(f"Successfully completed build for {username}")
+        except Exception as e:
+            print(f"Error building user {username}: {str(e)}")
+        finally:
+            if username in app.candidates:
+                app.candidates.remove(username)
+            with app.build_lock:
+                app.current_builds -= 1
 
 @app.post("/api/chat")
 async def chat(
@@ -335,7 +366,7 @@ async def initialize(port: int = 5001, bearer_token: str = None) -> None:
         exit()
 
     # Start the background refresh task in a separate thread
-    executor.submit(refresh_users_task)
+    refresh_executor.submit(refresh_users_task)
     print("Background refresh task started")
 
     # Start uvicorn server

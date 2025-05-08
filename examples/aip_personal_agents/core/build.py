@@ -88,7 +88,8 @@ def load_users() -> Dict[str, Any]:
     return users
 
 def build_user(user_name: str):
-    print(f"build user: {user_name}")
+    now = datetime.now()
+    print(f"Start build user: {user_name} at: {now}")
 
     # check if profile already exists
     if os.path.exists(f"outputs/{user_name}_summary.json"):
@@ -126,6 +127,9 @@ def build_user(user_name: str):
     if not os.path.exists(f"outputs/{user_name}_airdrop_score.json"):
         print(f"Airdrop score for {user_name}")
         estimate(user_name)
+
+    now = datetime.now()
+    print(f"Finished build user: {user_name} at: {now}")
 
 def refresh_user(user_name: str):
     date_str = datetime.now().strftime("%Y-%m-%d")
