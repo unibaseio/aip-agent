@@ -24,7 +24,8 @@ def summarize_profile(user_name: str) -> str:
         "personal_tags": {{
             "keywords": ["AI", "meme", "crypto", "tag4", "tag5"]
         }},
-        "personal_brief": "A 3-5 sentence paragraph that accurately reflects their domain, preferences, personality, and distinguishing traits. ",
+        "personal_brief": "A 1-2 sentence summary that captures their key interests, expertise, and personality traits.",
+        "long_description": "A 3-5 sentence detailed description that covers their domain expertise, preferences, personality, and distinguishing characteristics.",
         "detailed_analysis": {{
             "basic_profile": "Key insights about the user's basic profile",
             "communication_style": "Analysis of how the user communicates",
@@ -41,21 +42,28 @@ def summarize_profile(user_name: str) -> str:
        - Merge similar keywords into a single representative tag
        - Format as a simple list of strings
 
-    2. For Personal Summary:
-       - Focus on four key aspects in 3-5 sentences:
+    2. For Personal Brief:
+       - Write a concise 1-2 sentence summary that captures:
+         1. Key interests and expertise areas
+         2. Most notable personality traits
+       - Keep it focused and impactful
+       - The tone should be professional and insightful
+
+    3. For Long Description:
+       - Write a detailed 3-5 sentence description covering:
          1. Personal interests and expertise areas
          2. Frequently discussed topics and themes
          3. Core viewpoints and stances
-         4. Distinctive characteristics and sty
-       - The tone should be professional and insightful, incorporating subtle stylistic flair only when it aligns with the user's authentic voice. 
-       - With a touch of “chuunibyou” flair (e.g., grandiose nicknames like a dragon princess).
-       - Avoid exaggerated or unfounded embellishments.
+         4. Distinctive characteristics and style
+       - The tone should be professional and insightful, incorporating subtle stylistic flair only when it aligns with the user's authentic voice
+       - With a touch of "chuunibyou" flair (e.g., grandiose nicknames like a dragon princess)
+       - Avoid exaggerated or unfounded embellishments
 
-    3. For Detailed Analysis:
+    4. For Detailed Analysis:
        - Each section should be 2-3 sentences
 
     Special Instructions:
-    - Make it feel like a genuine, human observation rather than a formal analysis"
+    - Make it feel like a genuine, human observation rather than a formal analysis
     - Do not use third person pronouns (he, she, they, etc.)
     """
 

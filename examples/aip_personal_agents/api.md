@@ -70,7 +70,8 @@ The API uses standard HTTP status codes:
       "summary": {
         // User summary details
         "detailed_analysis": {},
-        "personal_brief": "",
+        "personal_brief": "", // 1-2 sentences
+        "long_description": "", // 3-5 sentences
         "personal_tags": {
           "keywords": [
             "#Bitcoin",
@@ -121,6 +122,7 @@ The API uses standard HTTP status codes:
     "summary": {
       "detailed_analysis": {},
       "personal_brief": "",
+      "long_description": "",
       "personal_tags": {
         "keywords": []
       }
@@ -180,6 +182,7 @@ The API uses standard HTTP status codes:
     "summary": {
       "detailed_analysis": {},
       "personal_brief": "",
+      "long_description": "",
       "personal_tags": {
         "keywords": [
         ]

@@ -12,171 +12,183 @@ def estimate_by_llm(tweets, userinfo, project_accounts: list):
     """Calculate quality, influence, engagement and authenticity scores for a batch of tweets using LLM"""
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
     
-    prompt = f"""You are a comprehensive tweet analyzer. Your task is to evaluate the quality, influence, engagement, and authenticity of this collection of tweets.
+    prompt = f"""You are a professional social media analyst specializing in Twitter/X platform analysis. Your task is to evaluate a user's Twitter activity and provide comprehensive scoring across multiple dimensions.
 
-User Information:
+Input Data:
+1. User Profile Information:
 {json.dumps(userinfo, indent=2)}
 
-Official Project Accounts (These are the official accounts that we want to evaluate user's interaction with):
+2. Target Project Accounts (These are the official project accounts that we want to evaluate user's interaction with):
 {json.dumps(project_accounts, indent=2)}
 
-Tweets to analyze:
+3. User's Tweets Collection:
 {json.dumps(tweets, indent=2)}
 
-Evaluate these aspects for the entire collection:
+Evaluation Criteria:
 
 1. Quality Score (0-25)
    A. Content Quality (0-12)
-      - Overall originality and uniqueness
-      - Collective information value
+      - Originality and uniqueness of content
+      - Information value and depth
       - Topic consistency and relevance
-      - Clarity of messages
+      - Message clarity and effectiveness
       - Tweet quantity and consistency:
-        * 0-2 points: Less than 10 tweets
+        * 0-2 points: < 10 tweets
         * 2-4 points: 10-30 tweets
         * 4-7 points: 30-60 tweets
         * 7-10 points: 60-100 tweets
-        * 10-12 points: More than 100 tweets
+        * 10-12 points: > 100 tweets
 
    B. Language & Grammar (0-3)
-      - Overall writing quality
-      - Consistent writing style
-      - Appropriate tone
+      - Writing quality and style
+      - Language consistency
+      - Tone appropriateness
 
    C. Professionalism (0-5)
-      - Professional tone
+      - Professional tone and presentation
       - Content appropriateness
       - Brand consistency
-      - Effective media usage
+      - Media usage effectiveness
 
    D. Value to Readers (0-5)
-      - Educational value
+      - Educational content value
       - Entertainment value
       - Actionable insights
       - Community engagement potential
 
 2. Influence Score (0-25)
-   Consider:
-   - Overall engagement metrics (likes, retweets, quotes, replies)
+   Evaluation Factors:
+   - Engagement metrics (likes, retweets, quotes, replies)
    - Content reach and visibility
    - Audience interaction quality
    - Viral potential
-   - Tweet quantity and consistency
+   - Tweet consistency
    - Account verification status
-   - Follower count and growth
+   - Follower metrics
 
-   Scoring guidelines:
+   Scoring Guidelines:
    * 0-3: Very poor engagement 
-      - Average < 10 interactions per tweet
-      - Less than 10 tweets
-      - Inconsistent posting pattern
+      - < 10 interactions/tweet
+      - < 10 tweets
+      - Inconsistent posting
       - Low follower count
    
    * 4-8: Poor engagement
-      - 10-50 interactions per tweet
+      - 10-50 interactions/tweet
       - 10-30 tweets
-      - Irregular posting pattern
-      - Moderate follower count
+      - Irregular posting
+      - Moderate followers
    
    * 9-13: Average engagement
-      - 50-100 interactions per tweet
+      - 50-100 interactions/tweet
       - 30-60 tweets
-      - Regular posting pattern
+      - Regular posting
       - Good follower count
    
    * 14-20: Good engagement
-      - 100-500 interactions per tweet
+      - 100-500 interactions/tweet
       - 60-100 tweets
-      - Consistent posting pattern
+      - Consistent posting
       - High follower count
    
    * 21-25: Excellent engagement
-      - >500 interactions per tweet
+      - >500 interactions/tweet
       - >100 tweets
-      - Very consistent posting pattern
-      - Verified account with large following
+      - Very consistent posting
+      - Verified with large following
 
 3. Engagement Score (0-25)
-   Evaluate:
+   Evaluation Factors:
    - Conversation quality and depth
    - Community building effectiveness
-   - Content relevance and value
-   - Interaction patterns and consistency
-   - Tweet frequency and regularity
-   - Account age and activity history
+   - Content relevance
+   - Interaction patterns
+   - Posting consistency
+   - Account history
 
-   Scoring guidelines:
+   Scoring Guidelines:
    * 0-3: Very poor engagement
-      - One-way communication, no meaningful interactions
-      - Less than 10 tweets
-      - No consistent posting pattern
+      - One-way communication
+      - < 10 tweets
+      - No posting pattern
       - New account
    
    * 4-8: Poor engagement
-      - Limited meaningful interactions, basic community presence
+      - Limited interactions
       - 10-30 tweets
-      - Irregular posting pattern
+      - Irregular posting
       - Young account
    
    * 9-13: Average engagement
-      - Some meaningful interactions, moderate community participation
+      - Moderate interactions
       - 30-60 tweets
-      - Regular posting pattern
+      - Regular posting
       - Established account
    
    * 14-20: Good engagement
-      - Active community participation, quality discussions
+      - Active participation
       - 60-100 tweets
-      - Consistent posting pattern
+      - Consistent posting
       - Long-standing account
    
    * 21-25: Excellent engagement
-      - Exceptional community building, deep meaningful interactions
+      - Exceptional community building
       - >100 tweets
-      - Very consistent posting pattern
-      - Veteran account with strong community presence
+      - Very consistent posting
+      - Veteran account
 
 4. Authenticity Score (0-1)
-   Evaluate:
    A. Content Authenticity (0-0.4)
-      - Original content vs reposted content
-      - Personal experiences and opinions
+      - Original vs reposted content
+      - Personal experiences
       - Natural language patterns
-      - Topic consistency and relevance
-      - Account verification status
-      - Account age and history
+      - Topic consistency
+      - Account verification
+      - Account history
 
    B. Engagement Patterns (0-0.2)
-      - Natural interaction patterns
+      - Natural interactions
       - Conversation flow
       - Response quality
-      - Follower to following ratio
-      - Account growth patterns
+      - Follower ratio
+      - Growth patterns
 
    C. Account Behavior (0-0.4)
-      - Posting frequency and patterns
+      - Posting patterns
       - Content diversity
-      - Spam-like behavior indicators
-      - Account verification status
-      - Account age and activity history
+      - Spam indicators
+      - Verification status
+      - Account history
       - Profile completeness
     
 5. Project Score (0-25)
-   Evaluate ONLY the user's interaction with official project accounts:
-   - Mentions of official project accounts in tweets
-   - Replies to official project accounts' tweets
-   - Retweets/quotes of official project accounts' tweets
+   Focus: Evaluate ONLY the user's interaction with and relevance to target project accounts
+   - Direct interactions with target project accounts:
+     * Mentions of target project accounts
+     * Replies to target project accounts' tweets
+     * Retweets/quotes of target project accounts' tweets
+   - Content relevance to target project:
+     * Project-related discussions
+     * Project-specific terminology usage
+     * Project topic consistency
 
-   Scoring guidelines:
-   * 0-8: Low interaction with official accounts
-      - Few or no interactions with official project accounts
+   Scoring Guidelines:
+   * 0-8: Low project relevance
+      - Few or no direct interactions with target project accounts
+      - Minimal project-related content
+      - No consistent project discussion
    
-   * 9-16: Medium interaction with official accounts
-      - Regular interactions with official project accounts
+   * 9-16: Medium project relevance
+      - Regular direct interactions with target project accounts
+      - Some project-related content
+      - Basic project discussion consistency
    
-   * 17-25: High interaction with official accounts
-      - Frequent and meaningful interactions with official project accounts
+   * 17-25: High project relevance
+      - Frequent and meaningful direct interactions with target project accounts
+      - Rich project-related content
+      - Strong project discussion consistency
 
+Output Format:
 Provide your analysis in this exact JSON format:
 {{
     "quality_score": <number between 0-25>,
@@ -198,17 +210,16 @@ Provide your analysis in this exact JSON format:
     "explanation": "<brief explanation of all scores>"
 }}
 
-Important:
+Important Guidelines:
 - All scores must be numbers within their specified ranges
-- Scores can include decimal points for more precise evaluation
-- Consider all metrics together, not individually
-- Be generous with high scores for good accounts (14-25)
-- Be strict with low scores for poor accounts (0-8)
-- Consider both quality and quantity of tweets
-- Consider account age, verification status, and follower count
-- Pay special attention to interactions with project accounts
-- Provide a brief explanation for all scores
-- Ensure the response is valid JSON"""
+- Use decimal points for precise evaluation
+- Consider all metrics holistically
+- Be generous with high scores (14-25) for good accounts
+- Be strict with low scores (0-8) for poor accounts
+- Consider both quality and quantity
+- Account for age, verification, and follower count
+- Provide clear score explanations
+- Ensure valid JSON output"""
 
     try:
         response = client.chat.completions.create(

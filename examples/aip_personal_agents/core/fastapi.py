@@ -55,6 +55,10 @@ def refresh_users_task():
             users = list(app.users.keys())
             xinfo = {}
             for username in users:
+                if username in app.candidates:
+                    continue
+                if username in unfinished_users:
+                    continue
                 refresh_user(username)
                 xinfo[username] = get_user_xinfo(username)
             app.xinfo = xinfo
