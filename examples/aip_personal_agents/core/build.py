@@ -110,7 +110,6 @@ def build_user(user_name: str):
         
     # generate profile if tweets exist
     if not os.path.exists(f"outputs/{user_name}_profile_final.json"):
-        print(f"Generating profile for {user_name}")
         try:
             generate_profile(user_name)
         except Exception as e:
@@ -118,10 +117,10 @@ def build_user(user_name: str):
 
     # after profile is generated, summarize
     if not os.path.exists(f"outputs/{user_name}_summary.json"):
-        print(f"Summary profile for {user_name}")
         try:
             summarize(user_name)
         except json.JSONDecodeError:
+            print(f"Summary profile for {user_name} fail")
             os.remove(f"outputs/{user_name}_profile_final.json")
 
     if not os.path.exists(f"outputs/{user_name}_airdrop_score.json"):

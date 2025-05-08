@@ -115,6 +115,9 @@ async def list_info(token: str = Depends(validate_token)):
                 xinfo["xinfo"] = app.xinfo[username]
 
             res.append(xinfo)   
+        
+        # Sort the results by username
+        res.sort(key=lambda x: x["username"])
         return {"success": True, "data": res}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -151,6 +154,7 @@ async def list_users(token: str = Depends(validate_token)):
     """List all available users"""
     try:
         accounts = list(app.users.keys())
+        accounts.sort()  # Sort the accounts list alphabetically
         return {"success": True, "data": accounts}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -240,11 +244,10 @@ async def generate_profile_api(
                 if not os.path.exists(f"outputs/{username}_tweets.json"):
                     with open(f"outputs/{username}_tweets.json", "w") as f:
                         json.dump([], f)
-
-                build_executor.submit(build_user_sync, username)
+                    build_executor.submit(build_user_sync, username)
                 return {"success": True, "data": "start building..."}
             else:
-                return {"success": True, "data": "building..."}
+                return {"success": True, "data": "already in building..."}
         else:
             return {"success": True, "data": "already built"}
     except Exception as e:
