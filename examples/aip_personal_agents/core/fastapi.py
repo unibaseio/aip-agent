@@ -36,9 +36,21 @@ security = HTTPBearer()
 
 # Create separate thread pool executors
 build_executor = ThreadPoolExecutor(max_workers=6)  # For build_user_sync
-refresh_executor = ThreadPoolExecutor(max_workers=1)  # For refresh_users_task
+refresh_executor = ThreadPoolExecutor(max_workers=2)  # For refresh/save_users_task
 
-# Background task to refresh users periodically
+# Add after app initialization
+app.build_locks = {}  # Store build locks for each user
+app.current_builds = 0  # Current number of builds in progress
+app.build_lock = Lock()  # Lock for protecting current_builds
+app.max_concurrent_builds = 4  # Maximum number of concurrent builds
+app.user_locks = {}  # Store locks for each user to prevent concurrent operations
+
+def get_user_lock(username: str) -> Lock:
+    """Get or create a lock for a specific user"""
+    if username not in app.user_locks:
+        app.user_locks[username] = Lock()
+    return app.user_locks[username]
+
 def refresh_users_task():
     """Background task to periodically refresh users list"""
     while True:
@@ -53,21 +65,46 @@ def refresh_users_task():
                     app.refresh_counts[username] = 0
                 app.refresh_counts[username] += 1
                 if app.refresh_counts[username] < 3 or app.refresh_counts[username] % 10 == 0:
-                    build_user(username)
+                    with get_user_lock(username):
+                        build_user(username)
             app.users = load_users()
             users = list(app.users.keys())
             users.sort()
             xinfo = {}
-            for username in users:
+            users_len = len(users)
+            if users_len == 0:
+                print(f"No users to refresh at {datetime.now()}")
+                time.sleep(600)
+                continue
+            for i, username in enumerate(users):
                 if username not in app.candidates:
                     if username not in unfinished_users:
-                        refresh_user(username)
+                        with get_user_lock(username):
+                            print(f"Refreshing {i}/{users_len} user {username} at {datetime.now()}")
+                            refresh_user(username)
                 xinfo[username] = get_user_xinfo(username)
             app.xinfo = xinfo
             print(f"Users list refreshed at {datetime.now()}")
         except Exception as e:
             print(f"Error refreshing users: {str(e)}")
         time.sleep(600)  # Refresh every 10 minutes
+
+def save_users_task():
+    """Background task to periodically save users tweets"""
+    while True:
+        time.sleep(780)  # Refresh every 13 minutes
+        try:
+            print(f"Saving users tweets at {datetime.now()}")
+            app.users = load_users()
+            users = list(app.users.keys())
+            users.sort()
+            for username in users:
+                print(f"Saving tweets for {username} at {datetime.now()}")
+                with get_user_lock(username):
+                    save_tweets(username)
+            print(f"Users tweets saved at {datetime.now()}")
+        except Exception as e:
+            print(f"Error saving users tweets: {str(e)}")
 
 # Dependency for token validation
 async def validate_token(credentials: HTTPAuthorizationCredentials = Security(security)):
@@ -272,12 +309,6 @@ async def generate_profile_api(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# Add after app initialization
-app.build_locks = {}  # Store build locks for each user
-app.current_builds = 0  # Current number of builds in progress
-app.build_lock = Lock()  # Lock for protecting current_builds
-app.max_concurrent_builds = 4  # Maximum number of concurrent builds
-
 def build_user_sync(username: str):
     """Synchronously build user profile with concurrency control"""
     # If already building, return directly
@@ -304,7 +335,6 @@ def build_user_sync(username: str):
             build_user(username)
             app.users[username] = load_user(username)
             app.xinfo[username] = get_user_xinfo(username)
-            save_tweets(username)
             print(f"Successfully completed build for {username}")
         except Exception as e:
             print(f"Error building user {username}: {str(e)}")
@@ -389,7 +419,8 @@ async def initialize(port: int = 5001, bearer_token: str = None) -> None:
 
     # Start the background refresh task in a separate thread
     refresh_executor.submit(refresh_users_task)
-    print("Background refresh task started")
+    refresh_executor.submit(save_users_task)
+    print("Background refresh/save task started")
 
     # Start uvicorn server
     config = uvicorn.Config(app, host="0.0.0.0", port=port, log_level="info")
