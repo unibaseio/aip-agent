@@ -7,7 +7,6 @@ from typing import Any, Dict, List
 from core.generate import generate_profile
 from core.retrieve import retrieve_tweets
 from core.summary import summarize
-from core.save import save_tweets
 from core.format import load_tweets
 from core.rate import estimate
 
@@ -157,7 +156,6 @@ def refresh_user(user_name: str):
     
     create_user_xinfo(user_name)
     estimate(user_name)
-    save_tweets(user_name)
 
 
 if __name__ == "__main__":
