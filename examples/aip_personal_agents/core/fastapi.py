@@ -82,6 +82,7 @@ def refresh_users_task():
                             print(f"Refreshing {i}/{users_len} user {username} at {datetime.now()}")
                             refresh_user(username)
                 xinfo[username] = get_user_xinfo(username)
+                app.users[username] = load_user(username)
             app.xinfo = xinfo
             app.users = load_users()
             print(f"Users list refreshed at {datetime.now()}")
