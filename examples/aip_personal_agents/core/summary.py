@@ -5,27 +5,34 @@ from typing import Dict, Any
 
 from openai import OpenAI
 
-from core.common import write_user_summary, load_user_profile
+from core.common import load_user_xinfo, write_user_summary, load_user_profile
 
 def summarize_profile(user_name: str) -> str:
     profile = load_user_profile(user_name)
     if profile is None or profile == {}:
         return None
     
+    xinfo = load_user_xinfo(user_name)
+    if xinfo is None or xinfo == {}:
+        return None
+    
     prompt_summary = f"""
     You are a professional social media analyst. 
+
+    Twitter/X Account Info:
+    {xinfo}
 
     Profile Data:
     {profile}
 
-    Based on the above Twitter/X user profile, generate a JSON response with the following structure:
+    Based on the above Twitter/X user info and profile, generate a JSON response with the following structure:
 
     {{
         "personal_tags": {{
             "keywords": ["AI", "meme", "crypto", "tag4", "tag5"]
         }},
-        "personal_brief": "A 1-2 sentence summary that captures their key interests, expertise, and personality traits.",
-        "long_description": "A 3-5 sentence detailed description that covers their domain expertise, preferences, personality, and distinguishing characteristics.",
+        "personal_brief": "A 1-3 sentence summary that captures their key interests, expertise, and personality traits.",
+        "long_description": "A 4-6 sentence detailed description that covers their domain expertise, preferences, personality, and distinguishing characteristics.",
         "detailed_analysis": {{
             "basic_profile": "Key insights about the user's basic profile",
             "communication_style": "Analysis of how the user communicates",
@@ -43,16 +50,17 @@ def summarize_profile(user_name: str) -> str:
        - Format as a simple list of strings
 
     2. For Personal Brief:
-       - Write a concise 1-2 sentence summary that captures:
+       - Write a concise 1-3 sentence summary that captures:
          1. Key interests and expertise areas
          2. Most notable personality traits
          3. The most important thing the user is doing
+         4. Title of the user, e.g. "CEO of Tesla", "Founder of Ethereum", "Leader of Google"
        - Keep it focused and impactful
        - The tone should be professional and insightful
        - The brief should be concise and to the point
 
     3. For Long Description:
-       - Write a detailed 3-5 sentence description covering:
+       - Write a detailed 4-6 sentence description covering:
          1. Personal interests and expertise areas
          2. Frequently discussed topics and themes
          3. Core viewpoints and stances
