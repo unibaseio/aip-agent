@@ -14,7 +14,7 @@ from threading import Lock
 from membase.chain.chain import membase_id
 from aip_agent.agents.custom_agent import CallbackAgent
 from aip_agent.agents.full_agent import FullAgentWrapper
-from core.build import get_user_xinfo, load_user, load_users, build_user, refresh_user
+from core.build import load_user, load_users, build_user, refresh_user
 from core.common import init_user, is_user_exists, load_usernames
 from core.rag import search_similar_posts, switch_user
 from core.save import save_tweets
@@ -68,11 +68,12 @@ def refresh_users_task():
                 if app.refresh_counts[username] < 3 or app.refresh_counts[username] % 10 == 0:
                     with get_user_lock(username):
                         build_user(username)
+                        app.users[username] = load_user(username)
 
-            xinfo = {}
             users_len = len(finished_users)
             if users_len == 0:
                 print(f"No users to refresh at {datetime.now()}")
+                app.users = load_users()
                 time.sleep(600)
                 continue
             for i, username in enumerate(finished_users):
@@ -81,9 +82,7 @@ def refresh_users_task():
                         with get_user_lock(username):
                             print(f"Refreshing {i}/{users_len} user {username} at {datetime.now()}")
                             refresh_user(username)
-                xinfo[username] = get_user_xinfo(username)
-                app.users[username] = load_user(username)
-            app.xinfo = xinfo
+                            app.users[username] = load_user(username)
             app.users = load_users()
             print(f"Users list refreshed at {datetime.now()}")
         except Exception as e:
@@ -137,7 +136,7 @@ def validate_required_fields(required_fields: List[str]):
     return dependency
 
 @app.get("/api/list_info")
-async def list_info(
+async def list_info_api(
     sort_by: Optional[str] = "score",
     order: Optional[str] = "desc",
     token: str = Depends(validate_token)
@@ -152,16 +151,14 @@ async def list_info(
     try:
         res = []
         for username in app.users:
-            xinfo = {
+            resinfo = {
                 "username": username,
-            }    
+                "summary": app.users[username].get("summary", {}),
+                "scores": app.users[username].get("scores", {}),
+                "xinfo": app.users[username].get("xinfo", {}),
+            }
 
-            xinfo["summary"] = app.users[username].get("summary", {})
-            xinfo["scores"] = app.users[username].get("scores", {})
-            if username in app.xinfo:
-                xinfo["xinfo"] = app.xinfo[username]
-
-            res.append(xinfo)   
+            res.append(resinfo)   
         
         # Sort the results
         def get_total_score(x):
@@ -180,7 +177,7 @@ async def list_info(
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/get_info")
-async def get_info(username: str, token: str = Depends(validate_token)):
+async def get_info_api(username: str, token: str = Depends(validate_token)):
     """Get info by username"""
     try:
         if not username:
@@ -190,14 +187,10 @@ async def get_info(username: str, token: str = Depends(validate_token)):
             if username in app.candidates:
                 return {"success": False, "data": "Building..."}    
             raise HTTPException(status_code=404, detail="User not found")
-
-        xinfo = app.xinfo[username]
-        if not xinfo:
-            raise HTTPException(status_code=404, detail="Xinfo not found")
         
         res = {
             "username": username,
-            "xinfo": xinfo,
+            "xinfo": app.users[username].get("xinfo", {}),
             "summary": app.users[username].get("summary", {}),
             "scores": app.users[username].get("scores", {}),
         }    
@@ -207,7 +200,7 @@ async def get_info(username: str, token: str = Depends(validate_token)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/list_users")
-async def list_users(token: str = Depends(validate_token)):
+async def list_users_api(token: str = Depends(validate_token)):
     """List all available users"""
     try:
         accounts = list(app.users.keys())
@@ -217,7 +210,7 @@ async def list_users(token: str = Depends(validate_token)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/get_profile")
-async def get_profile(username: str, token: str = Depends(validate_token)):
+async def get_profile_api(username: str, token: str = Depends(validate_token)):
     """Get a specific profile by username"""
     try:
         if not username:
@@ -228,30 +221,30 @@ async def get_profile(username: str, token: str = Depends(validate_token)):
                 return {"success": False, "data": "Building..."} 
             raise HTTPException(status_code=404, detail="User not found")
         
-        profile = app.users[username]          
+        profile = app.users[username].get("profile", {})          
         return {"success": True, "data": profile}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/get_xinfo")
-async def get_xinfo(username: str, token: str = Depends(validate_token)):
+async def get_xinfo_api(username: str, token: str = Depends(validate_token)):
     """Get x info by username"""
     try:
         if not username:
             raise HTTPException(status_code=400, detail="Missing username parameter")
 
-        if username not in app.xinfo:
+        if username not in app.users:
             if username in app.candidates:
                 return {"success": False, "data": "Building..."} 
             raise HTTPException(status_code=404, detail="User xinfo not found")
 
-        xinfo = app.xinfo[username]        
+        xinfo = app.users[username].get("xinfo", {})        
         return {"success": True, "data": xinfo}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/get_conversation")
-async def get_conversation(
+async def get_conversation_api(
     username: str,
     conversation_id: Optional[str] = None,
     recent_n_messages: Optional[int] = 128,
@@ -335,7 +328,6 @@ def build_user_sync(username: str):
             print(f"Starting build for {username}")
             build_user(username)
             app.users[username] = load_user(username)
-            app.xinfo[username] = get_user_xinfo(username)
             print(f"Successfully completed build for {username}")
         except Exception as e:
             print(f"Error building user {username}: {str(e)}")
@@ -346,7 +338,7 @@ def build_user_sync(username: str):
                 app.current_builds -= 1
 
 @app.post("/api/chat")
-async def chat(
+async def chat_api(
     token: str = Depends(validate_token),
     data: Dict[str, Any] = Depends(validate_required_fields(['username', 'message']))
 ):
@@ -408,9 +400,6 @@ async def initialize(port: int = 5001, bearer_token: str = None) -> None:
 
     try:
         app.users = load_users()
-        app.xinfo = {}
-        for username in app.users:
-            app.xinfo[username] = get_user_xinfo(username)
 
         app.candidates = []
         app.refresh_counts = {}

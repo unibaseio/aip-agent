@@ -35,7 +35,9 @@ def load_user(user_name: str) -> Any:
 
     scores = load_user_airdrop_score(user_name)
 
-    return {"profile": profile, "summary": summary, "scores": scores}
+    xinfo = get_user_xinfo(user_name)
+
+    return {"profile": profile, "summary": summary, "scores": scores, "xinfo": xinfo}
 
 # user dict: name -> summary
 def load_users() -> Dict[str, Any]:
