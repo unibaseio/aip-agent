@@ -38,8 +38,12 @@ def load_unfinished_users() -> Any:
     for file in os.listdir("outputs"):
         if file.endswith("_tweets.json"):
             user_name = file[:-len("_tweets.json")]
-            if not os.path.exists(f"outputs/{user_name}_summary.json"):
-                users.append(user_name) 
+            if os.path.exists(f"outputs/{user_name}_summary.json"):
+                if os.path.exists(f"outputs/{user_name}_profile_final.json"):
+                    if os.path.exists(f"outputs/{user_name}_airdrop_score.json"):
+                        continue        
+            users.append(user_name) 
+    users.sort()
     print(f"load unfinished users: {users}")
     return users
 

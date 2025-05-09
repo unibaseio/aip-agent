@@ -6,12 +6,10 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import os
 import json
 from concurrent.futures import ThreadPoolExecutor
-from functools import wraps
 import time
 import argparse
 from typing import Optional, List, Dict, Any
 from threading import Lock
-import queue
 
 from membase.chain.chain import membase_id
 from aip_agent.agents.custom_agent import CallbackAgent
@@ -58,6 +56,7 @@ def refresh_users_task():
                     build_user(username)
             app.users = load_users()
             users = list(app.users.keys())
+            users.sort()
             xinfo = {}
             for username in users:
                 if username not in app.candidates:
@@ -100,8 +99,18 @@ def validate_required_fields(required_fields: List[str]):
     return dependency
 
 @app.get("/api/list_info")
-async def list_info(token: str = Depends(validate_token)):
-    """List all available users and their info"""
+async def list_info(
+    sort_by: Optional[str] = "score",
+    order: Optional[str] = "desc",
+    token: str = Depends(validate_token)
+):
+    """List all available users and their info
+    
+    Args:
+        sort_by: Sort by field, can be 'name' or 'score'
+        order: Sort order, can be 'asc' or 'desc', default is 'desc'
+        token: Authentication token
+    """
     try:
         res = []
         for username in app.users:
@@ -116,8 +125,18 @@ async def list_info(token: str = Depends(validate_token)):
 
             res.append(xinfo)   
         
-        # Sort the results by username
-        res.sort(key=lambda x: x["username"])
+        # Sort the results
+        def get_total_score(x):
+            scores = x.get("scores", {})
+            return scores.get("total_score", 0)
+
+        if sort_by == "score":
+            res.sort(key=get_total_score, reverse=(order == "desc"))
+        elif sort_by == "name":
+            res.sort(key=lambda x: x["username"], reverse=(order == "desc"))
+        else:
+            raise HTTPException(status_code=400, detail="Invalid sort_by parameter. Must be 'name' or 'score'")
+            
         return {"success": True, "data": res}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

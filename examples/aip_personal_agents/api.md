@@ -59,6 +59,13 @@ The API uses standard HTTP status codes:
 - **Method**: GET
 - **Headers**: 
   - `Authorization: Bearer <token>`
+- **Parameters**:
+  - `sort_by`: Optional sorting field (default: "score")
+    - `name`: Sort by username
+    - `score`: Sort by total_score
+  - `order`: Optional sort order (default: "desc")
+    - `asc`: Ascending order
+    - `desc`: Descending order
 - **Response Example**:
 
 ```json
@@ -98,6 +105,7 @@ The API uses standard HTTP status codes:
 ```
 
 - **Error Cases**:
+  - If invalid sort_by parameter: 400 error with "Invalid sort_by parameter. Must be 'name' or 'score'"
   - If server error occurs: 500 error with error message
 
 ### 2. Get Complete User Info
