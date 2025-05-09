@@ -5,8 +5,9 @@ from openai import OpenAI
 import os
 import json
 
-from core.format import filter_tweets, load_tweets_within, load_tweets, order_tweets
+from core.format import filter_tweets, load_tweets_within, order_tweets
 from core.generate_prompts import build_batches
+from core.common import write_user_airdrop_score, load_user_tweets
 
 def estimate_by_llm(tweets, userinfo, project_accounts: list):
     """Calculate quality, influence, engagement and authenticity scores for a batch of tweets using LLM"""
@@ -488,15 +489,11 @@ def estimate_tweets(user_name):
     }
 
 def estimate(user_name):
+    print(f"Estimating {user_name} score")
     scores = estimate_tweets(user_name)
     print(f"{user_name} score is {scores}")
 
-    # Create outputs directory if it doesn't exist
-    os.makedirs("outputs", exist_ok=True)
-    
-    # Convert dictionary to JSON string before writing
-    with open(f"outputs/{user_name}_airdrop_score.json", "w", encoding='utf-8') as f:
-        json.dump(scores, f, indent=2)
+    write_user_airdrop_score(user_name, scores)
 
 if __name__ == "__main__":
     default_x_name = "cz_binance"

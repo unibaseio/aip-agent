@@ -3,6 +3,8 @@ import os
 from tiktoken import encoding_for_model
 from openai import OpenAI
 
+from core.common import load_user_tweets
+
 ENCODER = encoding_for_model("gpt-4o")
 
 def num_tokens(text):
@@ -167,7 +169,7 @@ def call_batch(user_info, batch):
 
 if __name__ == "__main__":
     user_name = "elonmusk"
-    tweets = json.load(open(f"outputs/{user_name}_cleaned.json"))
+    tweets = load_user_tweets(user_name)
     
     if len(tweets) == 0:
         print(f"No tweets found for {user_name}")
@@ -182,5 +184,5 @@ if __name__ == "__main__":
         print(f"Processing batch {i+1}/{len(batches)}")
         result = call_batch(user_info, batch)
         results.append(result)
-        with open(f"outputs/{user_name}_profile_batch_{i+1}.json", "w") as f:
+        with open(f"outputs/{user_name}/{user_name}_profile_batch_{i+1}.json", "w") as f:
             f.write(result)

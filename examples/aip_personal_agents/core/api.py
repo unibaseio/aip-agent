@@ -15,6 +15,7 @@ from aip_agent.agents.full_agent import FullAgentWrapper
 from core.build import get_user_xinfo, load_unfinished_users, load_user, load_users, build_user, refresh_user
 from core.rag import search_similar_posts, switch_user
 from core.save import save_tweets
+from core.common import init_user, is_user_exists
 
 app = Flask(__name__)
 CORS(app)
@@ -245,13 +246,14 @@ def generate_profile_api():
         if username not in app.users:
             if username not in app.candidates:
                 app.candidates.append(username)
-                # create a new file in outputs/{username}_tweets.json
-                if not os.path.exists(f"outputs/{username}_tweets.json"):
-                    with open(f"outputs/{username}_tweets.json", "w") as f:
-                        json.dump([], f)
-
-                executor.submit(build_user_sync, username)
-                return jsonify({'success': True, 'data': "start building..."})
+                # create a new directory in outputs/{username}
+                # if the directory exists, it means the user is already built
+                if not is_user_exists(username):
+                    init_user(username)
+                    executor.submit(build_user_sync, username)
+                    return jsonify({'success': True, 'data': "start building..."})
+                else:
+                    return jsonify({'success': True, 'data': "building..."})
             else:
                 return jsonify({'success': True, 'data': "building..."})
         else:

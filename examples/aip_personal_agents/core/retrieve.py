@@ -6,19 +6,8 @@ from apify_client import ApifyClient
 import os
 from typing import Optional, List, Dict
 
-from core.format import get_reply_tweet_ids, build_text, load_tweets
-
-def save_tweets_local(user_name: str, tweets: List[Dict]):
-    """Save tweets to local file."""
-    if len(tweets) == 0:
-        return
-    os.makedirs("outputs", exist_ok=True)
-    # format to day
-    date_str = datetime.now().strftime("%Y-%m-%d")
-    with open(f"outputs/{user_name}_tweets_{date_str}.json", "w") as f:
-        json.dump(tweets, f)
-    # copy to outputs/{user_name}.json
-    shutil.copy(f"outputs/{user_name}_tweets_{date_str}.json", f"outputs/{user_name}_tweets.json")
+from core.format import get_reply_tweet_ids, build_text
+from core.common import write_user_tweets, load_user_tweets
 
 def retrieve_tweets(user_name: str, begin_date: Optional[str] = None, end_date: Optional[str] = None):
     # Initialize the ApifyClient with your API token
@@ -34,7 +23,7 @@ def retrieve_tweets(user_name: str, begin_date: Optional[str] = None, end_date: 
         return datetime.strptime(date_str, "%a %b %d %H:%M:%S %z %Y")
 
     # Load existing tweets
-    existing_tweets = load_tweets(user_name)
+    existing_tweets = load_user_tweets(user_name)
     existing_tweets.sort(key=lambda x: parse_date(x["createdAt"]))
 
     # get latest tweet date of existing tweets
@@ -65,22 +54,29 @@ def retrieve_tweets(user_name: str, begin_date: Optional[str] = None, end_date: 
     # Fetch and process new tweets
     new_tweets = []
     for item in client.dataset(run["defaultDatasetId"]).iterate_items():
+        tweet_type = item.get("type")
+        if tweet_type and tweet_type == "mock_tweet":
+            continue
         tweet_id = item.get("id")
-        if tweet_id and tweet_id not in existing_ids:
+        if tweet_id is None or tweet_id == "-1":
+            continue
+        if tweet_id not in existing_ids:
             new_tweets.append(item)
             existing_ids.add(tweet_id)
 
+    if len(new_tweets) == 0:
+        write_user_tweets(user_name, existing_tweets)
+        return None
+    
+    print(f"Retrieving {len(new_tweets)} new tweets")
+    for tweet in new_tweets:
+        print(tweet)
+    
     new_tweets.sort(key=lambda x: parse_date(x["createdAt"]))
 
     # Combine existing and new tweets
     all_tweets = existing_tweets + new_tweets
-    if len(all_tweets) == 0:
-        return None
-
-    save_tweets_local(user_name, all_tweets)
-
-    if len(all_tweets) == 0:
-        return None
+    write_user_tweets(user_name, all_tweets)
 
     print(f"Retrieving replied tweets for {user_name}")
     replied_ids = get_reply_tweet_ids(all_tweets)
@@ -103,7 +99,7 @@ def retrieve_tweets(user_name: str, begin_date: Optional[str] = None, end_date: 
             t["inReplyToText"] = build_text(replied_tweets[t["inReplyToId"]])
 
     # Save the combined and sorted tweets
-    save_tweets_local(user_name, all_tweets)
+    write_user_tweets(user_name, all_tweets)
 
     return all_tweets
 

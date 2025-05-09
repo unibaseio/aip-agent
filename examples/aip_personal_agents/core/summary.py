@@ -5,11 +5,11 @@ from typing import Dict, Any
 
 from openai import OpenAI
 
-from core.post import load_profile
+from core.common import write_user_summary, load_user_profile
 
 def summarize_profile(user_name: str) -> str:
-    profile = load_profile(user_name)
-    if profile is None:
+    profile = load_user_profile(user_name)
+    if profile is None or profile == {}:
         return None
     
     prompt_summary = f"""
@@ -46,8 +46,10 @@ def summarize_profile(user_name: str) -> str:
        - Write a concise 1-2 sentence summary that captures:
          1. Key interests and expertise areas
          2. Most notable personality traits
+         3. The most important thing the user is doing
        - Keep it focused and impactful
        - The tone should be professional and insightful
+       - The brief should be concise and to the point
 
     3. For Long Description:
        - Write a detailed 3-5 sentence description covering:
@@ -85,9 +87,8 @@ def summarize(user_name: str):
             raise ValueError(f"Invalid summary result: {summary}")
         
         content = summary.replace('```json\n', '').replace('\n```', '')
-        json.loads(content)
-        with open(f"outputs/{user_name}_summary.json", "w") as f:
-            f.write(summary)
+        summary_dict = json.loads(content)
+        write_user_summary(user_name, summary_dict)
         print(f"Successfully summarized profile for {user_name}")
     except json.JSONDecodeError as e:
         print(f"Error Summary: Invalid JSON format - {str(e)}")

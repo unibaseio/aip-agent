@@ -14,7 +14,8 @@ from threading import Lock
 from membase.chain.chain import membase_id
 from aip_agent.agents.custom_agent import CallbackAgent
 from aip_agent.agents.full_agent import FullAgentWrapper
-from core.build import get_user_xinfo, load_unfinished_users, load_user, load_users, build_user, refresh_user
+from core.build import get_user_xinfo, load_user, load_users, build_user, refresh_user
+from core.common import init_user, is_user_exists, load_usernames
 from core.rag import search_similar_posts, switch_user
 from core.save import save_tweets
 
@@ -56,7 +57,7 @@ def refresh_users_task():
     while True:
         try:
             print(f"Refreshing users list at {datetime.now()}")
-            unfinished_users = load_unfinished_users()
+            finished_users, unfinished_users = load_usernames()
             for username in unfinished_users:
                 if username in app.candidates:
                     print(f"Skipping: {username} because it's in candidates")
@@ -67,16 +68,14 @@ def refresh_users_task():
                 if app.refresh_counts[username] < 3 or app.refresh_counts[username] % 10 == 0:
                     with get_user_lock(username):
                         build_user(username)
-            app.users = load_users()
-            users = list(app.users.keys())
-            users.sort()
+
             xinfo = {}
-            users_len = len(users)
+            users_len = len(finished_users)
             if users_len == 0:
                 print(f"No users to refresh at {datetime.now()}")
                 time.sleep(600)
                 continue
-            for i, username in enumerate(users):
+            for i, username in enumerate(finished_users):
                 if username not in app.candidates:
                     if username not in unfinished_users:
                         with get_user_lock(username):
@@ -84,6 +83,7 @@ def refresh_users_task():
                             refresh_user(username)
                 xinfo[username] = get_user_xinfo(username)
             app.xinfo = xinfo
+            app.users = load_users()
             print(f"Users list refreshed at {datetime.now()}")
         except Exception as e:
             print(f"Error refreshing users: {str(e)}")
@@ -296,10 +296,10 @@ async def generate_profile_api(
         if username not in app.users:
             if username not in app.candidates:
                 app.candidates.append(username)
-                # create a new file in outputs/{username}_tweets.json
-                if not os.path.exists(f"outputs/{username}_tweets.json"):
-                    with open(f"outputs/{username}_tweets.json", "w") as f:
-                        json.dump([], f)
+                # create a new dir in outputs/{username}
+                # check if the dir exists or is dir
+                if not is_user_exists(username):
+                    init_user(username)
                     build_executor.submit(build_user_sync, username)
                 return {"success": True, "data": "start building..."}
             else:

@@ -1,18 +1,6 @@
-import json
 from datetime import datetime, timedelta
-import os
 
-def load_tweets(user_name):
-    """Load existing tweets from local file if it exists."""
-    file_path = f"outputs/{user_name}_tweets.json"
-    try:
-        if os.path.exists(file_path):
-            with open(file_path, "r") as f:
-                return json.load(f)
-    except Exception as e:
-        print(f"load tweets fail: {str(e)}")
-    
-    return []
+from core.common import load_user_tweets
 
 def order_tweets(tweets, reverse=False):
     # parse createdAt string to datetime object for proper sorting
@@ -22,7 +10,7 @@ def order_tweets(tweets, reverse=False):
     return sorted(tweets, key=lambda x: parse_date(x["createdAt"]), reverse=reverse)
 
 def load_tweets_within(user_name: str, days: int):
-    tweets = load_tweets(user_name)
+    tweets = load_user_tweets(user_name)
     
     # filter tweets to get latest 3m 
     three_months_ago = datetime.now().astimezone() - timedelta(days=days)
@@ -90,21 +78,11 @@ def get_reply_tweet_ids(tweets):
             reply_ids.append(t["inReplyToId"])
     return reply_ids
 
-def load_reply_tweets():
-    jsonfile = f"outputs/tweets_replied.json"
-    with open(jsonfile, 'r') as f:
-        tweets = json.load(f)
-    
-    reply_tweets = {}
-    for t in tweets:
-        reply_tweets[t["id"]] = t
-    return reply_tweets
-
 
 if __name__ == "__main__":
     user_name = "cz_binance"
-    tweets = load_tweets(user_name)
-    #filtered = filter_tweets(tweets)
-    #with open(f"outputs/{user_name}_cleaned.json", "w") as f:
-    #    json.dump(filtered, f, indent=2)
+    tweets = load_user_tweets(user_name)
+    filtered = filter_tweets(tweets)
+    print(filtered)
+   
 

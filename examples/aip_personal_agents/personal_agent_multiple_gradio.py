@@ -14,9 +14,8 @@ from membase.chain.chain import membase_id
 from core.rag import switch_user, search_similar_posts
 from core.post import generate_system_prompt
 
-from core.retrieve import retrieve_tweets
-from core.generate import generate_profile
 from core.save import save_tweets
+from core.build import is_user_finished, load_usernames, build_user
 
 default_x_name = "elonmusk"
 description = generate_system_prompt(default_x_name)
@@ -56,36 +55,22 @@ def add_x_user(x_user: str):
 def build_users(x_user: str):
     """Build user profile and update user status"""
     global users, users_candidates
-    
-    # check if profile already exists
-    if os.path.exists(f"outputs/{x_user}_profile_final.json"):
-        print(f"Profile for {x_user} already exists")
+
+    is_finished = is_user_finished(x_user)
+    if is_finished:
         if x_user in users_candidates:
             users_candidates.remove(x_user)
         if x_user not in users:
             users.append(x_user)
         return
-    
-    # check if tweets need to be retrieved
-    if not os.path.exists(f"outputs/{x_user}_tweets.json"):
-        print(f"Retrieving tweets for {x_user}")
-        try:
-            update_log(f"Retrieving tweets for {x_user}")
-            retrieve_tweets(x_user)
-        except Exception as e:
-            update_log(f"Error retrieving tweets for {x_user}: {str(e)}")
-    
-    # generate profile if tweets exist
-    if os.path.exists(f"outputs/{x_user}_tweets.json"):
-        update_log(f"Generating profile for {x_user}")
-        try:
-            generate_profile(x_user)
-        except Exception as e:
-            update_log(f"Error generating profile for {x_user}: {str(e)}")
-    
-    # after profile is generated, update user status
-    if os.path.exists(f"outputs/{x_user}_profile_final.json"):
-        update_log(f"Finished generating profile for {x_user}")
+
+    print(f"Building profile for {x_user}")
+    try:
+        build_user(x_user)
+    except Exception as e:
+        update_log(f"Error building profile for {x_user}: {str(e)}")
+        return
+    finally:
         if x_user in users_candidates:
             users_candidates.remove(x_user)
         if x_user not in users:
@@ -98,24 +83,13 @@ def list_users() -> list[str]:
         list[str]: A list of user names extracted from profile files.
     """
     global users, users_candidates
-    try:
-        if not os.path.exists("outputs"):
-            return []
-            
-        user_names = []
-        for file in os.listdir("outputs"):
-            if file.endswith("_profile_final.json"):
-                # Remove '_profile_final.json' suffix to get the user name
-                user_name = file[:-len("_profile_final.json")]
-                if user_name:  # Ensure we don't add empty names
-                    user_names.append(user_name)
-                    # Remove from candidates if exists
-                    if user_name in users_candidates:
-                        users_candidates.remove(user_name)
-                    # Add to users if not exists
-                    if user_name not in users:
-                        users.append(user_name)
-        return user_names
+    try:    
+        finished_users, unfinished_users = load_usernames()
+        for user_name in finished_users:
+            if user_name in users_candidates:
+                users_candidates.remove(user_name)
+        users = finished_users
+        return users
     except Exception as e:
         logging.error(f"Error listing users: {str(e)}")
         return []

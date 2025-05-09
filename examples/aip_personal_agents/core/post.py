@@ -5,20 +5,11 @@ from typing import Dict, Any
 
 from openai import OpenAI
 
-def load_profile(user_name: str) -> Dict[str, Any]:
-    """Load profile from JSON file"""
-    
-    if not os.path.exists(f"outputs/{user_name}_profile_final.json"):
-        return None
+from core.common import load_user_profile
 
-    with open(f"outputs/{user_name}_profile_final.json", 'r', encoding='utf-8') as f:
-        content = f.read()
-        # Remove the ```json markers if they exist
-        content = content.replace('```json\n', '').replace('\n```', '')
-        return json.loads(content)
 
 def generate_system_prompt(user_name: str) -> str:
-    profile = load_profile(user_name)
+    profile = load_user_profile(user_name)
     """Generate a system prompt based on the profile characteristics"""
     
     def format_profile_markdown(data: Dict[str, Any], indent: int = 0) -> str:
@@ -95,7 +86,7 @@ def generate_tweet(user_name: str, profile: Dict[str, Any]) -> str:
     return response.choices[0].message.content
 
 def main(user_name: str):
-    profile = load_profile(user_name)
+    profile = load_user_profile(user_name)
     tweet = generate_tweet(user_name, profile)
     print(tweet)
 

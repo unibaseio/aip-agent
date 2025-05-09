@@ -4,7 +4,8 @@ import sys
 from membase.knowledge.chroma import ChromaKnowledgeBase
 from membase.knowledge.document import Document
 
-from core.format import build_text, load_tweets, order_tweets
+from core.format import build_text, order_tweets
+from core.common import load_user_tweets
 
 def format_tweet_to_doc(tweet):
     doc = Document(
@@ -34,7 +35,7 @@ def format_tweet_to_doc(tweet):
 def save_tweets_to_collection(user_name, collection_name):
     print(f"Saving tweets of {user_name} in kol database: {collection_name}")
    
-    tweets = load_tweets(user_name)
+    tweets = load_user_tweets(user_name)
 
     rag = ChromaKnowledgeBase(
         persist_directory=f"./chroma_db_kol",

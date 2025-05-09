@@ -14,9 +14,8 @@ from membase.chain.chain import membase_id
 from core.rag import switch_user, search_similar_posts
 from core.post import generate_system_prompt
 
-from core.retrieve import retrieve_tweets
-from core.generate import generate_profile
-from core.save import save_tweets
+from core.build import build_user
+from core.common import is_user_profile_exists
 
 default_x_name = ""
 description = ""
@@ -33,24 +32,15 @@ def update_log(message):
 def build_users(x_user: str) -> str:
     """Build user profile and update user status"""
     
-    # check if profile already exists
-    if os.path.exists(f"outputs/{x_user}_profile_final.json"):
-        print(f"Profile for {x_user} already exists")
-        return generate_system_prompt(x_user)
-    
-    # check if tweets need to be retrieved
-    if not os.path.exists(f"outputs/{x_user}_tweets.json"):
-        print(f"Retrieving tweets for {x_user}")
-        update_log(f"Retrieving tweets for {x_user}")
-        retrieve_tweets(x_user)
-    
-    # generate profile if tweets exist
-    if os.path.exists(f"outputs/{x_user}_tweets.json"):
-        update_log(f"Generating profile for {x_user}")
-        generate_profile(x_user)
+    update_log(f"Building profile for {x_user}")
+    try:
+        build_user(x_user)
+    except Exception as e:
+        update_log(f"Error building profile for {x_user}: {str(e)}")
+        return ""
     
     # after profile is generated, update user status
-    if os.path.exists(f"outputs/{x_user}_profile_final.json"):
+    if is_user_profile_exists(x_user):
         update_log(f"Finished generating profile for {x_user}")
         return generate_system_prompt(x_user)
 
@@ -147,7 +137,11 @@ async def main(address: str, x_account: str) -> None:
         x_account = x_account[1:]
     default_x_name = x_account
     description = build_users(x_account)
-    save_tweets(x_account)
+    if description is None or description == "":
+        update_log(f"Error building profile for {x_account}")
+        return
+
+    switch_user(x_account)
 
     full_agent = FullAgentWrapper(
         agent_cls=CallbackAgent,

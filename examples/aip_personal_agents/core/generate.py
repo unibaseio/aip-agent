@@ -1,14 +1,15 @@
 import json
 import sys
 
-from core.format import filter_tweets, order_tweets, load_tweets
+from core.format import filter_tweets, order_tweets
 from core.generate_prompts import build_batches, call_batch
 from core.merge import merge_profiles
+from core.common import write_user_profile, load_user_tweets
 
 def generate_profile(user_name):
     print(f"Generating profile for {user_name}")
 
-    tweets = load_tweets(user_name)
+    tweets = load_user_tweets(user_name)
     if len(tweets) == 0:
         return 
     
@@ -46,10 +47,9 @@ def generate_profile(user_name):
         content = profile_final.replace('```json\n', '').replace('\n```', '')
 
         # Validate JSON format and parse it
-        json.loads(content)
+        profile_dict = json.loads(content)
         # Write the validated JSON to file
-        with open(f"outputs/{user_name}_profile_final.json", "w") as f:
-            f.write(profile_final)
+        write_user_profile(user_name, profile_dict)
         print(f"Successfully generated profile for {user_name}")
     except json.JSONDecodeError as e:
         print(f"Error: Invalid JSON format in the generated profile - {str(e)}")

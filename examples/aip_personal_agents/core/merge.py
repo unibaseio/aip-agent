@@ -55,8 +55,8 @@ Return a single, merged user profile in valid JSON format (no additional text or
 
 if __name__ == "__main__":
     user_name = "elonmusk"
-    paths = sorted(glob.glob(f"outputs/{user_name}_profile_batch_*.json"))
+    paths = sorted(glob.glob(f"outputs/{user_name}/{user_name}_profile_batch_*.json"))
     merged_text = "\n\n".join(open(p).read() for p in paths)
     final = merge_profiles(merged_text)
-    with open(f"outputs/{user_name}_profile_final.json", "w") as f:
+    with open(f"outputs/{user_name}/{user_name}_profile_final.json", "w") as f:
         f.write(final)
