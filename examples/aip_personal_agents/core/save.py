@@ -12,15 +12,12 @@ def sanitize_collection_name(name):
     """
     Sanitize collection name to meet Chroma's requirements:
     - Length between 3 and 63 characters
-    - Start and end with lowercase letter or number
+    - Start and end with letter or number
     - Can contain dots, dashes, and underscores in between
     - No consecutive dots
     """
-    # Convert to lowercase
-    name = name.lower()
-    
     # Replace invalid characters with underscore
-    name = re.sub(r'[^a-z0-9._-]', '_', name)
+    name = re.sub(r'[^a-zA-Z0-9._-]', '_', name)
     
     # Replace consecutive dots with single dot
     name = re.sub(r'\.+', '.', name)
@@ -32,12 +29,6 @@ def sanitize_collection_name(name):
     # Ensure ends with letter or number
     if not name[-1].isalnum():
         name = name + '_e'
-    
-    # Ensure length between 3 and 63
-    if len(name) < 3:
-        name = name + '_' * (3 - len(name))
-    elif len(name) > 63:
-        name = name[:60] + '_e'
     
     return name
 
@@ -111,4 +102,4 @@ if __name__ == "__main__":
     if len(args) > 0:
         default_x_name = args[0]
     #save_tweets(default_x_name)
-    print(sanitize_collection_name("elonmusk_"))
+    print(sanitize_collection_name("_elonmusK"))

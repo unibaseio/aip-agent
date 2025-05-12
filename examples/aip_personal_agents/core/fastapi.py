@@ -120,7 +120,10 @@ def save_users_task():
             for username in users:
                 print(f"Saving tweets for {username} at {datetime.now()}")
                 with get_user_lock(username):
-                    save_tweets(username)
+                    try:
+                        save_tweets(username)
+                    except Exception as e:
+                        print(f"Error saving tweets for {username}: {str(e)}")
             print(f"Users tweets saved at {datetime.now()}")
         except Exception as e:
             print(f"Error saving users tweets: {str(e)}")
