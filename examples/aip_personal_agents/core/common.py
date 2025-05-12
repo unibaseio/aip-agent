@@ -177,5 +177,22 @@ def format_files():
                 print(f"Moving {file} to {username} directory")
                 os.rename(src, dst)
 
+def is_user_status_exists(user_name: str) -> bool:
+    return os.path.exists(f"outputs/{user_name}/status.json")
+
+def load_user_status(user_name: str) -> dict:
+    if is_user_status_exists(user_name):
+        with open(f"outputs/{user_name}/status.json", 'r', encoding='utf-8') as f:
+            content = f.read()
+            # Remove the ```json markers if they exist
+            content = content.replace('```json\n', '').replace('\n```', '')
+            status = json.loads(content)
+            return status
+    return {}
+
+def write_user_status(user_name: str, status: dict):
+    with open(f"outputs/{user_name}/status.json", 'w', encoding='utf-8') as f:
+        f.write(json.dumps(status, ensure_ascii=False))
+
 if __name__ == "__main__":
     format_files()

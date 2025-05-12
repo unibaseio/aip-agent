@@ -353,6 +353,79 @@ The API uses standard HTTP status codes:
   - If missing required fields: 400 error
   - If server error occurs: 500 error with error message
 
+### 9. Set User Status
+
+- **Description**: Set status for a specific user
+- **Endpoint**: `/api/set_status`
+- **Method**: POST
+- **Headers**: 
+  - `Content-Type: application/json`
+  - `Authorization: Bearer <token>`
+- **Request Body**:
+
+```json
+{
+  "username": "username",
+  "key": "status_key",
+  "value": "status_value"
+}
+```
+
+- **Example Status Keys**:
+  - `PayingUser`: Boolean value indicating if the user is a paying user
+    - `true`: User has paid for premium features
+    - `false`: Default value, user is using free features
+- **Response Example**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "PayingUser": true,
+    "other_key": "other_value"
+  }
+}
+```
+
+- **Error Cases**:
+  - If user not found: 404 error
+  - If missing required fields: 400 error
+  - If server error occurs: 500 error with error message
+
+### 10. Get User Status
+
+- **Description**: Get status for a specific user
+- **Endpoint**: `/api/get_status`
+- **Method**: GET
+- **Headers**: 
+  - `Authorization: Bearer <token>`
+- **Parameters**:
+  - `username`: Username (required)
+  - `key`: Optional key to get specific status value. If not specified, returns entire status object
+- **Response Example**:
+
+```json
+// When key is specified
+{
+  "success": true,
+  "data": "status_value"
+}
+
+// When key is not specified, all status key/value is returned
+{
+  "success": true,
+  "data": {
+    "one_key": "one_value",
+    "other_key": "other_value"
+  }
+}
+```
+
+- **Error Cases**:
+  - If user not found: 404 error
+  - If username parameter missing: 400 error
+  - If server error occurs: 500 error with error message
+
 ## System Configuration
 
 - Server runs on port 5001 (configurable via `--port` argument)

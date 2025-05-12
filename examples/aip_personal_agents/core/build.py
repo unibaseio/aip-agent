@@ -99,6 +99,7 @@ def refresh_user(user_name: str):
     tweets = retrieve_tweets(user_name)
     if tweets is None:
         return
+    
     try:
         generate_profile(user_name)
     except Exception as e:

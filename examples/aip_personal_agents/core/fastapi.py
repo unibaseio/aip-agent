@@ -15,7 +15,7 @@ from membase.chain.chain import membase_id
 from aip_agent.agents.custom_agent import CallbackAgent
 from aip_agent.agents.full_agent import FullAgentWrapper
 from core.build import load_user, load_users, build_user, refresh_user
-from core.common import init_user, is_user_exists, load_usernames
+from core.common import init_user, is_user_exists, load_usernames, load_user_status, write_user_status
 from core.rag import search_similar_posts, switch_user
 from core.save import save_tweets
 
@@ -45,12 +45,29 @@ app.current_builds = 0  # Current number of builds in progress
 app.build_lock = Lock()  # Lock for protecting current_builds
 app.max_concurrent_builds = 4  # Maximum number of concurrent builds
 app.user_locks = {}  # Store locks for each user to prevent concurrent operations
+app.status = {}  # Cache for all user statuses
 
 def get_user_lock(username: str) -> Lock:
     """Get or create a lock for a specific user"""
     if username not in app.user_locks:
         app.user_locks[username] = Lock()
     return app.user_locks[username]
+
+def get_user_status(username: str) -> dict:
+    """Get user status from cache or load from file"""
+    if username not in app.status:
+        app.status[username] = load_user_status(username)
+    return app.status[username]
+
+def save_user_status(username: str, status: dict):
+    """Save user status to both cache and file"""
+    app.status[username] = status
+    write_user_status(username, status)
+
+def is_paying_user(username: str) -> bool:
+    """Check if the user is a paying user"""
+    status = get_user_status(username)
+    return status.get("PayingUser", False)
 
 def refresh_users_task():
     """Background task to periodically refresh users list"""
@@ -77,6 +94,8 @@ def refresh_users_task():
                 time.sleep(600)
                 continue
             for i, username in enumerate(finished_users):
+                if not is_paying_user(username):
+                    continue
                 if username not in app.candidates:
                     if username not in unfinished_users:
                         with get_user_lock(username):
@@ -326,8 +345,11 @@ def build_user_sync(username: str):
     with app.build_locks[username]:
         try:
             print(f"Starting build for {username}")
+            save_user_status(username, {"state": "building"})
             build_user(username)
             app.users[username] = load_user(username)
+            save_user_status(username, {"state": "built"})
+
             print(f"Successfully completed build for {username}")
         except Exception as e:
             print(f"Error building user {username}: {str(e)}")
@@ -371,6 +393,67 @@ async def chat_api(
             conversation_id=conversation_id
         )
         return {"success": True, "data": response}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/set_status")
+async def set_status_api(
+    token: str = Depends(validate_token),
+    data: Dict[str, Any] = Depends(validate_required_fields(['username', 'key', 'value']))
+):
+    """Set status for a specific user
+    
+    Args:
+        username: The username to set status for
+        key: The status key to set
+        value: The status value to set
+    """
+    try:
+        username = data['username']
+        key = data['key']
+        value = data['value']
+            
+        if username not in app.users:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Get current status from cache
+        status = get_user_status(username)
+        # Update status
+        status[key] = value
+        # Save status to both cache and file
+        save_user_status(username, status)
+        
+        return {"success": True, "data": status}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/get_status")
+async def get_status_api(
+    username: str,
+    key: Optional[str] = None,
+    token: str = Depends(validate_token)
+):
+    """Get status for a specific user
+    
+    Args:
+        username: The username to get status for
+        key: Optional key to get specific status value. If not specified, returns entire status object
+    """
+    try:
+        if not username:
+            raise HTTPException(status_code=400, detail="Missing username parameter")
+
+        if username not in app.users:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        status = get_user_status(username)
+        
+        if key is not None:
+            if key not in status:
+                return {"success": True, "data": None}
+            return {"success": True, "data": status[key]}
+            
+        return {"success": True, "data": status}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

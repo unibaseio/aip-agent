@@ -4,6 +4,8 @@ from typing import Annotated
 from membase.knowledge.chroma import ChromaKnowledgeBase
 from membase.knowledge.document import Document
 
+from core.save import sanitize_collection_name
+
 default_x_name = "elonmusk"
 
 kol_rag = ChromaKnowledgeBase(
@@ -27,11 +29,13 @@ def switch_user(
         user_name: Annotated[str, "The user name to switch to"]
         ):
     global rags, rag
-    print(f"Switching rag to user: {user_name}")
+    collection_name = sanitize_collection_name(user_name)
+
+    print(f"Switching rag to user: {user_name} ({collection_name})")
     if user_name not in rags:
         rag = ChromaKnowledgeBase(
             persist_directory="./chroma_db_kol",
-            collection_name=user_name,
+            collection_name=collection_name,
             membase_account=os.getenv("MEMBASE_ACCOUNT"),
             auto_upload_to_hub=True,
         )

@@ -1,11 +1,45 @@
 import json
 import os
 import sys
+import re
 from membase.knowledge.chroma import ChromaKnowledgeBase
 from membase.knowledge.document import Document
 
 from core.format import build_text, order_tweets
 from core.common import load_user_tweets
+
+def sanitize_collection_name(name):
+    """
+    Sanitize collection name to meet Chroma's requirements:
+    - Length between 3 and 63 characters
+    - Start and end with lowercase letter or number
+    - Can contain dots, dashes, and underscores in between
+    - No consecutive dots
+    """
+    # Convert to lowercase
+    name = name.lower()
+    
+    # Replace invalid characters with underscore
+    name = re.sub(r'[^a-z0-9._-]', '_', name)
+    
+    # Replace consecutive dots with single dot
+    name = re.sub(r'\.+', '.', name)
+    
+    # Ensure starts with letter or number
+    if not name[0].isalnum():
+        name = 'c_' + name
+    
+    # Ensure ends with letter or number
+    if not name[-1].isalnum():
+        name = name + '_e'
+    
+    # Ensure length between 3 and 63
+    if len(name) < 3:
+        name = name + '_' * (3 - len(name))
+    elif len(name) > 63:
+        name = name[:60] + '_e'
+    
+    return name
 
 def format_tweet_to_doc(tweet):
     doc = Document(
@@ -36,10 +70,15 @@ def save_tweets_to_collection(user_name, collection_name):
     print(f"Saving tweets of {user_name} in kol database: {collection_name}")
    
     tweets = load_user_tweets(user_name)
+    
+    # Sanitize collection name
+    sanitized_collection_name = sanitize_collection_name(collection_name)
+    if sanitized_collection_name != collection_name:
+        print(f"Collection name sanitized from '{collection_name}' to '{sanitized_collection_name}'")
 
     rag = ChromaKnowledgeBase(
         persist_directory=f"./chroma_db_kol",
-        collection_name=collection_name,
+        collection_name=sanitized_collection_name,
         membase_account=os.getenv("MEMBASE_ACCOUNT"),
         auto_upload_to_hub=True,
     )
@@ -71,5 +110,5 @@ if __name__ == "__main__":
     args = sys.argv[1:]
     if len(args) > 0:
         default_x_name = args[0]
-    save_tweets(default_x_name)
-   
+    #save_tweets(default_x_name)
+    print(sanitize_collection_name("elonmusk_"))
