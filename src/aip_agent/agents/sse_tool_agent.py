@@ -121,7 +121,7 @@ class SSEToolAgentWrapper:
         self,
         name: str,
         server: FastMCP,
-        host_address: str = '13.212.116.103:8081',
+        host_address: str = '54.169.29.193:8081',
         description: str = "I am a tool agent that can execute various tools",
     ) -> None:
         """Initialize ToolAgentWrapper

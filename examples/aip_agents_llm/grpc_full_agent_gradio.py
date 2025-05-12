@@ -33,7 +33,7 @@ async def main(address: str, gradio_address: str, gradio_port: int) -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run an aip agent.")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging.")
-    parser.add_argument("--address", type=str, help="Address to connect to", default="13.212.116.103:8081")
+    parser.add_argument("--address", type=str, help="Address to connect to", default="54.169.29.193:8081")
 
     parser.add_argument('--host', default='localhost', help='Host to bind to')
     parser.add_argument('--port', type=int, default=7860, help='Port to listen on')

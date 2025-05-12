@@ -48,7 +48,7 @@ The single user mode is designed for focusing on one specific Twitter/X account.
 #### Parameters
 
 - `--verbose`: Enable verbose logging
-- `--address`: GRPC server address, default is "13.212.116.103:8081"
+- `--address`: GRPC server address, default is "54.169.29.193:8081"
 - `--x_account`: Your X account name
 
 To start:
@@ -70,7 +70,7 @@ The multi user mode allows managing and switching between multiple Twitter/X acc
 #### Parameters:
 
 - `--verbose`: Enable verbose logging
-- `--address`: GRPC server address, default is "13.212.116.103:8081"
+- `--address`: GRPC server address, default is "54.169.29.193:8081"
 
 To start:
 ```bash

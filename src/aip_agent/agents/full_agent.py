@@ -39,7 +39,7 @@ class FullAgentWrapper:
         self,
         agent_cls: Type[T],
         name: str,
-        host_address: str = '13.212.116.103:8081',
+        host_address: str = '54.169.29.193:8081',
         description: str = "You are an assistant",
         runtime: Optional[GrpcWorkerAgentRuntime] = None,
         server_names: List[str] = None,

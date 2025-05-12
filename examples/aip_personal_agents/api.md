@@ -9,7 +9,7 @@ uv run -m core.fastapi --port=5001
 
 ## Environment Variables
 
-- `GRPC_SERVER_URL`: gRPC server URL (default: "13.212.116.103:8081")
+- `GRPC_SERVER_URL`: gRPC server URL (default: "54.169.29.193:8081")
 - `BEARER_TOKEN`: Authentication token (default: "unibase_personal_agent")
 
 ## Basic Information
@@ -429,7 +429,7 @@ The API uses standard HTTP status codes:
 ## System Configuration
 
 - Server runs on port 5001 (configurable via `--port` argument)
-- Default grpc server URL: "13.212.116.103:8081" (configurable via `GRPC_SERVER_URL` environment variable)
+- Default grpc server URL: "54.169.29.193:8081" (configurable via `GRPC_SERVER_URL` environment variable)
 - System prompt can be configured via `SYSTEM_PROMPT` environment variable
 - Bearer token can be configured via `BEARER_TOKEN` environment variable or `--bearer-token` argument
 - Server runs on all interfaces (0.0.0.0) by default

@@ -462,7 +462,7 @@ async def get_status_api(
 
 async def initialize(port: int = 5001, bearer_token: str = None) -> None:
     """Initialize"""
-    grpc_server_url = os.getenv("GRPC_SERVER_URL", "13.212.116.103:8081")
+    grpc_server_url = os.getenv("GRPC_SERVER_URL", "54.169.29.193:8081")
     system_prompt = os.getenv("SYSTEM_PROMPT", "You are a digital twin of the user, designed to mimic their personality, knowledge, and communication style. Your responses should be natural and consistent with the user's characteristics.")
     
     # Set bearer token from environment variable or command line argument

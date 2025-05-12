@@ -36,7 +36,7 @@ async def chat_messages() -> any:
 
 async def initialize() -> None:
     """Initialize"""
-    server_url = os.getenv("SERVER_URL", "13.212.116.103:8081")
+    server_url = os.getenv("SERVER_URL", "54.169.29.193:8081")
     system_prompt = os.getenv("SYSTEM_PROMPT", "You are an assistant")
 
     app.agent = FullAgentWrapper(

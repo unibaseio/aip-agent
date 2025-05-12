@@ -53,7 +53,7 @@ mcp:
 The gRPC tool server provides a more traditional RPC-based approach for tool access.
 
 #### Configuration
-- Default grpc server: `13.212.116.103:8081`
+- Default grpc server: `54.169.29.193:8081`
 - Supports verbose logging for debugging
 
 #### Starting the Server

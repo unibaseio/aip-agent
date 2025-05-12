@@ -23,7 +23,7 @@ if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser(description='Run an aip sse tool.')
-    parser.add_argument('--address', default='13.212.116.103:8081', help='Memabase hub address')
+    parser.add_argument('--address', default='54.169.29.193:8081', help='Memabase hub address')
     parser.add_argument('--host', default='0.0.0.0', help='Host to bind to')
     parser.add_argument('--port', type=int, default=8080, help='Port to listen on')
     

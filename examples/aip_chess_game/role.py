@@ -114,7 +114,7 @@ async def main(address: str, moderator_id: str) -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run a chess game between two agents.")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging.")
-    parser.add_argument("--address", type=str, help="address to connect to", default="13.212.116.103:8081")
+    parser.add_argument("--address", type=str, help="address to connect to", default="54.169.29.193:8081")
     parser.add_argument(
         "--moderator", type=str, help="moderator id", default="board_starter"
     )
