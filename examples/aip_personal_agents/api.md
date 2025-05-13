@@ -184,18 +184,7 @@ The API uses standard HTTP status codes:
 {
   "success": true,
   "data": {
-    "profile": {
-      // User profile details
-    },
-    "summary": {
-      "detailed_analysis": {},
-      "personal_brief": "",
-      "long_description": "",
-      "personal_tags": {
-        "keywords": [
-        ]
-      }
-    }
+    // User profile details
   }
 }
 ```

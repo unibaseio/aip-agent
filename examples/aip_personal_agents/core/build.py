@@ -90,13 +90,19 @@ def build_user(user_name: str):
     now = datetime.now()
     print(f"Finished build user: {user_name} at: {now}")
 
-def refresh_user(user_name: str):
+def refresh_tweets(user_name: str):
     date_str = datetime.now().strftime("%Y-%m-%d")
     if is_user_tweets_exists_at(user_name, date_str):
         print(f"Already refreshed at {date_str} for: {user_name}")
-        return
+        return None
     print(f"Refreshing user: {user_name} at: {date_str}")
     tweets = retrieve_tweets(user_name)
+    if tweets is None:
+        return None
+    print(f"Refreshed tweets for: {user_name} at: {date_str}")
+
+def refresh_user(user_name: str):
+    tweets = refresh_tweets(user_name)
     if tweets is None:
         return
     

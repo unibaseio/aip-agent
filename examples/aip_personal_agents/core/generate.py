@@ -1,10 +1,10 @@
 import json
 import sys
 
-from core.format import filter_tweets, order_tweets
+from core.format import filter_tweets
 from core.generate_prompts import build_batches, call_batch
 from core.merge import merge_profiles
-from core.common import write_user_profile, load_user_tweets
+from core.common import write_user_profile, load_user_tweets, order_tweets
 
 def generate_profile(user_name):
     print(f"Generating profile for {user_name}")

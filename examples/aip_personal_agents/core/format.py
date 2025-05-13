@@ -1,25 +1,4 @@
-from datetime import datetime, timedelta
-
 from core.common import load_user_tweets
-
-def order_tweets(tweets, reverse=False):
-    # parse createdAt string to datetime object for proper sorting
-    def parse_date(date_str):
-        return datetime.strptime(date_str, "%a %b %d %H:%M:%S %z %Y")
-    
-    return sorted(tweets, key=lambda x: parse_date(x["createdAt"]), reverse=reverse)
-
-def load_tweets_within(user_name: str, days: int):
-    tweets = load_user_tweets(user_name)
-    
-    # filter tweets to get latest 3m 
-    three_months_ago = datetime.now().astimezone() - timedelta(days=days)
-    recent_tweets = [
-        tweet for tweet in tweets 
-        if datetime.strptime(tweet["createdAt"], "%a %b %d %H:%M:%S %z %Y") > three_months_ago
-    ]
-    
-    return order_tweets(recent_tweets)
 
 def clean_text(text):
     import re

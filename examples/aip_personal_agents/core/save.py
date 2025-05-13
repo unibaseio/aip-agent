@@ -5,8 +5,8 @@ import re
 from membase.knowledge.chroma import ChromaKnowledgeBase
 from membase.knowledge.document import Document
 
-from core.format import build_text, order_tweets
-from core.common import load_user_tweets
+from core.format import build_text
+from core.common import load_user_tweets, order_tweets
 
 def sanitize_collection_name(name):
     """

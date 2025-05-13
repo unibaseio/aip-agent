@@ -1,13 +1,12 @@
-from dataclasses import dataclass
 from datetime import datetime
 import sys
 from openai import OpenAI
 import os
 import json
 
-from core.format import filter_tweets, load_tweets_within, order_tweets
+from core.format import filter_tweets
 from core.generate_prompts import build_batches
-from core.common import write_user_airdrop_score, load_user_tweets
+from core.common import write_user_airdrop_score, load_user_tweets_within, order_tweets
 
 def estimate_by_llm(tweets, userinfo, project_accounts: list):
     """Calculate quality, influence, engagement and authenticity scores for a batch of tweets using LLM"""
@@ -420,7 +419,7 @@ def estimate_legacy(recent_tweets, dedicated_accounts):
     }
 
 def estimate_tweets(user_name):
-    recent_tweets = load_tweets_within(user_name, 90)
+    recent_tweets = load_user_tweets_within(user_name, 90)
     
     if not recent_tweets or len(recent_tweets) == 0:
         return {
