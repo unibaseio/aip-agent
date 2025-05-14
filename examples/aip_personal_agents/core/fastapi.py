@@ -14,7 +14,7 @@ from threading import Lock
 from membase.chain.chain import membase_id
 from aip_agent.agents.custom_agent import CallbackAgent
 from aip_agent.agents.full_agent import FullAgentWrapper
-from core.build import load_user, load_users, build_user, refresh_user
+from core.build import load_user, load_users, build_user, refresh_tweets, refresh_profile
 from core.common import init_user, is_user_exists, load_usernames, load_user_status, write_user_status
 from core.rag import search_similar_posts, switch_user
 from core.save import save_tweets
@@ -93,15 +93,26 @@ def refresh_users_task():
                 app.users = load_users()
                 time.sleep(600)
                 continue
+
+            # refresh tweets
+            for i, username in enumerate(finished_users):
+                if username not in app.candidates:
+                    if username not in unfinished_users:
+                        with get_user_lock(username):
+                            print(f"Refreshing tweets for {i}/{users_len} user {username} at {datetime.now()}")
+                            refresh_tweets(username)
+
+            # refresh profile
             for i, username in enumerate(finished_users):
                 if not is_paying_user(username):
                     continue
                 if username not in app.candidates:
                     if username not in unfinished_users:
                         with get_user_lock(username):
-                            print(f"Refreshing {i}/{users_len} user {username} at {datetime.now()}")
-                            refresh_user(username)
+                            print(f"Refreshing profile for {i}/{users_len} user {username} at {datetime.now()}")
+                            refresh_profile(username)
                             app.users[username] = load_user(username)
+
             app.users = load_users()
             print(f"Users list refreshed at {datetime.now()}")
         except Exception as e:

@@ -446,7 +446,7 @@ def estimate_tweets(user_name):
     ordered_tweets = order_tweets(recent_tweets, reverse=True)
     user_info = ordered_tweets[0].get("author", {})
     filtered_tweets = filter_tweets(ordered_tweets)
-    batches = build_batches(filtered_tweets)
+    batches = build_batches(filtered_tweets, max_batch=1)
     if len(batches) == 0:
         return estimate_legacy(recent_tweets, dedicated_accounts)
     

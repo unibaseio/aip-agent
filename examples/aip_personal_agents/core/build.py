@@ -4,11 +4,11 @@ import os
 import sys
 from typing import Any, Dict, List
 
-from core.generate import generate_profile
+from core.generate import generate_profile, update_profile
 from core.retrieve import retrieve_tweets
 from core.summary import summarize
 from core.rate import estimate
-from core.common import is_user_finished, is_user_tweets_exists_at, is_user_xinfo_exists, is_user_tweets_exists, is_user_profile_exists, is_user_summary_exists, is_user_airdrop_score_exists, load_user_airdrop_score, load_user_profile, load_user_summary, load_user_tweets, load_user_xinfo, load_usernames, remove_user_profile, write_user_xinfo
+from core.common import is_user_finished, is_user_tweets_exists_at, is_user_xinfo_exists, is_user_tweets_exists, is_user_profile_exists, is_user_summary_exists, is_user_airdrop_score_exists, load_user_airdrop_score, load_user_profile, load_user_status, load_user_summary, load_user_tweets, load_user_xinfo, load_usernames, order_tweets, remove_user_profile, write_user_status, write_user_xinfo
 
 def get_user_xinfo(user_name: str) -> Any:
     info = load_user_xinfo(user_name)
@@ -23,7 +23,8 @@ def create_user_xinfo(user_name: str):
     if len(tweets) == 0:
         return {}
     
-    info = tweets[-1].get("author", {})
+    tweets = order_tweets(tweets, reverse=True)
+    info = tweets[0].get("author", {})
     write_user_xinfo(user_name, info)
     return info
 
@@ -91,35 +92,67 @@ def build_user(user_name: str):
     print(f"Finished build user: {user_name} at: {now}")
 
 def refresh_tweets(user_name: str):
-    date_str = datetime.now().strftime("%Y-%m-%d")
-    if is_user_tweets_exists_at(user_name, date_str):
-        print(f"Already refreshed at {date_str} for: {user_name}")
+    has_new_tweets = False
+    try:
+        date_str = datetime.now().strftime("%Y-%m-%d")
+        if is_user_tweets_exists_at(user_name, date_str):
+            print(f"Already refreshed at {date_str} for: {user_name}")
+            return None
+        print(f"Refreshing user: {user_name} at: {date_str}")
+        tweets = retrieve_tweets(user_name)
+        if tweets is None:
+            return None
+        has_new_tweets = True
+        create_user_xinfo(user_name)
+        print(f"Refreshed tweets for: {user_name} at: {date_str}")
+    except Exception as e:
+        print(f"Refreshing tweets for {user_name} fail: {str(e)}")
         return None
-    print(f"Refreshing user: {user_name} at: {date_str}")
-    tweets = retrieve_tweets(user_name)
-    if tweets is None:
-        return None
-    print(f"Refreshed tweets for: {user_name} at: {date_str}")
+    finally:
+        status = load_user_status(user_name)
+        status["tweets_updated_at"] = date_str
+        if not has_new_tweets:
+            status["profile_updated_at"] = date_str
+            status["summary_updated_at"] = date_str
+            status["scores_updated_at"] = date_str
+        write_user_status(user_name, status)
 
-def refresh_user(user_name: str):
-    tweets = refresh_tweets(user_name)
-    if tweets is None:
+def refresh_profile(user_name: str):
+    date_str = datetime.now().strftime("%Y-%m-%d")
+    status = load_user_status(user_name)
+    if status.get("tweets_updated_at", "") != date_str:
+        print(f"Not refreshed at {date_str} for: {user_name}")
         return
     
     try:
-        generate_profile(user_name)
+        print(f"Updating profile for {user_name} at: {date_str}")
+        if status.get("profile_updated_at", "") != date_str:
+            update_profile(user_name)
+            status["profile_updated_at"] = date_str
+            write_user_status(user_name, status)
     except Exception as e:
-        print(f"Generating profile for {user_name} fail: {str(e)}")
+        print(f"Updating profile for {user_name} fail: {str(e)}")
         return
 
     try:
-        summarize(user_name)
+        print(f"Summarizing profile for {user_name} at: {date_str}")
+        if status.get("summary_updated_at", "") != date_str:
+            summarize(user_name)
+            status["summary_updated_at"] = date_str
+            write_user_status(user_name, status)
     except json.JSONDecodeError:
         remove_user_profile(user_name)
         return
     
-    create_user_xinfo(user_name)
-    estimate(user_name)
+    try:
+        print(f"Estimating airdrop score for {user_name} at: {date_str}")
+        if status.get("scores_updated_at", "") != date_str:
+            estimate(user_name)
+            status["scores_updated_at"] = date_str
+            write_user_status(user_name, status)
+    except Exception as e:
+        print(f"Estimating airdrop score for {user_name} fail: {str(e)}")
+        return
 
 
 if __name__ == "__main__":

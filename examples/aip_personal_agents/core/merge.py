@@ -16,11 +16,11 @@ def merge_profiles(merged_text: str):
         raise ValueError("Invalid input: merged_text must be a non-empty string")
         
     # result should be a json object
-    # oldest to newest, newest has the highest priority
+    # newest to oldest, newest has the highest priority
     prompt = f"""You are a professional profile analyzer. Your task is to merge multiple partial user profile JSONs into a single, comprehensive, and coherent user persona.
 
 Guidelines:
-1. Analyze each profile chronologically (oldest to newest)
+1. Analyze each profile chronologically (newest to oldest)
 2. For conflicting information, prioritize the newest data
 3. Remove redundant information while preserving unique insights
 4. Maintain a consistent JSON structure

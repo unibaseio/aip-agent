@@ -15,7 +15,7 @@ def get_recent_tweets():
 
     ordered_tweets = order_tweets(recent_tweets, reverse=True)
     filtered_tweets = filter_tweets(ordered_tweets)
-    batches = build_batches(filtered_tweets)
+    batches = build_batches(filtered_tweets, max_batch=1)
     if len(batches) > 0 and len(batches[0]) > 0:
         return batches[0]
     else:
@@ -23,13 +23,15 @@ def get_recent_tweets():
 
 
 def generate_news():
-    ordered_tweets = get_recent_tweets()
+    tweets = get_recent_tweets()
+    if len(tweets) == 0:
+        return ""
 
     prompt = f"""
     You are a Web3 industry analyst. Based on the following KOL tweets:
-    {ordered_tweets}
+    {tweets}
 
-    Please analyze these tweets and generate a comprehensive industry report in Chinese. The report should follow this structure:
+    Please analyze these tweets and generate a comprehensive industry report. The report should follow this structure:
 
     # Web3 Weekly Report
     [Date: Use the most recent date from the tweets]
@@ -79,6 +81,7 @@ def generate_news():
     7. Use precise and specific language, avoid vague terms
     8. Attribute opinions to specific KOLs when possible
     9. Use the most recent date from the tweets as the report date
+    10. Output the entire report in Chinese
     """
 
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))    

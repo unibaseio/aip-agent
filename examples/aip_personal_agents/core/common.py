@@ -19,7 +19,14 @@ def is_user_tweets_exists(user_name: str) -> bool:
     return os.path.exists(f"outputs/{user_name}/{user_name}_tweets.json")
 
 def is_user_tweets_exists_at(user_name: str, date_str: str) -> bool:
-    return os.path.exists(f"outputs/{user_name}/{user_name}_tweets_{date_str}.json")
+    is_exists = os.path.exists(f"outputs/{user_name}/{user_name}_tweets_{date_str}.json")
+    if is_exists:
+        return True
+    # check if the file is empty
+    status = load_user_status(user_name)
+    if status.get("tweets_updated_at", "") == date_str:
+        return True
+    return False
 
 def is_user_profile_exists(user_name: str) -> bool:
     return os.path.exists(f"outputs/{user_name}/{user_name}_profile_final.json")

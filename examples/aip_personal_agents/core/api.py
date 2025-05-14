@@ -12,7 +12,7 @@ import argparse
 from membase.chain.chain import membase_id
 from aip_agent.agents.custom_agent import CallbackAgent
 from aip_agent.agents.full_agent import FullAgentWrapper
-from core.build import get_user_xinfo, load_unfinished_users, load_user, load_users, build_user, refresh_user
+from core.build import get_user_xinfo, load_unfinished_users, load_user, load_users, build_user, refresh_profile, refresh_tweets
 from core.rag import search_similar_posts, switch_user
 from core.save import save_tweets
 from core.common import init_user, is_user_exists
@@ -41,7 +41,7 @@ def refresh_users_task():
             users = list(app.users.keys())
             xinfo = {}
             for username in users:
-                refresh_user(username)
+                refresh_profile(username)
                 xinfo[username] = get_user_xinfo(username)
             app.xinfo = xinfo
         except Exception as e:

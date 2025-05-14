@@ -10,9 +10,13 @@ ENCODER = encoding_for_model("gpt-4o")
 def num_tokens(text):
     return len(ENCODER.encode(text))
 
-def build_batches(tweets, max_tokens=51200):
+def build_batches(tweets, max_tokens=51200, max_batch=4):
     batches, current, total = [], [], 0
     for t in tweets:
+        # If we've reached max_batch, stop processing
+        if len(batches) >= max_batch:
+            break
+            
         txt = t['text']
         tokens = num_tokens(txt)
         if total + tokens > max_tokens and current:
@@ -20,7 +24,8 @@ def build_batches(tweets, max_tokens=51200):
             current, total = [], 0
         current.append(txt)
         total += tokens
-    if current:
+        
+    if current and len(batches) < max_batch:
         batches.append(current)
     return batches
 
