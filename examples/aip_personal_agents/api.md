@@ -7,6 +7,22 @@
 uv run -m core.fastapi --port=5001
 ```
 
+## API Endpoints List
+
+| Endpoint | Method | Description |
+|------|------|------|
+| `/api/list_info` | GET | Get list of all user information |
+| `/api/get_info` | GET | Get complete information of specific user |
+| `/api/list_users` | GET | List all available users |
+| `/api/get_profile` | GET | Get user profile |
+| `/api/get_xinfo` | GET | Get user Twitter information |
+| `/api/get_conversation` | GET | Get conversation history |
+| `/api/set_status` | POST | Set user status |
+| `/api/get_status` | GET | Get user status |
+| `/api/generate` | POST | Generate profile for a new user |
+| `/api/chat` | POST | Chat with user personal agent |
+| `/api/generate_tweet` | POST | Generate tweets based on user profile and input message |
+
 ## Environment Variables
 
 - `GRPC_SERVER_URL`: gRPC server URL (default: "54.169.29.193:8081")
@@ -413,6 +429,55 @@ The API uses standard HTTP status codes:
 - **Error Cases**:
   - If user not found: 404 error
   - If username parameter missing: 400 error
+  - If server error occurs: 500 error with error message
+
+### 11. Generate Tweet
+
+- **Description**: Generate tweets based on user profile and a news/topic input
+- **Endpoint**: `/api/generate_tweet`
+- **Method**: POST
+- **Headers**: 
+  - `Content-Type: application/json`
+  - `Authorization: Bearer <token>`
+- **Request Body**:
+
+```json
+{
+  "username": "username",
+  "message": "news or topic for tweet generation",
+  "conversation_id": "optional, conversation ID"
+}
+```
+
+- **Response Example**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "want_to_comment": true,
+    "reason_for_decision": "This news aligns with my interests in technology and innovation",
+    "tweets": [
+      {
+        "tweet": "Content of the first generated tweet",
+        "reason": "Reason for posting this tweet"
+      },
+      {
+        "tweet": "Content of the second generated tweet",
+        "reason": "Reason for posting this tweet"
+      },
+      {
+        "tweet": "Content of the third generated tweet",
+        "reason": "Reason for posting this tweet"
+      }
+    ]
+  }
+}
+```
+
+- **Error Cases**:
+  - If user profile not found: 404 error
+  - If missing required fields: 400 error
   - If server error occurs: 500 error with error message
 
 ## System Configuration

@@ -80,7 +80,7 @@ def generate_tweet(user_name: str, profile: Dict[str, Any]) -> str:
     
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))    
     response = client.chat.completions.create(
-        model="gpt-4o",
+        model="gpt-4.1-mini",
         messages=[{"role": "user", "content": prompt_template}]
     )
     return response.choices[0].message.content

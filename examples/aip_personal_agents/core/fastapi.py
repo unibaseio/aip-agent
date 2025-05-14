@@ -412,6 +412,80 @@ async def chat_api(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/api/generate_tweet")
+async def generate_tweet_api(
+    token: str = Depends(validate_token),
+    data: Dict[str, Any] = Depends(validate_required_fields(['username', 'message']))
+):
+    """Generate a tweet for a specific profile using username"""
+    try:
+        username = data['username']
+        message = data['message']
+            
+        conversation_id = data.get('conversation_id', None)
+        if conversation_id is None or conversation_id == "":
+            conversation_id = membase_id + "_" + username
+
+        if username not in app.users:
+            raise HTTPException(status_code=404, detail="User profile not found")
+
+        # TODO: may change due to another task
+        switch_user(username)
+        profile = app.users[username]["profile"]
+        profile_str = json.dumps(profile)
+
+        system_prompt = f"""
+        You are a digital twin of {username}, designed to mimic their personality, knowledge, and communication style.
+        Your responses should be natural and consistent with the following characteristics:
+        {profile_str}
+        """
+
+        user_message = f"""
+        When you hear about the following news:
+        {message}
+
+        1. Search similar posts for the news.
+        2. Decide if you want to comment on this news.
+        3. If you want to comment, generate three tweet posts.
+        4. If you don't want to comment, illustrate your thoughts.
+
+        The output should be in JSON format with the following structure:
+        {{
+            "want_to_comment": true,  // true if you want to comment, false otherwise
+            "reason_for_decision": "explain why you want to comment or not",
+            "tweets": [
+                {{
+                    "tweet": "content you want to post",
+                    "reason": "the reason you want to post this"
+                }},
+                {{
+                    "tweet": "...",
+                    "reason": "..."
+                }},
+                {{
+                    "tweet": "...",
+                    "reason": "..."
+                }}
+            ]
+        }}
+        
+        Ensure your response is only valid JSON without any other text before or after.
+        """
+
+        # Run the async operation synchronously
+        response = await app.agent.process_query(
+            user_message,
+            use_history=False,
+            system_prompt=system_prompt,
+            conversation_id=conversation_id
+        )
+
+        response = response.replace("```json", "").replace("```", "")
+        response = json.loads(response)
+        return {"success": True, "data": response}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/api/set_status")
 async def set_status_api(
     token: str = Depends(validate_token),
