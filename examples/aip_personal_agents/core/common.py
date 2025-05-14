@@ -223,6 +223,9 @@ def write_user_status(user_name: str, status: dict):
 
 def update_user_status(user_name: str, key: str, value: str):
     status_file = f"outputs/{user_name}/status.json"
+    if not os.path.exists(status_file):
+        with open(status_file, 'w', encoding='utf-8') as f:
+            f.write(json.dumps({}, ensure_ascii=False))
     with open(status_file, 'r+', encoding='utf-8') as f:
         # Acquire an exclusive lock
         fcntl.flock(f.fileno(), fcntl.LOCK_EX)

@@ -7,7 +7,7 @@ import os
 from typing import Optional, List, Dict
 
 from core.format import get_reply_tweet_ids, build_text
-from core.common import write_user_tweets, load_user_tweets
+from core.common import order_tweets, write_user_tweets, load_user_tweets
 
 def retrieve_tweets(user_name: str, begin_date: Optional[str] = None, end_date: Optional[str] = None):
     # Initialize the ApifyClient with your API token
@@ -24,7 +24,7 @@ def retrieve_tweets(user_name: str, begin_date: Optional[str] = None, end_date: 
 
     # Load existing tweets
     existing_tweets = load_user_tweets(user_name)
-    existing_tweets.sort(key=lambda x: parse_date(x["createdAt"]))
+    existing_tweets = order_tweets(existing_tweets)
 
     # get latest tweet date of existing tweets
     if len(existing_tweets) > 0:
