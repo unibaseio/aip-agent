@@ -77,15 +77,19 @@ def build_user(user_name: str):
         print(f"Profiles for {user_name} already exists")
         return 
     
+    date_str = datetime.now().strftime("%Y-%m-%d")
+
     # check if tweets need to be retrieved
     if not is_user_tweets_exists(user_name):
         print(f"Retrieving tweets for {user_name}")
         retrieve_tweets(user_name)
-        
+        update_user_status(user_name, "tweets_updated_at", date_str)
+
     # generate profile if tweets exist
     if not is_user_profile_exists(user_name):
         try:
             generate_profile(user_name)
+            update_user_status(user_name, "profile_updated_at", date_str)
         except Exception as e:
             print(f"Generating profile for {user_name} fail: {str(e)}")
 
@@ -93,18 +97,20 @@ def build_user(user_name: str):
     if not is_user_summary_exists(user_name):
         try:
             summarize(user_name)
+            update_user_status(user_name, "summary_updated_at", date_str)
         except json.JSONDecodeError:
             print(f"Summary profile for {user_name} fail")
             remove_user_profile(user_name)
             return
 
-    # create xinfo
-    if not is_user_xinfo_exists(user_name):
-        create_user_xinfo(user_name)
-
     # estimate airdrop score
     if not is_user_airdrop_score_exists(user_name):
         estimate(user_name)
+        update_user_status(user_name, "scores_updated_at", date_str)
+
+    # create xinfo
+    if not is_user_xinfo_exists(user_name):
+        create_user_xinfo(user_name)
 
     now = datetime.now()
     print(f"Finished build user: {user_name} at: {now}")
