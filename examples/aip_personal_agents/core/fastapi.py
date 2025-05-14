@@ -61,6 +61,8 @@ def get_user_status(username: str) -> dict:
 
 def save_user_status(username: str, key: str, value: str):
     """Save user status to both cache and file"""
+    if username not in app.status:
+        app.status[username] = load_user_status(username)
     app.status[username][key] = value
     update_user_status(username, key, value)
 
