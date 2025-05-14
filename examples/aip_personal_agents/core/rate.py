@@ -8,21 +8,33 @@ from core.format import filter_tweets
 from core.generate_prompts import build_batches
 from core.common import write_user_airdrop_score, load_user_tweets_within, order_tweets
 
-def estimate_by_llm(tweets, userinfo, project_accounts: list):
+def estimate_by_llm(tweets: list, userinfo: dict, project_accounts: list):
     """Calculate quality, influence, engagement and authenticity scores for a batch of tweets using LLM"""
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    
+    try:
+        userinfo_json = json.dumps(userinfo, indent=2)
+        project_accounts_json = json.dumps(project_accounts, indent=2)
+        tweets_json = json.dumps(tweets, indent=2)
+        print(f"Input data serialization check:")
+        print(f"userinfo length: {len(userinfo_json)}")
+        print(f"project_accounts length: {len(project_accounts_json)}")
+        print(f"tweets length: {len(tweets_json)}")
+    except Exception as e:
+        print(f"Error serializing input data: {str(e)}")
+        raise e
     
     prompt = f"""You are a professional social media analyst specializing in Twitter/X platform analysis. Your task is to evaluate a user's Twitter activity and provide comprehensive scoring across multiple dimensions.
 
 Input Data:
 1. User Profile Information:
-{json.dumps(userinfo, indent=2)}
+{userinfo_json}
 
 2. Target Project Accounts (These are the official project accounts that we want to evaluate user's interaction with):
-{json.dumps(project_accounts, indent=2)}
+{project_accounts_json}
 
 3. User's Tweets Collection:
-{json.dumps(tweets, indent=2)}
+{tweets_json}
 
 Evaluation Criteria:
 
@@ -227,8 +239,7 @@ Important Guidelines:
             messages=[{"role": "user", "content": prompt}],
             temperature=0.3
         )
-        result = json.loads(response.choices[0].message.content)
-        return result
+        return response.choices[0].message.content
     except Exception as e:
         print(f"Error in LLM scoring: {str(e)}")
         raise e
@@ -446,13 +457,10 @@ def estimate_tweets(user_name):
     ordered_tweets = order_tweets(recent_tweets, reverse=True)
     user_info = ordered_tweets[0].get("author", {})
     filtered_tweets = filter_tweets(ordered_tweets)
-    batches = build_batches(filtered_tweets, max_batch=1)
+    batches = build_batches(tweets=filtered_tweets, max_tokens=40960, max_batch=1)
     if len(batches) == 0:
         return estimate_legacy(recent_tweets, dedicated_accounts)
     
-    legacy_scores = estimate_legacy(recent_tweets, dedicated_accounts)
-    print(f"{user_name} legacy score is {legacy_scores}")
-
     try:
         result = estimate_by_llm(batches[0], user_info, dedicated_accounts)
         print(result)

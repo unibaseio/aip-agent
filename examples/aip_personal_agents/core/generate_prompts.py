@@ -5,7 +5,7 @@ from openai import OpenAI
 
 from core.common import load_user_tweets
 
-ENCODER = encoding_for_model("gpt-4o")
+ENCODER = encoding_for_model("gpt-4o-mini")
 
 def num_tokens(text):
     return len(ENCODER.encode(text))
