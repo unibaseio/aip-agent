@@ -463,7 +463,10 @@ def estimate_tweets(user_name):
     
     try:
         result = estimate_by_llm(batches[0], user_info, dedicated_accounts)
-        print(result)
+        print(f"result: {result}")
+        # Parse the string response into a JSON object
+        result = result.replace("```json", "").replace("```", "")
+        result = json.loads(result)
         quality_score = result["quality_score"]
         influence_score = result["influence_score"]
         engagement_score = result["engagement_score"]
@@ -472,7 +475,8 @@ def estimate_tweets(user_name):
         detail["explanation"] = result["explanation"]
         detail["quality_sub_scores"] = result["quality_sub_scores"]
         detail["authenticity_sub_scores"] = result["authenticity_sub_scores"]
-    except:
+    except Exception as e:
+        print(f"Error estimating {user_name} score: {e}")
         return estimate_legacy(recent_tweets, dedicated_accounts)
 
     if user_info.get("isBlueVerified", False):
@@ -507,4 +511,8 @@ if __name__ == "__main__":
     args = sys.argv[1:]
     if len(args) > 0:
         default_x_name = args[0] 
-    estimate(default_x_name)
+    try:
+        estimate(default_x_name)
+    except Exception as e:
+        print(f"Error estimating {default_x_name} score: {e}")
+        raise e
