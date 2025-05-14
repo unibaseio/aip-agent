@@ -1,14 +1,32 @@
 from datetime import datetime
 import json
-import os
 import sys
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from core.generate import generate_profile, update_profile
 from core.retrieve import retrieve_tweets
 from core.summary import summarize
 from core.rate import estimate
-from core.common import is_user_finished, is_user_tweets_exists_at, is_user_xinfo_exists, is_user_tweets_exists, is_user_profile_exists, is_user_summary_exists, is_user_airdrop_score_exists, load_user_airdrop_score, load_user_profile, load_user_status, load_user_summary, load_user_tweets, load_user_xinfo, load_usernames, order_tweets, remove_user_profile, write_user_status, write_user_xinfo
+from core.common import (
+    is_user_finished, 
+    is_user_tweets_exists_at, 
+    is_user_xinfo_exists, 
+    is_user_tweets_exists, 
+    is_user_profile_exists, 
+    is_user_summary_exists, 
+    is_user_airdrop_score_exists, 
+    load_user_airdrop_score,
+    load_user_profile, 
+    load_user_status, 
+    load_user_summary, 
+    load_user_tweets, 
+    load_user_xinfo, 
+    load_usernames, 
+    order_tweets, 
+    remove_user_profile, 
+    update_user_status, 
+    write_user_xinfo
+)
 
 def get_user_xinfo(user_name: str) -> Any:
     info = load_user_xinfo(user_name)
@@ -111,11 +129,11 @@ def refresh_tweets(user_name: str):
     finally:
         status = load_user_status(user_name)
         status["tweets_updated_at"] = date_str
+        update_user_status(user_name, "tweets_updated_at", date_str)
         if not has_new_tweets:
-            status["profile_updated_at"] = date_str
-            status["summary_updated_at"] = date_str
-            status["scores_updated_at"] = date_str
-        write_user_status(user_name, status)
+            update_user_status(user_name, "profile_updated_at", date_str)
+            update_user_status(user_name, "summary_updated_at", date_str)
+            update_user_status(user_name, "scores_updated_at", date_str)
 
 def refresh_profile(user_name: str):
     date_str = datetime.now().strftime("%Y-%m-%d")
@@ -128,8 +146,7 @@ def refresh_profile(user_name: str):
         print(f"Updating profile for {user_name} at: {date_str}")
         if status.get("profile_updated_at", "") != date_str:
             update_profile(user_name)
-            status["profile_updated_at"] = date_str
-            write_user_status(user_name, status)
+            update_user_status(user_name, "profile_updated_at", date_str)
     except Exception as e:
         print(f"Updating profile for {user_name} fail: {str(e)}")
         return
@@ -138,8 +155,7 @@ def refresh_profile(user_name: str):
         print(f"Summarizing profile for {user_name} at: {date_str}")
         if status.get("summary_updated_at", "") != date_str:
             summarize(user_name)
-            status["summary_updated_at"] = date_str
-            write_user_status(user_name, status)
+            update_user_status(user_name, "summary_updated_at", date_str)
     except json.JSONDecodeError:
         remove_user_profile(user_name)
         return
@@ -148,8 +164,7 @@ def refresh_profile(user_name: str):
         print(f"Estimating airdrop score for {user_name} at: {date_str}")
         if status.get("scores_updated_at", "") != date_str:
             estimate(user_name)
-            status["scores_updated_at"] = date_str
-            write_user_status(user_name, status)
+            update_user_status(user_name, "scores_updated_at", date_str)
     except Exception as e:
         print(f"Estimating airdrop score for {user_name} fail: {str(e)}")
         return

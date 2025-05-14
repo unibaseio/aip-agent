@@ -15,7 +15,7 @@ from membase.chain.chain import membase_id
 from aip_agent.agents.custom_agent import CallbackAgent
 from aip_agent.agents.full_agent import FullAgentWrapper
 from core.build import load_user, load_users, build_user, refresh_tweets, refresh_profile
-from core.common import init_user, is_user_exists, load_usernames, load_user_status, write_user_status
+from core.common import init_user, is_user_exists, load_usernames, load_user_status, update_user_status
 from core.rag import search_similar_posts, switch_user
 from core.save import save_tweets
 
@@ -59,10 +59,10 @@ def get_user_status(username: str) -> dict:
         app.status[username] = load_user_status(username)
     return app.status[username]
 
-def save_user_status(username: str, status: dict):
+def save_user_status(username: str, key: str, value: str):
     """Save user status to both cache and file"""
-    app.status[username] = status
-    write_user_status(username, status)
+    app.status[username][key] = value
+    update_user_status(username, key, value)
 
 def is_paying_user(username: str) -> bool:
     """Check if the user is a paying user"""
@@ -359,10 +359,10 @@ def build_user_sync(username: str):
     with app.build_locks[username]:
         try:
             print(f"Starting build for {username}")
-            save_user_status(username, {"state": "building"})
+            save_user_status(username, "state", "building")
             build_user(username)
             app.users[username] = load_user(username)
-            save_user_status(username, {"state": "built"})
+            save_user_status(username, "state", "built")
 
             print(f"Successfully completed build for {username}")
         except Exception as e:
@@ -435,7 +435,7 @@ async def set_status_api(
         # Update status
         status[key] = value
         # Save status to both cache and file
-        save_user_status(username, status)
+        save_user_status(username, key, value)
         
         return {"success": True, "data": status}
     except Exception as e:

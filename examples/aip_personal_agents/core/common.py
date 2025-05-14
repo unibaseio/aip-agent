@@ -3,6 +3,7 @@ import json
 import os
 import shutil
 from typing import Dict, List
+import fcntl
 
 def is_user_exists(user_name: str) -> bool:
     return os.path.exists(f"outputs/{user_name}")
@@ -219,6 +220,25 @@ def load_user_status(user_name: str) -> dict:
 def write_user_status(user_name: str, status: dict):
     with open(f"outputs/{user_name}/status.json", 'w', encoding='utf-8') as f:
         f.write(json.dumps(status, ensure_ascii=False))
+
+def update_user_status(user_name: str, key: str, value: str):
+    status_file = f"outputs/{user_name}/status.json"
+    with open(status_file, 'r+', encoding='utf-8') as f:
+        # Acquire an exclusive lock
+        fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+        try:
+            content = f.read()
+            # Remove the ```json markers if they exist
+            content = content.replace('```json\n', '').replace('\n```', '')
+            status = json.loads(content) if content else {}
+            status[key] = value
+            # Reset file pointer to beginning
+            f.seek(0)
+            f.write(json.dumps(status, ensure_ascii=False))
+            f.truncate()
+        finally:
+            # Release the lock
+            fcntl.flock(f.fileno(), fcntl.LOCK_UN)
 
 if __name__ == "__main__":
     format_files()
