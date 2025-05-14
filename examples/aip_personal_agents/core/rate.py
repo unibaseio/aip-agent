@@ -226,8 +226,8 @@ Important Guidelines:
 - All scores must be numbers within their specified ranges
 - Use precise decimal points (e.g., 12.37, 8.92, 0.14) for more accurate evaluation
 - Consider all metrics holistically
-- Be generous with high scores (14-25) for good accounts
-- Be strict with low scores (0-8) for poor accounts
+- Be generous with high scores (14-25) for good accounts, with scores closer to 25 indicating exceptional performance
+- Be strict with low scores (0-8) for poor accounts, with scores closer to 0 indicating very poor performance
 - Consider both quality and quantity
 - Account for age, verification, and follower count
 - Provide clear score explanations
