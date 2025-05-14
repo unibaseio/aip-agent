@@ -478,7 +478,8 @@ def estimate_tweets(user_name):
         detail["authenticity_sub_scores"] = result["authenticity_sub_scores"]
     except Exception as e:
         print(f"Error estimating {user_name} score: {e}")
-        return estimate_legacy(recent_tweets, dedicated_accounts)
+        raise e
+        #return estimate_legacy(recent_tweets, dedicated_accounts)
 
     if user_info.get("isBlueVerified", False):
         print(f"User is blue verified")
@@ -502,6 +503,7 @@ def estimate_tweets(user_name):
 
 def estimate(user_name):
     print(f"Estimating {user_name} score")
+    
     scores = estimate_tweets(user_name)
     print(f"{user_name} score is {scores}")
 
