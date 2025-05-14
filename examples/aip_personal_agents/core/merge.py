@@ -7,7 +7,7 @@ client = OpenAI(
     #base_url="https://api.deepseek.com/v1"
 )
 
-model_name = "gpt-4o-mini"
+model_name = "gpt-4.1-mini"
 
 # combine multiple profiles (oldest to newest) into a single profile
 def merge_profiles(merged_text: str):

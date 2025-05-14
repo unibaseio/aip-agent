@@ -86,7 +86,7 @@ def generate_news():
 
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))    
     response = client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="gpt-4.1-mini",
         messages=[{"role": "user", "content": prompt}]
     )
     return response.choices[0].message.content

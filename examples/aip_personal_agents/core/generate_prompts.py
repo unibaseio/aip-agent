@@ -35,7 +35,7 @@ client = OpenAI(
     #base_url="https://api.deepseek.com/v1"
 )
 
-model_name = "gpt-4o-mini"
+model_name = "gpt-4.1-mini"
 
 prompt_template = """
 You are an expert in personality analysis through social media data. Your task is to analyze a user's tweets and generate a comprehensive personality profile. Focus on both explicit and implicit characteristics, and provide evidence-based insights.

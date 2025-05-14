@@ -231,11 +231,12 @@ Important Guidelines:
 - Consider both quality and quantity
 - Account for age, verification, and follower count
 - Provide clear score explanations
-- Ensure valid JSON output"""
+- Ensure valid JSON output
+"""
 
     try:
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-4.1-mini",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.3
         )
@@ -457,7 +458,7 @@ def estimate_tweets(user_name):
     ordered_tweets = order_tweets(recent_tweets, reverse=True)
     user_info = ordered_tweets[0].get("author", {})
     filtered_tweets = filter_tweets(ordered_tweets)
-    batches = build_batches(tweets=filtered_tweets, max_tokens=40960, max_batch=1)
+    batches = build_batches(tweets=filtered_tweets, max_tokens=40960+10240, max_batch=1)
     if len(batches) == 0:
         return estimate_legacy(recent_tweets, dedicated_accounts)
     
