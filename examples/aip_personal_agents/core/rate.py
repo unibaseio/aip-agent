@@ -34,7 +34,7 @@ Input Data:
 2. Target Project Accounts (These are the official project accounts that we want to evaluate user's interaction with):
 {project_accounts_json}
 
-3. User's Tweets Collection:
+3. User's Recent Tweets Collection:
 {tweets_json}
 
 Evaluation Criteria:
