@@ -35,7 +35,7 @@ def sanitize_collection_name(name):
 def format_tweet_to_doc(tweet):
     doc = Document(
         doc_id=tweet["id"],
-        content= tweet["author"]["name"] + " tweet: " + build_text(tweet),
+        content= tweet["author"]["name"] + " post:\n" + build_text(tweet),
         metadata={
             "type": "tweet",
             "post_type": "reply" if tweet.get("isReply") else 
