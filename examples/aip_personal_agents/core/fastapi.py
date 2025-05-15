@@ -56,17 +56,29 @@ build_executor = ThreadPoolExecutor(max_workers=6)  # For build_user_sync
 refresh_executor = ThreadPoolExecutor(max_workers=2)  # For refresh/save_users_task
 
 # Add after app initialization
-app.build_locks = {}  # Store build locks for each user
+app.user_locks = {}  # Store locks for each user (for both building and other operations)
 app.current_builds = 0  # Current number of builds in progress
 app.build_lock = Lock()  # Lock for protecting current_builds
 app.max_concurrent_builds = 4  # Maximum number of concurrent builds
-app.user_locks = {}  # Store locks for each user to prevent concurrent operations
 
-def get_user_lock(username: str) -> Lock:
-    """Get or create a lock for a specific user"""
+def get_user_lock(username: str) -> bool:
+    """Get or create a lock for a specific user and try to acquire it
+    
+    Returns:
+        bool: True if lock was acquired, False if lock is already held
+    """
     if username not in app.user_locks:
         app.user_locks[username] = Lock()
-    return app.user_locks[username]
+    return app.user_locks[username].acquire(blocking=False)
+
+def release_user_lock(username: str) -> None:
+    """Release the lock for a specific user"""
+    if username in app.user_locks:
+        try:
+            app.user_locks[username].release()
+        except RuntimeError:
+            # Lock was not held
+            pass
 
 def refresh_users_task():
     """Background task to periodically refresh users list"""
@@ -83,9 +95,14 @@ def refresh_users_task():
                 app.refresh_counts[username] += 1
                 set_try_count(username, app.refresh_counts[username])
                 if app.refresh_counts[username] < 3 or app.refresh_counts[username] % 100 == 0:
-                    with get_user_lock(username):
-                        build_user(username)
-                        app.users[username] = load_user(username)
+                    if get_user_lock(username):
+                        try:
+                            build_user(username)
+                            app.users[username] = load_user(username)
+                        finally:
+                            release_user_lock(username)
+                    else:
+                        print(f"Skipping: {username} because it's locked")
 
             users_len = len(finished_users)
             if users_len == 0:
@@ -101,9 +118,14 @@ def refresh_users_task():
                 # user is paying or is kol for news
                 if not is_paying_user(username) and not is_kol_user(username):
                     continue
-                with get_user_lock(username):
-                    print(f"Refreshing tweets for {i}/{users_len} user {username} at {datetime.now()}")
-                    refresh_tweets(username)
+                if get_user_lock(username):
+                    try:
+                        print(f"Refreshing tweets for {i}/{users_len} user {username} at {datetime.now()}")
+                        refresh_tweets(username)
+                    finally:
+                        release_user_lock(username)
+                else:
+                    print(f"Skipping tweets refresh for {username} because it's locked")
 
             # refresh profile
             for i, username in enumerate(finished_users):
@@ -112,10 +134,15 @@ def refresh_users_task():
                 # user is paying
                 if not is_paying_user(username):
                     continue
-                with get_user_lock(username):
-                    print(f"Refreshing profile for {i}/{users_len} user {username} at {datetime.now()}")
-                    refresh_profile(username)
-                    app.users[username] = load_user(username)
+                if get_user_lock(username):
+                    try:
+                        print(f"Refreshing profile for {i}/{users_len} user {username} at {datetime.now()}")
+                        refresh_profile(username)
+                        app.users[username] = load_user(username)
+                    finally:
+                        release_user_lock(username)
+                else:
+                    print(f"Skipping profile refresh for {username} because it's locked")
 
             app.users = load_users()
             print(f"Users list refreshed at {datetime.now()}")
@@ -134,11 +161,15 @@ def save_users_task():
             users.sort()
             for username in users:
                 print(f"Saving tweets for {username} at {datetime.now()}")
-                with get_user_lock(username):
+                if get_user_lock(username):
                     try:
                         save_tweets(username)
                     except Exception as e:
                         print(f"Error saving tweets for {username}: {str(e)}")
+                    finally:
+                        release_user_lock(username)
+                else:
+                    print(f"Skipping saving tweets for {username} because it's locked")
             print(f"Users tweets saved at {datetime.now()}")
         except Exception as e:
             print(f"Error saving users tweets: {str(e)}")
@@ -342,8 +373,8 @@ async def generate_profile_api(
 
 def build_user_sync(username: str):
     """Synchronously build user profile with concurrency control"""
-    # If already building, return directly
-    if username in app.build_locks and app.build_locks[username].locked():
+    # Try to acquire the user lock
+    if not get_user_lock(username):
         print(f"Build already in progress for {username}")
         return
 
@@ -351,31 +382,28 @@ def build_user_sync(username: str):
     with app.build_lock:
         if app.current_builds >= app.max_concurrent_builds:
             print(f"Max concurrent builds reached, skipping {username}")
+            release_user_lock(username)
             if username in app.candidates:
                 app.candidates.remove(username)
             return
         app.current_builds += 1
-
-    # Get build lock for this user
-    if username not in app.build_locks:
-        app.build_locks[username] = Lock()
     
-    with app.build_locks[username]:
-        try:
-            print(f"Starting build for {username}")
-            update_user_status(username, "state", "building")
-            build_user(username)
-            app.users[username] = load_user(username)
-            update_user_status(username, "state", "built")
+    try:
+        print(f"Starting build for {username}")
+        update_user_status(username, "state", "building")
+        build_user(username)
+        app.users[username] = load_user(username)
+        update_user_status(username, "state", "built")
 
-            print(f"Successfully completed build for {username}")
-        except Exception as e:
-            print(f"Error building user {username}: {str(e)}")
-        finally:
-            if username in app.candidates:
-                app.candidates.remove(username)
-            with app.build_lock:
-                app.current_builds -= 1
+        print(f"Successfully completed build for {username}")
+    except Exception as e:
+        print(f"Error building user {username}: {str(e)}")
+    finally:
+        if username in app.candidates:
+            app.candidates.remove(username)
+        with app.build_lock:
+            app.current_builds -= 1
+        release_user_lock(username)
 
 @app.post("/api/chat")
 async def chat_api(
