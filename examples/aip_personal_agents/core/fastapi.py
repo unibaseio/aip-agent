@@ -15,7 +15,7 @@ from membase.chain.chain import membase_id
 from aip_agent.agents.custom_agent import CallbackAgent
 from aip_agent.agents.full_agent import FullAgentWrapper
 from core.build import load_user, load_users, build_user, refresh_tweets, refresh_profile
-from core.common import init_user, is_user_exists, load_usernames, load_user_status, update_user_status
+from core.common import init_user, is_kol_user, is_paying_user, is_user_exists, load_user_xinfo, load_usernames, load_user_status, update_user_status
 from core.rag import search_similar_posts, switch_user
 from core.save import save_tweets
 from core.utils import convert_to_json
@@ -67,11 +67,6 @@ def save_user_status(username: str, key: str, value: str):
     app.status[username][key] = value
     update_user_status(username, key, value)
 
-def is_paying_user(username: str) -> bool:
-    """Check if the user is a paying user"""
-    status = get_user_status(username)
-    return status.get("PayingUser", False)
-
 def refresh_users_task():
     """Background task to periodically refresh users list"""
     while True:
@@ -99,22 +94,26 @@ def refresh_users_task():
 
             # refresh tweets
             for i, username in enumerate(finished_users):
-                if username not in app.candidates:
-                    if username not in unfinished_users:
-                        with get_user_lock(username):
-                            print(f"Refreshing tweets for {i}/{users_len} user {username} at {datetime.now()}")
-                            refresh_tweets(username)
+                if username in app.candidates:
+                    continue
+                # user is paying or is kol for news
+                if not is_paying_user(username) and not is_kol_user(username):
+                    continue
+                with get_user_lock(username):
+                    print(f"Refreshing tweets for {i}/{users_len} user {username} at {datetime.now()}")
+                    refresh_tweets(username)
 
             # refresh profile
             for i, username in enumerate(finished_users):
+                if username in app.candidates:
+                    continue
+                # user is paying
                 if not is_paying_user(username):
                     continue
-                if username not in app.candidates:
-                    if username not in unfinished_users:
-                        with get_user_lock(username):
-                            print(f"Refreshing profile for {i}/{users_len} user {username} at {datetime.now()}")
-                            refresh_profile(username)
-                            app.users[username] = load_user(username)
+                with get_user_lock(username):
+                    print(f"Refreshing profile for {i}/{users_len} user {username} at {datetime.now()}")
+                    refresh_profile(username)
+                    app.users[username] = load_user(username)
 
             app.users = load_users()
             print(f"Users list refreshed at {datetime.now()}")

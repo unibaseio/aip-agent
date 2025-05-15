@@ -5,6 +5,16 @@ import shutil
 from typing import Dict, List
 import fcntl
 
+def is_paying_user(username: str) -> bool:
+    """Check if the user is a paying user"""
+    status = load_user_status(username)
+    return status.get("PayingUser", False)
+
+def is_kol_user(username: str) -> bool:
+    """Check if the user is a kol user"""
+    xinfo = load_user_xinfo(username)
+    return xinfo.get("followers", 0) > 100000
+
 def is_user_exists(user_name: str) -> bool:
     return os.path.exists(f"outputs/{user_name}")
 
@@ -205,11 +215,15 @@ def format_files():
                 os.rename(src, dst)
 
 def is_user_status_exists(user_name: str) -> bool:
-    return os.path.exists(f"outputs/{user_name}/status.json")
+    if os.path.exists(f"outputs/{user_name}/status.json"):
+        # rename to {user_name}_status.json
+        os.rename(f"outputs/{user_name}/status.json", f"outputs/{user_name}/{user_name}_status.json")
+    
+    return os.path.exists(f"outputs/{user_name}/{user_name}_status.json")
 
 def load_user_status(user_name: str) -> dict:
     if is_user_status_exists(user_name):
-        with open(f"outputs/{user_name}/status.json", 'r', encoding='utf-8') as f:
+        with open(f"outputs/{user_name}/{user_name}_status.json", 'r', encoding='utf-8') as f:
             content = f.read()
             # Remove the ```json markers if they exist
             content = content.replace('```json\n', '').replace('\n```', '')
@@ -218,12 +232,12 @@ def load_user_status(user_name: str) -> dict:
     return {}
 
 def write_user_status(user_name: str, status: dict):
-    with open(f"outputs/{user_name}/status.json", 'w', encoding='utf-8') as f:
+    with open(f"outputs/{user_name}/{user_name}_status.json", 'w', encoding='utf-8') as f:
         f.write(json.dumps(status, ensure_ascii=False))
 
 def update_user_status(user_name: str, key: str, value: str):
-    status_file = f"outputs/{user_name}/status.json"
-    if not os.path.exists(status_file):
+    status_file = f"outputs/{user_name}/{user_name}_status.json"
+    if not is_user_status_exists(user_name):
         with open(status_file, 'w', encoding='utf-8') as f:
             f.write(json.dumps({}, ensure_ascii=False))
     with open(status_file, 'r+', encoding='utf-8') as f:
