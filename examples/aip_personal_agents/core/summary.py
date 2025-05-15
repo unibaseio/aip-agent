@@ -6,6 +6,7 @@ from typing import Dict, Any
 from openai import OpenAI
 
 from core.common import load_user_xinfo, write_user_summary, load_user_profile
+from core.utils import convert_to_json
 
 def summarize_profile(user_name: str) -> str:
     profile = load_user_profile(user_name)
@@ -94,8 +95,7 @@ def summarize(user_name: str):
         if not summary or not isinstance(summary, str):
             raise ValueError(f"Invalid summary result: {summary}")
         
-        content = summary.replace('```json\n', '').replace('\n```', '')
-        summary_dict = json.loads(content)
+        summary_dict = convert_to_json(summary)
         write_user_summary(user_name, summary_dict)
         print(f"Successfully summarized profile for {user_name}")
     except json.JSONDecodeError as e:

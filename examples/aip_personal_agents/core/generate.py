@@ -5,6 +5,7 @@ from core.format import filter_tweets
 from core.generate_prompts import build_batches, call_batch
 from core.merge import merge_profiles
 from core.common import load_user_profile, write_user_profile, load_user_tweets, order_tweets
+from core.utils import convert_to_json
 
 def generate_profile(user_name):
     print(f"Generating profile for {user_name}")
@@ -43,11 +44,9 @@ def generate_profile(user_name):
     try:
         if not profile_final or not isinstance(profile_final, str):
             raise ValueError(f"Invalid merge_profiles result: {profile_final}")
-        
-        content = profile_final.replace('```json\n', '').replace('\n```', '')
-
+    
         # Validate JSON format and parse it
-        profile_dict = json.loads(content)
+        profile_dict = convert_to_json(profile_final)
         # Write the validated JSON to file
         write_user_profile(user_name, profile_dict)
         print(f"Successfully generated profile for {user_name}")
@@ -89,11 +88,9 @@ def update_profile(user_name):
     try:
         if not profile_final or not isinstance(profile_final, str):
             raise ValueError(f"Invalid merge_profiles result: {profile_final}")
-        
-        content = profile_final.replace('```json\n', '').replace('\n```', '')
 
         # Validate JSON format and parse it
-        profile_dict = json.loads(content)
+        profile_dict = convert_to_json(profile_final)
         # Write the validated JSON to file
         write_user_profile(user_name, profile_dict)
         print(f"Successfully updated profile for {user_name}")

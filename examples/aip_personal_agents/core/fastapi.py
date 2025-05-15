@@ -18,6 +18,7 @@ from core.build import load_user, load_users, build_user, refresh_tweets, refres
 from core.common import init_user, is_user_exists, load_usernames, load_user_status, update_user_status
 from core.rag import search_similar_posts, switch_user
 from core.save import save_tweets
+from core.utils import convert_to_json
 
 app = FastAPI(
     title="TwinX API",
@@ -84,7 +85,7 @@ def refresh_users_task():
                 if username not in app.refresh_counts:
                     app.refresh_counts[username] = 0
                 app.refresh_counts[username] += 1
-                if app.refresh_counts[username] < 3 or app.refresh_counts[username] % 10 == 0:
+                if app.refresh_counts[username] < 3 or app.refresh_counts[username] % 100 == 0:
                     with get_user_lock(username):
                         build_user(username)
                         app.users[username] = load_user(username)
@@ -480,8 +481,7 @@ async def generate_tweet_api(
             conversation_id=conversation_id
         )
 
-        response = response.replace("```json", "").replace("```", "")
-        response = json.loads(response)
+        response = convert_to_json(response)
         return {"success": True, "data": response}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

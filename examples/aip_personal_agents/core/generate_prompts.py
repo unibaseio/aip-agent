@@ -10,7 +10,7 @@ ENCODER = encoding_for_model("gpt-4o-mini")
 def num_tokens(text):
     return len(ENCODER.encode(text))
 
-def build_batches(tweets, max_tokens=51200, max_batch=4):
+def build_batches(tweets, max_tokens=51200, max_batch=4, include_metadata=False):
     batches, current, total = [], [], 0
     for t in tweets:
         # If we've reached max_batch, stop processing
@@ -18,6 +18,8 @@ def build_batches(tweets, max_tokens=51200, max_batch=4):
             break
             
         txt = t['text']
+        if include_metadata:
+            txt = json.dumps(t, indent=2)
         tokens = num_tokens(txt)
         if total + tokens > max_tokens and current:
             batches.append(current)

@@ -42,7 +42,6 @@ def filter_tweets(tweets):
             "view_count": t["viewCount"]
         }
         for t in tweets
-        if len(t["text"]) > 10 or (t["likeCount"] + t["retweetCount"] + t["replyCount"] + t["viewCount"] + t["quoteCount"]> 1)
     ]
 
 def get_reply_tweet_ids(tweets):

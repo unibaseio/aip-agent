@@ -7,6 +7,7 @@ import json
 from core.format import filter_tweets
 from core.generate_prompts import build_batches
 from core.common import write_user_airdrop_score, load_user_tweets_within, order_tweets
+from core.utils import convert_to_json
 
 def estimate_by_llm(tweets: list, userinfo: dict, project_accounts: list):
     """Calculate quality, influence, engagement and authenticity scores for a batch of tweets using LLM"""
@@ -458,7 +459,7 @@ def estimate_tweets(user_name):
     ordered_tweets = order_tweets(recent_tweets, reverse=True)
     user_info = ordered_tweets[0].get("author", {})
     filtered_tweets = filter_tweets(ordered_tweets)
-    batches = build_batches(tweets=filtered_tweets, max_tokens=40960+10240, max_batch=1)
+    batches = build_batches(tweets=filtered_tweets, max_batch=1, include_metadata=True)
     if len(batches) == 0:
         return estimate_legacy(recent_tweets, dedicated_accounts)
     
@@ -466,8 +467,7 @@ def estimate_tweets(user_name):
         result = estimate_by_llm(batches[0], user_info, dedicated_accounts)
         print(f"result: {result}")
         # Parse the string response into a JSON object
-        result = result.replace("```json", "").replace("```", "")
-        result = json.loads(result)
+        result = convert_to_json(result)
         quality_score = result["quality_score"]
         influence_score = result["influence_score"]
         engagement_score = result["engagement_score"]

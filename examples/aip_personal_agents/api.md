@@ -14,8 +14,8 @@ uv run -m core.fastapi --port=5001
 | `/api/list_info` | GET | Get list of all user information |
 | `/api/get_info` | GET | Get complete information of specific user |
 | `/api/list_users` | GET | List all available users |
-| `/api/get_profile` | GET | Get user profile |
 | `/api/get_xinfo` | GET | Get user Twitter information |
+| `/api/get_profile` | GET | Get user raw profile |
 | `/api/get_conversation` | GET | Get conversation history |
 | `/api/set_status` | POST | Set user status |
 | `/api/get_status` | GET | Get user status |
@@ -489,14 +489,6 @@ The API uses standard HTTP status codes:
 - Server runs on all interfaces (0.0.0.0) by default
 - Thread pool size is fixed at 4 workers for background tasks
 - User profile refresh interval is set to 10 minutes
-
-## Rate Limiting
-
-Currently, there are no explicit rate limits implemented. However, it's recommended to:
-
-- Space out requests appropriately
-- Handle 500 errors gracefully
-- Implement retry logic with exponential backoff
 
 ## Best Practices
 
