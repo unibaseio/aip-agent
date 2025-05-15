@@ -28,6 +28,27 @@ from core.common import (
     write_user_xinfo
 )
 
+def is_paying_user(username: str) -> bool:
+    """Check if the user is a paying user"""
+    status = load_user_status(username)
+    return status.get("PayingUser", False)
+
+def is_kol_user(username: str) -> bool:
+    """Check if the user is a kol user"""
+    xinfo = load_user_xinfo(username)
+    return xinfo.get("followers", 0) > 100000
+
+def get_try_count(username: str) -> int:
+    """Get the try count of the user"""
+    status = load_user_status(username)
+    return status.get("try_count", 0)
+
+def set_try_count(username: str, count: int):
+    """Set the try count of the user"""
+    status = load_user_status(username)
+    status["try_count"] = count
+    update_user_status(username, "try_count", count)
+
 def get_user_xinfo(user_name: str) -> Any:
     info = load_user_xinfo(user_name)
     if info is not None and info != {}:

@@ -14,14 +14,29 @@ from threading import Lock
 from membase.chain.chain import membase_id
 from aip_agent.agents.custom_agent import CallbackAgent
 from aip_agent.agents.full_agent import FullAgentWrapper
-from core.build import load_user, load_users, build_user, refresh_tweets, refresh_profile
-from core.common import init_user, is_kol_user, is_paying_user, is_user_exists, load_user_xinfo, load_usernames, load_user_status, update_user_status
+from core.build import (
+    get_try_count,
+    load_user, 
+    load_users, 
+    build_user, 
+    refresh_tweets, 
+    refresh_profile,
+    is_kol_user, is_paying_user,
+    set_try_count
+)
+from core.common import (
+    init_user, 
+    is_user_exists, 
+    load_usernames, 
+    load_user_status, 
+    update_user_status
+)
 from core.rag import search_similar_posts, switch_user
 from core.save import save_tweets
 from core.utils import convert_to_json
 
 app = FastAPI(
-    title="TwinX API",
+    title="TwinX API"
 )
 
 # Add CORS middleware
@@ -46,26 +61,12 @@ app.current_builds = 0  # Current number of builds in progress
 app.build_lock = Lock()  # Lock for protecting current_builds
 app.max_concurrent_builds = 4  # Maximum number of concurrent builds
 app.user_locks = {}  # Store locks for each user to prevent concurrent operations
-app.status = {}  # Cache for all user statuses
 
 def get_user_lock(username: str) -> Lock:
     """Get or create a lock for a specific user"""
     if username not in app.user_locks:
         app.user_locks[username] = Lock()
     return app.user_locks[username]
-
-def get_user_status(username: str) -> dict:
-    """Get user status from cache or load from file"""
-    if username not in app.status:
-        app.status[username] = load_user_status(username)
-    return app.status[username]
-
-def save_user_status(username: str, key: str, value: str):
-    """Save user status to both cache and file"""
-    if username not in app.status:
-        app.status[username] = load_user_status(username)
-    app.status[username][key] = value
-    update_user_status(username, key, value)
 
 def refresh_users_task():
     """Background task to periodically refresh users list"""
@@ -78,8 +79,9 @@ def refresh_users_task():
                     print(f"Skipping: {username} because it's in candidates")
                     continue
                 if username not in app.refresh_counts:
-                    app.refresh_counts[username] = 0
+                    app.refresh_counts[username] = get_try_count(username)
                 app.refresh_counts[username] += 1
+                set_try_count(username, app.refresh_counts[username])
                 if app.refresh_counts[username] < 3 or app.refresh_counts[username] % 100 == 0:
                     with get_user_lock(username):
                         build_user(username)
@@ -361,10 +363,10 @@ def build_user_sync(username: str):
     with app.build_locks[username]:
         try:
             print(f"Starting build for {username}")
-            save_user_status(username, "state", "building")
+            update_user_status(username, "state", "building")
             build_user(username)
             app.users[username] = load_user(username)
-            save_user_status(username, "state", "built")
+            update_user_status(username, "state", "built")
 
             print(f"Successfully completed build for {username}")
         except Exception as e:
@@ -506,11 +508,11 @@ async def set_status_api(
             raise HTTPException(status_code=404, detail="User not found")
 
         # Get current status from cache
-        status = get_user_status(username)
+        status = load_user_status(username)
         # Update status
         status[key] = value
         # Save status to both cache and file
-        save_user_status(username, key, value)
+        update_user_status(username, key, value)
         
         return {"success": True, "data": status}
     except Exception as e:
@@ -535,7 +537,7 @@ async def get_status_api(
         if username not in app.users:
             raise HTTPException(status_code=404, detail="User not found")
 
-        status = get_user_status(username)
+        status = load_user_status(username)
         
         if key is not None:
             if key not in status:

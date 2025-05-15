@@ -5,16 +5,6 @@ import shutil
 from typing import Dict, List
 import fcntl
 
-def is_paying_user(username: str) -> bool:
-    """Check if the user is a paying user"""
-    status = load_user_status(username)
-    return status.get("PayingUser", False)
-
-def is_kol_user(username: str) -> bool:
-    """Check if the user is a kol user"""
-    xinfo = load_user_xinfo(username)
-    return xinfo.get("followers", 0) > 100000
-
 def is_user_exists(user_name: str) -> bool:
     return os.path.exists(f"outputs/{user_name}")
 
