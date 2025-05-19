@@ -45,7 +45,7 @@ def generate_news():
     1. Trending Topics
        * List of specific topics with quantitative data
        * Community discussions with engagement metrics
-       * Notable KOL opinions and their context
+       * Notable KOL(e.g. Vitalik, CZ, etc.) opinions and their context
     
     2. Regulatory Updates
        * Recent policy changes and announcements

@@ -8,13 +8,17 @@ import json
 from concurrent.futures import ThreadPoolExecutor
 import time
 import argparse
+import signal
+import sys
 from typing import Optional, List, Dict, Any
 from threading import Lock
+from contextlib import asynccontextmanager
 
 from membase.chain.chain import membase_id
 from aip_agent.agents.custom_agent import CallbackAgent
 from aip_agent.agents.full_agent import FullAgentWrapper
 from core.build import (
+    get_description,
     get_try_count,
     load_user, 
     load_users, 
@@ -35,8 +39,18 @@ from core.rag import search_similar_posts, switch_user
 from core.save import save_tweets
 from core.utils import convert_to_json
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: setup code goes here
+    print("Application startup...")
+    yield
+    # Shutdown: cleanup code goes here
+    print("Application shutdown...")
+    shutdown_app()
+
 app = FastAPI(
-    title="TwinX API"
+    title="TwinX API",
+    lifespan=lifespan
 )
 
 # Add CORS middleware
@@ -55,11 +69,20 @@ security = HTTPBearer()
 build_executor = ThreadPoolExecutor(max_workers=6)  # For build_user_sync
 refresh_executor = ThreadPoolExecutor(max_workers=2)  # For refresh/save_users_task
 
+# Flag to control background tasks
+app.running = True
+
 # Add after app initialization
 app.user_locks = {}  # Store locks for each user (for both building and other operations)
 app.current_builds = 0  # Current number of builds in progress
 app.build_lock = Lock()  # Lock for protecting current_builds
 app.max_concurrent_builds = 4  # Maximum number of concurrent builds
+app.users = {}
+app.candidates = []
+app.refresh_counts = {}
+app.agent = None
+app.agents = {}
+app.grpc_server_url = os.getenv("GRPC_SERVER_URL", "54.169.29.193:8081")
 
 def get_user_lock(username: str) -> bool:
     """Get or create a lock for a specific user and try to acquire it
@@ -80,9 +103,39 @@ def release_user_lock(username: str) -> None:
             # Lock was not held
             pass
 
+async def load_user_agents():
+    new_agents = []
+    for username in app.users:
+        if not is_paying_user(username):  
+            continue
+        
+        if username in app.agents:
+            continue
+
+        profile = app.users[username]["profile"]
+        if profile is None or profile == {}:
+            continue
+
+        print("Initializing agent for " + username + "...")
+        app.agents[username] = FullAgentWrapper(
+            agent_cls=CallbackAgent,
+            name="agent_" + username,
+            description=get_description(username, profile),
+            host_address=app.grpc_server_url,
+            functions=[search_similar_posts]
+        )
+        new_agents.append(username)
+    
+    try:
+        for username in new_agents:
+            await app.agents[username].initialize()
+    except Exception as e:
+        print(f"Error initializing agent: {str(e)}")
+        raise e
+
 def refresh_users_task():
     """Background task to periodically refresh users list"""
-    while True:
+    while app.running:
         try:
             print(f"Refreshing users list at {datetime.now()}")
             finished_users, unfinished_users = load_usernames()
@@ -145,6 +198,8 @@ def refresh_users_task():
                     print(f"Skipping profile refresh for {username} because it's locked")
 
             app.users = load_users()
+
+            load_user_agents()
             print(f"Users list refreshed at {datetime.now()}")
         except Exception as e:
             print(f"Error refreshing users: {str(e)}")
@@ -152,7 +207,7 @@ def refresh_users_task():
 
 def save_users_task():
     """Background task to periodically save users tweets"""
-    while True:
+    while app.running:
         time.sleep(780)  # Refresh every 13 minutes
         try:
             print(f"Saving users tweets at {datetime.now()}")
@@ -425,11 +480,7 @@ async def chat_api(
         # TODO: may change due to another task
         switch_user(username)
         profile = app.users[username]["profile"]
-        profile_str = json.dumps(profile)
-        description = "You act as a digital twin of " + username + ", designed to mimic personality, knowledge, and communication style. \n"
-        description = description + "You donot need to mention that you are a digital twin. \n"
-        description = description + "Your responses should be natural and consistent with the following characteristics: \n"
-        description = description + profile_str
+        description = get_description(username, profile)
         
         # Run the async operation synchronously
         response = await app.agent.process_query(
@@ -576,21 +627,89 @@ async def get_status_api(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+async def shutdown_app_async():
+    """Async cleanup of resources and shutdown of the application"""
+    print("Shutting down application...")
+    
+    # Stop background tasks
+    app.running = False
+    
+    # Shutdown thread pool executors
+    print("Shutting down thread pools...")
+    build_executor.shutdown(wait=False)
+    refresh_executor.shutdown(wait=False)
+    
+    # Close agent resources
+    if hasattr(app, 'agent'):
+        print("Shutting down agent...")
+        try:
+            await app.agent.stop()
+        except Exception as e:
+            print(f"Error shutting down main agent: {str(e)}")
+
+    for username in app.agents:
+        print("Shutting down agent for " + username + "...")
+        try:
+            await app.agents[username].stop()
+        except Exception as e:
+            print(f"Error shutting down agent for {username}: {str(e)}")
+
+    print("Application has been completely shut down")
+
+def shutdown_app():
+    """Synchronous wrapper for shutdown_app_async"""
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            # If we're in a running event loop, create a task and wait for it
+            future = asyncio.run_coroutine_threadsafe(shutdown_app_async(), loop)
+            # Wait for the shutdown to complete with a timeout
+            try:
+                future.result(timeout=10)  # 10 seconds timeout
+            except asyncio.TimeoutError:
+                print("Warning: Shutdown timed out after 10 seconds")
+        else:
+            # If we're not in a running event loop, run until complete
+            loop.run_until_complete(shutdown_app_async())
+    except Exception as e:
+        print(f"Error during shutdown: {str(e)}")
+
+def signal_handler(sig, frame):
+    """Handle termination signals"""
+    print(f"Received signal {sig}, gracefully exiting...")
+    shutdown_app()
+    # Give a small delay to allow pending tasks to complete
+    time.sleep(1)
+    sys.exit(0)
+
+
 async def initialize(port: int = 5001, bearer_token: str = None) -> None:
     """Initialize"""
-    grpc_server_url = os.getenv("GRPC_SERVER_URL", "54.169.29.193:8081")
     system_prompt = os.getenv("SYSTEM_PROMPT", "You are a digital twin of the user, designed to mimic their personality, knowledge, and communication style. Your responses should be natural and consistent with the user's characteristics.")
+    
+    # Set up signal handlers
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
     
     # Set bearer token from environment variable or command line argument
     app.bearer_token = bearer_token or os.getenv("BEARER_TOKEN")
     if not app.bearer_token:
         raise ValueError("Bearer token must be provided either through --bearer-token argument or BEARER_TOKEN environment variable")
 
+    try:
+        app.users = load_users()
+
+        app.candidates = []
+        app.refresh_counts = {}
+    except Exception as e:
+        print(f"Error loading users: {str(e)}")
+        exit()
+
     app.agent = FullAgentWrapper(
         agent_cls=CallbackAgent,
         name=membase_id,
         description=system_prompt,
-        host_address=grpc_server_url,
+        host_address=app.grpc_server_url,
         functions=[search_similar_posts]
     )
     
@@ -601,12 +720,9 @@ async def initialize(port: int = 5001, bearer_token: str = None) -> None:
         exit()
 
     try:
-        app.users = load_users()
-
-        app.candidates = []
-        app.refresh_counts = {}
+        await load_user_agents()
     except Exception as e:
-        print(f"Error loading users: {str(e)}")
+        print(f"Error loading user agents: {str(e)}")
         exit()
 
     # Start the background refresh task in a separate thread
@@ -628,6 +744,31 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     print(f"Initializing TwinX API on port {args.port}")
-    asyncio.run(initialize(port=args.port, bearer_token=args.bearer_token))
+    
+    try:
+        # Create new event loop
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(initialize(port=args.port, bearer_token=args.bearer_token))
+    except KeyboardInterrupt:
+        print("Received keyboard interrupt, shutting down...")
+        loop.run_until_complete(shutdown_app_async())
+    except Exception as e:
+        print(f"Error during startup: {str(e)}")
+        loop.run_until_complete(shutdown_app_async())
+    finally:
+        try:
+            # Cancel all running tasks
+            pending = asyncio.all_tasks(loop)
+            for task in pending:
+                task.cancel()
+            
+            # Wait until all tasks are cancelled
+            loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+            
+            # Close the loop
+            loop.close()
+        except Exception as e:
+            print(f"Error closing event loop: {str(e)}")
     
     

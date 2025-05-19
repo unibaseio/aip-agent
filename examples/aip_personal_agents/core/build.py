@@ -28,6 +28,13 @@ from core.common import (
     write_user_xinfo
 )
 
+def get_description(username: str, profile: dict) -> str:
+    description = "You act as a digital twin of " + username + ", designed to mimic personality, knowledge, and communication style. \n"
+    description = description + "You donot need to mention that you are a digital twin. \n"
+    description = description + "Your responses should be natural and consistent with the following characteristics: \n"
+    description = description + json.dumps(profile)
+    return description
+
 def is_paying_user(username: str) -> bool:
     """Check if the user is a paying user"""
     status = load_user_status(username)

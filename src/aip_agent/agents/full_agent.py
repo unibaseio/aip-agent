@@ -135,12 +135,14 @@ class FullAgentWrapper:
         await self._runtime.start()
         
         # Initialize Memory
+        default_conversation_id = str(uuid.uuid5(uuid.NAMESPACE_URL, self._name))  
         self._memory = MultiMemory(
             membase_account=membase_account, 
             auto_upload_to_hub=True, 
             preload_from_hub=False,
-            default_conversation_id= str(uuid.uuid5(uuid.NAMESPACE_URL, self._name))  
+            default_conversation_id=default_conversation_id  
         )
+        self._memory.load_from_hub(default_conversation_id)
         
         # Initialize LLM
         self._llm = await self._init_llm()
@@ -335,16 +337,23 @@ class FullAgentWrapper:
 
     async def stop(self) -> None:
         """Stop the agent and cleanup resources"""
-        self._running = False
+        if self._initialized:
+            try:
+                await self.update_in_hub(state="stopped")    
+            except Exception:
+                pass
+
         if self._heartbeat_task:
             self._heartbeat_task.cancel()
             try:
                 await self._heartbeat_task
             except asyncio.CancelledError:
                 pass
-        if self._initialized:
-            await self.update_in_hub(state="stopped")
-            await self._runtime.stop()
+        
+        self._running = False
+        self._initialized = False
+        await self._runtime.stop()
+        
 
 
 

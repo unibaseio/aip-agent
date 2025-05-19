@@ -42,12 +42,12 @@ class CallbackAgent(RoutedAgent):
     
         #print(f"{message.source} {ctx.sender}")
         memory = self._memory.get_memory()
-        memory.add(Message(content=message.content, name=message.source, role="user"))
+        memory.add(Message(content=message.content, name=self.id.type, role="user", metadata={"source": message.source}))
         try:
             response = await self._llm.generate_str(message.content)
         except Exception as e:
-            response = "I'm sorry, I couldn't generate a response to that message."
-        memory.add(Message(content=response, name=self.id, role="assistant"))
+            response = "I'm sorry, I couldn't generate a response to that message due to an error:" + str(e)
+        memory.add(Message(content=response, name=self.id.type, role="assistant", metadata={"source": message.source}))
         return InteractionMessage(
             action="response",
             content=response,
