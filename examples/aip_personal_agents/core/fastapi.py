@@ -133,7 +133,7 @@ async def load_user_agents():
         print(f"Error initializing agent: {str(e)}")
         raise e
 
-def refresh_users_task():
+async def refresh_users_task():
     """Background task to periodically refresh users list"""
     while app.running:
         try:
@@ -161,7 +161,7 @@ def refresh_users_task():
             if users_len == 0:
                 print(f"No users to refresh at {datetime.now()}")
                 app.users = load_users()
-                time.sleep(600)
+                await asyncio.sleep(600)
                 continue
 
             # refresh tweets
@@ -198,11 +198,11 @@ def refresh_users_task():
                     print(f"Skipping profile refresh for {username} because it's locked")
 
             app.users = load_users()
-
+            await load_user_agents()
             print(f"Users list refreshed at {datetime.now()}")
         except Exception as e:
             print(f"Error refreshing users: {str(e)}")
-        time.sleep(600)  # Refresh every 10 minutes
+        await asyncio.sleep(600)  # Refresh every 10 minutes
 
 def save_users_task():
     """Background task to periodically save users tweets"""
@@ -725,7 +725,7 @@ async def initialize(port: int = 5001, bearer_token: str = None) -> None:
         exit()
 
     # Start the background refresh task in a separate thread
-    refresh_executor.submit(refresh_users_task)
+    asyncio.create_task(refresh_users_task())
     refresh_executor.submit(save_users_task)
     print("Background refresh/save task started")
 
