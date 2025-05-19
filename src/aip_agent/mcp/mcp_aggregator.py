@@ -411,12 +411,12 @@ class MCPAggregator(ContextDependent):
         """
         Send a message to a specified agent and wait for its response. @agent_name is the name of the agent to send the message to.
         For example:
-        1. Direct agent communication: "@weather_agent What's the weather like?", 
-           agent_name should be "weather_agent" and content should be "What's the weather like?"
-        2. Task delegation: "ask data_agent Please analyze this data", 
-           agent_name should be "data_agent" and content should be "Please analyze this data"
-        3. Multi-agent collaboration: "ask @helper_agent Can you help me?", 
-           agent_name should be "helper_agent" and content should be "Can you help me?"
+        1. Direct agent communication: "@agent_weather What's the weather like?", 
+           agent_name should be "agent_weather" and content should be "What's the weather like?"
+        2. Task delegation: "ask agent_data Please analyze this data", 
+           agent_name should be "agent_data" and content should be "Please analyze this data"
+        3. Multi-agent collaboration: "ask @agent_helper Can you help me?", 
+           agent_name should be "agent_helper" and content should be "Can you help me?"
 
         Args:
             agent_name (str): The name of the target agent to send the message to.
@@ -440,7 +440,7 @@ class MCPAggregator(ContextDependent):
                     AgentId(agent_name, "default"),
                     sender=AgentId(self._name, "default")
                 ),
-                timeout=60.0  # 120 seconds timeout
+                timeout=120.0  # 120 seconds timeout
             )
             return res
         except asyncio.TimeoutError:
