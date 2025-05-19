@@ -83,6 +83,7 @@ app.refresh_counts = {}
 app.agent = None
 app.agents = {}
 app.grpc_server_url = os.getenv("GRPC_SERVER_URL", "54.169.29.193:8081")
+app.agent_prefix = "agent_"
 
 def get_user_lock(username: str) -> bool:
     """Get or create a lock for a specific user and try to acquire it
@@ -104,7 +105,6 @@ def release_user_lock(username: str) -> None:
             pass
 
 async def load_user_agents():
-    new_agents = []
     for username in app.users:
         if not is_paying_user(username):  
             continue
@@ -119,19 +119,17 @@ async def load_user_agents():
         print("Initializing agent for " + username + "...")
         app.agents[username] = FullAgentWrapper(
             agent_cls=CallbackAgent,
-            name="agent_" + username,
+            name=app.agent_prefix + username,
             description=get_description(username, profile),
             host_address=app.grpc_server_url,
             functions=[search_similar_posts]
         )
-        new_agents.append(username)
     
-    try:
-        for username in new_agents:
+        try:
             await app.agents[username].initialize()
-    except Exception as e:
-        print(f"Error initializing agent: {str(e)}")
-        raise e
+        except Exception as e:
+            print(f"Error initializing agent: {str(e)}")
+            raise e
 
 async def refresh_users_task():
     """Background task to periodically refresh users list"""

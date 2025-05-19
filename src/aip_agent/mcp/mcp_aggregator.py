@@ -409,7 +409,25 @@ class MCPAggregator(ContextDependent):
 
     async def send_message(self, agent_name: str, content: str):
         """
-        Send a message to a agent
+        Send a message to a specified agent and wait for its response. @agent_name is the name of the agent to send the message to.
+        For example:
+        1. Direct agent communication: "@weather_agent What's the weather like?", 
+           agent_name should be "weather_agent" and content should be "What's the weather like?"
+        2. Task delegation: "ask data_agent Please analyze this data", 
+           agent_name should be "data_agent" and content should be "Please analyze this data"
+        3. Multi-agent collaboration: "ask @helper_agent Can you help me?", 
+           agent_name should be "helper_agent" and content should be "Can you help me?"
+
+        Args:
+            agent_name (str): The name of the target agent to send the message to.
+            content (str): The message content to be sent.
+
+        Returns:
+            The response message from the target agent.
+
+        Raises:
+            TimeoutError: If the agent does not respond within 120 seconds.
+            Exception: If there are any other errors during message sending.
         """
         try:
             res = await asyncio.wait_for(
@@ -422,11 +440,11 @@ class MCPAggregator(ContextDependent):
                     AgentId(agent_name, "default"),
                     sender=AgentId(self._name, "default")
                 ),
-                timeout=120.0  # 120 seconds timeout
+                timeout=60.0  # 120 seconds timeout
             )
             return res
         except asyncio.TimeoutError:
-            print(f"Message to {agent_name} timed out after 120 seconds")
+            print(f"Message to {agent_name} timed out after 60 seconds")
             return f"Message sending timed out, {agent_name} is offline"
         except Exception as e:
             print(f"Error sending message to {agent_name}: {e}")
