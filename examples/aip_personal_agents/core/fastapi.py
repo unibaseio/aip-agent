@@ -199,7 +199,6 @@ def refresh_users_task():
 
             app.users = load_users()
 
-            load_user_agents()
             print(f"Users list refreshed at {datetime.now()}")
         except Exception as e:
             print(f"Error refreshing users: {str(e)}")
