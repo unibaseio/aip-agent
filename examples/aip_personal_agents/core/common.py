@@ -276,5 +276,63 @@ def update_user_status(user_name: str, key: str, value: str):
             # Release the lock
             fcntl.flock(f.fileno(), fcntl.LOCK_UN)
 
+def is_system_status_exists() -> bool:
+    return os.path.exists(f"outputs/system_status.json")
+
+def load_system_status() -> dict:
+    if is_system_status_exists():
+        with open(f"outputs/system_status.json", 'r', encoding='utf-8') as f:
+            content = f.read()
+            # Remove the ```json markers if they exist
+            content = content.replace('```json\n', '').replace('\n```', '')
+            status = json.loads(content)
+            return status
+    return {}
+
+def write_system_status(status: dict):
+    with open(f"outputs/system_status.json", 'w', encoding='utf-8') as f:
+        f.write(json.dumps(status, ensure_ascii=False))
+
+def update_system_status(key: str, value: str):
+    status_file = f"outputs/system_status.json"
+    if not is_system_status_exists():
+        with open(status_file, 'w', encoding='utf-8') as f:
+            f.write(json.dumps({}, ensure_ascii=False))
+    with open(status_file, 'r+', encoding='utf-8') as f:
+        # Acquire an exclusive lock
+        fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+        try:
+            content = f.read()
+            # Remove the ```json markers if they exist
+            content = content.replace('```json\n', '').replace('\n```', '')
+            status = json.loads(content) if content else {}
+            status[key] = value
+            # Reset file pointer to beginning
+            f.seek(0)
+            f.write(json.dumps(status, ensure_ascii=False))
+            f.truncate()
+        finally:
+            # Release the lock
+            fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+
+def load_news_report(date_str: str, language: str) -> str:
+    report_file = f"outputs/news_report_{date_str}_{language}.md"
+    if date_str == "":
+        report_file = f"outputs/news_report_{language}.md"
+    if os.path.exists(report_file):
+        with open(report_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+            return content
+    return ""
+
+def write_news_report(date_str: str, language: str, report: str):
+    report_file = f"outputs/news_report_{date_str}_{language}.md"
+    if date_str == "":
+        report_file = f"outputs/news_report_{language}.md"
+    
+    with open(report_file, 'w', encoding='utf-8') as f:
+        f.write(report)
+    
+
 if __name__ == "__main__":
     format_files()

@@ -22,6 +22,7 @@ uv run -m core.fastapi --port=5001
 | `/api/generate` | POST | Generate profile for a new user |
 | `/api/chat` | POST | Chat with user personal agent |
 | `/api/generate_tweet` | POST | Generate tweets based on user profile and input message |
+| `/api/get_report` | GET | Get news report for the latest or specific date |
 
 ## Environment Variables
 
@@ -478,6 +479,51 @@ The API uses standard HTTP status codes:
 - **Error Cases**:
   - If user profile not found: 404 error
   - If missing required fields: 400 error
+  - If server error occurs: 500 error with error message
+
+### 12. Get News Report
+
+- **Description**: Get Web3 & AI news report for the latest or specific date
+- **Endpoint**: `/api/get_report`
+- **Method**: GET
+- **Headers**: 
+  - `Authorization: Bearer <token>`
+- **Parameters**:
+  - `date_str`: Optional date string in format 'YYYY-MM-DD'. If not specified, returns the latest report.
+  - `language`: Optional language for the report (default: "Chinese", alternative: "English").
+  - `format`: Optional output format (default: "text", alternative: "json").
+- **Response Example (text format)**:
+
+```json
+{
+  "success": true,
+  "data": "# Web3 & AI Daily Report\n[2023-06-15]\n\n## Brief\n* Summary of the latest news in 150 words...\n\n## Hot Topics\n1. Trending Topics\n   * List of specific topics being discussed by KOLs...\n\n[...full report content...]"
+}
+```
+
+- **Response Example (json format)**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "title": "Web3 & AI Daily Report",
+    "Brief": [
+      "Summary of the latest news in 150 words..."
+    ],
+    "Hot Topics": [
+      "Trending Topics",
+      "List of specific topics being discussed by KOLs..."
+    ]
+  }
+}
+```
+
+- **Error Cases**:
+  - If report not found for specified date: 404 error with "News report for date {date_str} not found"
+  - If latest report not found: 404 error with "Latest news report not found"
+  - If unsupported language provided: 400 error with "Unsupported language. Available options: Chinese, English"
+  - If unsupported format provided: 400 error with "Unsupported format. Available options: text, json"
   - If server error occurs: 500 error with error message
 
 ## System Configuration

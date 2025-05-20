@@ -14,7 +14,8 @@ from core.common import (
     is_user_tweets_exists, 
     is_user_profile_exists, 
     is_user_summary_exists, 
-    is_user_airdrop_score_exists, 
+    is_user_airdrop_score_exists,
+    load_system_status, 
     load_user_airdrop_score,
     load_user_profile, 
     load_user_status, 
@@ -23,10 +24,13 @@ from core.common import (
     load_user_xinfo, 
     load_usernames, 
     order_tweets, 
-    remove_user_profile, 
-    update_user_status, 
+    remove_user_profile,
+    update_system_status, 
+    update_user_status,
+    write_news_report, 
     write_user_xinfo
 )
+from core.news import generate_news
 
 def get_description(username: str, profile: dict) -> str:
     description = "You act as a digital twin of " + username + ", designed to mimic personality, knowledge, and communication style. \n"
@@ -95,6 +99,26 @@ def load_users() -> Dict[str, Any]:
     for user_name in unfinished_users:
         users[user_name] = load_user(user_name)
     return users
+
+def generate_daily_report():
+    status = load_system_status()
+    date_str = datetime.now().strftime("%Y-%m-%d")
+    languages = ["chinese", "english"]
+    for language in languages:
+        if status.get(f"report_{language}_updated_at", "") == date_str:
+            print(f"Daily report already exists at: {date_str} for {language}")
+            continue
+    
+        print(f"Generating daily report at: {date_str} for {language}")
+        try:
+            report = generate_news(language)
+            write_news_report(date_str, language, report)
+            write_news_report("", language, report)   
+        except Exception as e:
+            print(f"Generating daily report fail: {str(e)}")
+        finally:
+            # in case generate repeatly
+            update_system_status(f"report_{language}_updated_at", date_str)
 
 def build_user(user_name: str):
     now = datetime.now()

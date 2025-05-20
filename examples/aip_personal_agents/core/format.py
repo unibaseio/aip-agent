@@ -4,13 +4,14 @@ from core.common import load_user_tweets
 def clean_text(text):
     import re
     text = re.sub(r"http\S+", "", text)     # remove URLs
-    text = re.sub(r"@\w+", "", text)        # remove mentions
+    #text = re.sub(r"@\w+", "", text)        # remove mentions
     text = re.sub(r"#\w+", "", text)        # remove hashtags
     return text.strip()
 
 def build_text(tweet, include_author=False):
     base = tweet["text"].strip()
     if include_author:
+        base = clean_text(base)
         created_at = tweet.get("createdAt", "unknown")
         if created_at != "unknown":
             parsed_date = datetime.strptime(created_at, "%a %b %d %H:%M:%S %z %Y")
@@ -19,13 +20,17 @@ def build_text(tweet, include_author=False):
 
     if tweet.get("quoted_tweet"):
         quoted = tweet["quoted_tweet"]
-        quoted_text = quoted.get("text", "").strip()
+        quoted_text = quoted.get("text", "")
+        if include_author:
+            quoted_text = clean_text(quoted_text)
         quoted_user = quoted.get("author", {}).get("userName", "unknown")
         base += f"\nQuoted from @{quoted_user}:\n{quoted_text}"
     
     if tweet.get("inReplyToId") and tweet.get("inReplyToText"):
         reply_user = tweet.get("inReplyToUsername", "unknown")
-        reply_text = tweet.get("inReplyToText", "").strip()
+        reply_text = tweet.get("inReplyToText", "")
+        if include_author:
+            reply_text = clean_text(reply_text)
         base += f"\nReply to @{reply_user}: \n{reply_text}"
 
     base += "\n\n"

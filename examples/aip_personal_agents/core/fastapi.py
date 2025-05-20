@@ -13,11 +13,13 @@ import sys
 from typing import Optional, List, Dict, Any
 from threading import Lock
 from contextlib import asynccontextmanager
+import threading
 
 from membase.chain.chain import membase_id
 from aip_agent.agents.custom_agent import CallbackAgent
 from aip_agent.agents.full_agent import FullAgentWrapper
 from core.build import (
+    generate_daily_report,
     get_description,
     get_try_count,
     load_user, 
@@ -33,11 +35,15 @@ from core.common import (
     is_user_exists, 
     load_usernames, 
     load_user_status, 
-    update_user_status
+    update_user_status,
+    load_news_report
 )
 from core.rag import search_similar_posts, switch_user
 from core.save import save_tweets
 from core.utils import convert_to_json
+
+# Add global shutdown flag
+is_shutting_down = False
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -46,7 +52,7 @@ async def lifespan(app: FastAPI):
     yield
     # Shutdown: cleanup code goes here
     print("Application shutdown...")
-    shutdown_app()
+    await graceful_shutdown()
 
 app = FastAPI(
     title="TwinX API",
@@ -84,6 +90,10 @@ app.agent = None
 app.agents = {}
 app.grpc_server_url = os.getenv("GRPC_SERVER_URL", "54.169.29.193:8081")
 app.agent_prefix = "agent_"
+
+prefix = os.getenv("AGENT_PREFIX")
+if prefix:
+    app.agent_prefix = prefix
 
 def get_user_lock(username: str) -> bool:
     """Get or create a lock for a specific user and try to acquire it
@@ -134,6 +144,7 @@ async def load_user_agents():
 async def refresh_users_task():
     """Background task to periodically refresh users list"""
     while app.running:
+        #await asyncio.sleep(600)
         try:
             print(f"Refreshing users list at {datetime.now()}")
             finished_users, unfinished_users = load_usernames()
@@ -177,6 +188,9 @@ async def refresh_users_task():
                         release_user_lock(username)
                 else:
                     print(f"Skipping tweets refresh for {username} because it's locked")
+
+            # refresh report
+            generate_daily_report()
 
             # refresh profile
             for i, username in enumerate(finished_users):
@@ -624,6 +638,77 @@ async def get_status_api(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/get_report")
+async def get_report_api(
+    date_str: Optional[str] = None,
+    language: Optional[str] = "Chinese",
+    format: Optional[str] = "markdown",
+    token: str = Depends(validate_token)
+):
+    """Get news report
+    
+    Args:
+        date_str: Optional date string in format 'YYYY-MM-DD'. If not specified, returns the latest report.
+        language: Optional language for the report (default: "Chinese", alternative: "English").
+        format: Optional output format (default: "markdown", alternative: "json").
+    """
+    try:
+        language = language.lower()
+        if language not in ["chinese", "english"]:
+            raise HTTPException(status_code=400, detail="Unsupported language. Available options: Chinese, English")
+
+        if format not in ["markdown", "json"]:
+            raise HTTPException(status_code=400, detail="Unsupported format. Available options: text, json")
+
+        if date_str is None:
+            # Load the latest report
+            report = load_news_report("", language)
+            if not report or report == "":
+                raise HTTPException(status_code=404, detail="Latest news report not found")
+        else:
+            # Load report for specific date
+            report = load_news_report(date_str, language)
+            if not report or report == "":
+                raise HTTPException(status_code=404, detail=f"News report for date {date_str} not found")
+        
+        # Process different output formats
+        if format == "json":
+            try:
+                # Try to convert Markdown report to structured JSON
+                sections = {}
+                current_section = ""
+                lines = report.split("\n")
+                for line in lines:
+                    if line.startswith("# "):
+                        # Main title
+                        title = line[2:].strip()
+                        sections["title"] = title
+                    elif line.startswith("## "):
+                        # Section titles as new blocks
+                        current_section = line[3:].strip()
+                        sections[current_section] = []
+                    elif line.startswith("* ") and current_section:
+                        # List items added to current section
+                        sections[current_section].append(line[2:].strip())
+                    elif line.strip() and current_section and not line.startswith("#"):
+                        # Regular text with current section, add to current section
+                        if isinstance(sections[current_section], list):
+                            sections[current_section].append(line.strip())
+                        else:
+                            sections[current_section] = line.strip()
+                
+                return {"success": True, "data": sections}
+            except Exception:
+                # If parsing fails, return original text with format conversion failure note
+                return {"success": True, "data": report, "format_note": "Failed to parse as JSON, returning raw text"}
+        else:
+            # Default to markdown format
+            return {"success": True, "data": report}
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 async def shutdown_app_async():
     """Async cleanup of resources and shutdown of the application"""
     print("Shutting down application...")
@@ -631,13 +716,8 @@ async def shutdown_app_async():
     # Stop background tasks
     app.running = False
     
-    # Shutdown thread pool executors
-    print("Shutting down thread pools...")
-    build_executor.shutdown(wait=False)
-    refresh_executor.shutdown(wait=False)
-    
     # Close agent resources
-    if hasattr(app, 'agent'):
+    if hasattr(app, 'agent') and app.agent is not None:
         print("Shutting down agent...")
         try:
             await app.agent.stop()
@@ -651,34 +731,81 @@ async def shutdown_app_async():
         except Exception as e:
             print(f"Error shutting down agent for {username}: {str(e)}")
 
+    # Shutdown thread pool executors
+    print("Shutting down thread pools...")
+    try:
+        build_executor.shutdown(wait=False)
+        refresh_executor.shutdown(wait=False)
+    except Exception as e:
+        print(f"Error shutting down thread pools: {str(e)}")
+
+    # Cancel the refresh_users_task
+    if hasattr(app, 'refresh_task'):
+        print("Cancelling refresh task...")
+        try:
+            app.refresh_task.cancel()
+            try:
+                await asyncio.wait_for(app.refresh_task, timeout=5.0)
+            except asyncio.TimeoutError:
+                print("Timeout waiting for refresh task to cancel")
+            except asyncio.CancelledError:
+                print("Refresh task cancelled successfully")
+            except Exception as e:
+                print(f"Error waiting for refresh task: {str(e)}")
+        except Exception as e:
+            print(f"Error cancelling refresh task: {str(e)}")
+
     print("Application has been completely shut down")
+
+# Add unified shutdown function
+async def graceful_shutdown():
+    """Unified shutdown function to avoid multiple shutdown calls"""
+    global is_shutting_down
+    
+    # Ensure shutdown process is executed only once
+    if is_shutting_down:
+        print("Shutdown already in progress, skipping...")
+        return
+    
+    is_shutting_down = True
+    print("Starting graceful shutdown...")
+    
+    try:
+        await shutdown_app_async()
+    except Exception as e:
+        print(f"Error during graceful shutdown: {str(e)}")
+        # Force exit on error
+        os._exit(1)
 
 def shutdown_app():
     """Synchronous wrapper for shutdown_app_async"""
-    try:
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            # If we're in a running event loop, create a task and wait for it
-            future = asyncio.run_coroutine_threadsafe(shutdown_app_async(), loop)
-            # Wait for the shutdown to complete with a timeout
-            try:
-                future.result(timeout=10)  # 10 seconds timeout
-            except asyncio.TimeoutError:
-                print("Warning: Shutdown timed out after 10 seconds")
-        else:
-            # If we're not in a running event loop, run until complete
-            loop.run_until_complete(shutdown_app_async())
-    except Exception as e:
-        print(f"Error during shutdown: {str(e)}")
+    print("Starting shutdown process...")
+    
+    # Call the async shutdown process through the unified function
+    asyncio.run_coroutine_threadsafe(graceful_shutdown(), asyncio.get_event_loop())
+    
+    # Give some time for the async shutdown process to start
+    time.sleep(1)
 
 def signal_handler(sig, frame):
     """Handle termination signals"""
     print(f"Received signal {sig}, gracefully exiting...")
+    
+    # Set timer for forced exit on timeout
+    def force_exit():
+        print("Graceful shutdown took too long, forcing exit...")
+        os._exit(1)
+    
+    # Force exit after 15 seconds
+    timer = threading.Timer(15.0, force_exit)
+    timer.daemon = True
+    timer.start()
+    
+    # Call the synchronous shutdown function
     shutdown_app()
-    # Give a small delay to allow pending tasks to complete
-    time.sleep(1)
-    sys.exit(0)
-
+    
+    # Don't call sys.exit() immediately to give async shutdown a chance to complete
+    # Forced exit will happen via timer or after async shutdown completes
 
 async def initialize(port: int = 5001, bearer_token: str = None) -> None:
     """Initialize"""
@@ -723,7 +850,7 @@ async def initialize(port: int = 5001, bearer_token: str = None) -> None:
         exit()
 
     # Start the background refresh task in a separate thread
-    asyncio.create_task(refresh_users_task())
+    app.refresh_task = asyncio.create_task(refresh_users_task())
     refresh_executor.submit(save_users_task)
     print("Background refresh/save task started")
 
@@ -749,23 +876,41 @@ if __name__ == "__main__":
         loop.run_until_complete(initialize(port=args.port, bearer_token=args.bearer_token))
     except KeyboardInterrupt:
         print("Received keyboard interrupt, shutting down...")
-        loop.run_until_complete(shutdown_app_async())
+        try:
+            loop.run_until_complete(graceful_shutdown())
+        except Exception as e:
+            print(f"Error during shutdown after KeyboardInterrupt: {str(e)}")
     except Exception as e:
         print(f"Error during startup: {str(e)}")
-        loop.run_until_complete(shutdown_app_async())
+        try:
+            loop.run_until_complete(graceful_shutdown())
+        except Exception as e:
+            print(f"Error during shutdown after startup error: {str(e)}")
     finally:
         try:
             # Cancel all running tasks
             pending = asyncio.all_tasks(loop)
-            for task in pending:
-                task.cancel()
-            
-            # Wait until all tasks are cancelled
-            loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+            if pending:
+                print(f"Cancelling {len(pending)} pending tasks...")
+                for task in pending:
+                    task.cancel()
+                
+                # Wait until all tasks are cancelled with timeout
+                try:
+                    loop.run_until_complete(asyncio.wait_for(asyncio.gather(*pending, return_exceptions=True), timeout=5.0))
+                except asyncio.TimeoutError:
+                    print("Timeout waiting for tasks to cancel")
+                except Exception as e:
+                    print(f"Error waiting for tasks to cancel: {str(e)}")
             
             # Close the loop
             loop.close()
+            print("Event loop closed")
         except Exception as e:
             print(f"Error closing event loop: {str(e)}")
+        
+        print("Application exit complete")
+        # Ensure clean exit
+        os._exit(0)
     
     
