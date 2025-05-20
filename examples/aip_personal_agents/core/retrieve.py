@@ -70,10 +70,11 @@ def retrieve_tweets(user_name: str, begin_date: Optional[str] = None, end_date: 
     
     print(f"Retrieving {len(new_tweets)} new tweets")
     
-    new_tweets.sort(key=lambda x: parse_date(x["createdAt"]))
+    
 
     # Combine existing and new tweets
     all_tweets = existing_tweets + new_tweets
+    all_tweets.sort(key=lambda x: parse_date(x["createdAt"]))
     write_user_tweets(user_name, all_tweets)
 
     print(f"Retrieving replied tweets for {user_name}")
