@@ -148,15 +148,44 @@ def load_user_airdrop_score(user_name: str) -> dict:
     return {}
 
 def write_user_tweets(user_name: str, tweets: List[Dict]):
-    """Save tweets to local file."""
+    """Save tweets to local file:
+    1. First write to daily file
+    2. Replace main file with daily file
+    3. Delete daily file
+    """
     if len(tweets) == 0:
         return
-    # format to day
+    
+    user_dir = f"outputs/{user_name}"
+    os.makedirs(user_dir, exist_ok=True)
+    
     date_str = datetime.now().strftime("%Y-%m-%d")
-    with open(f"outputs/{user_name}/{user_name}_tweets_{date_str}.json", "w", encoding='utf-8') as f:
-        json.dump(tweets, f)
-    # copy to outputs/{user_name}.json
-    shutil.copy(f"outputs/{user_name}/{user_name}_tweets_{date_str}.json", f"outputs/{user_name}/{user_name}_tweets.json")
+    daily_file = f"{user_dir}/{user_name}_tweets_{date_str}.json"
+    main_file = f"{user_dir}/{user_name}_tweets.json"
+    
+    try:
+        # 1. First write to daily file
+        with open(daily_file, "w", encoding='utf-8') as f:
+            json.dump(tweets, f, ensure_ascii=False, indent=2)
+            f.flush()
+            os.fsync(f.fileno())
+        
+        # 2. Replace main file with daily file (atomic operation)
+        os.replace(daily_file, main_file)
+        
+        # 3. Delete daily file if it still exists
+        if os.path.exists(daily_file):
+            os.remove(daily_file)
+        
+        print(f"Successfully wrote and updated {len(tweets)} tweets")
+    except Exception as e:
+        print(f"Error writing tweets for {user_name}: {str(e)}")
+        # If error occurs, try to clean up temporary file
+        if os.path.exists(daily_file):
+            try:
+                os.remove(daily_file)
+            except:
+                pass
 
 def write_user_xinfo(user_name: str, xinfo: dict):
     with open(f"outputs/{user_name}/{user_name}_info.json", 'w', encoding='utf-8') as f:

@@ -65,7 +65,7 @@ def retrieve_tweets(user_name: str, begin_date: Optional[str] = None, end_date: 
             existing_ids.add(tweet_id)
 
     if len(new_tweets) == 0:
-        write_user_tweets(user_name, existing_tweets)
+        #write_user_tweets(user_name, existing_tweets)
         return None
     
     print(f"Retrieving {len(new_tweets)} new tweets")
@@ -90,7 +90,14 @@ def retrieve_tweets(user_name: str, begin_date: Optional[str] = None, end_date: 
         }
         run = client.actor(actor_id).call(run_input=run_input)
         for item in client.dataset(run["defaultDatasetId"]).iterate_items():
+            tweet_type = item.get("type")
+            if tweet_type and tweet_type == "mock_tweet":
+                continue    
             replied_tweets[item["id"]] = item
+
+    print(f"Retrieving {len(replied_tweets)} replied tweets")
+    if len(replied_tweets) == 0:
+        return all_tweets
 
     for t in all_tweets:
         if t.get("isReply") and t.get("inReplyToId") and  t["inReplyToId"] in replied_tweets:
