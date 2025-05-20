@@ -10,8 +10,10 @@ def get_recent_tweets():
     finished_users, unfinished_users = load_usernames()
     for username in finished_users:
         tweets = load_user_tweets_within(username, 7)
-        if len(tweets) > 0:
-            recent_tweets.extend(tweets)
+        for t in tweets:
+            if len(t["text"]) < 30:
+                continue
+            recent_tweets.append(t)
 
     ordered_tweets = order_tweets(recent_tweets, reverse=True)
     filtered_tweets = filter_tweets(ordered_tweets, include_author=True)
