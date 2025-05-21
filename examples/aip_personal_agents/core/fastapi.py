@@ -479,7 +479,11 @@ async def chat_api(
     """Chat with a specific profile using username"""
     try:
         username = data['username']
+        prompt = data['prompt']
         message = data['message']
+        prompt_mode = data['prompt_mode']
+        if prompt_mode is None:
+            prompt_mode = "append"
             
         conversation_id = data.get('conversation_id', None)
         if conversation_id is None or conversation_id == "":
@@ -492,6 +496,11 @@ async def chat_api(
         switch_user(username)
         profile = app.users[username]["profile"]
         description = get_description(username, profile)
+        if prompt:
+            if prompt_mode == "replace":
+                description = prompt
+            else:
+                description = description + "\n\n" + prompt
         
         # Run the async operation synchronously
         response = await app.agent.process_query(

@@ -9,20 +9,21 @@ uv run -m core.fastapi --port=5001
 
 ## API Endpoints List
 
-| Endpoint | Method | Description |
-|------|------|------|
-| `/api/list_info` | GET | Get list of all user information |
-| `/api/get_info` | GET | Get complete information of specific user |
-| `/api/list_users` | GET | List all available users |
-| `/api/get_xinfo` | GET | Get user Twitter information |
-| `/api/get_profile` | GET | Get user raw profile |
-| `/api/get_conversation` | GET | Get conversation history |
-| `/api/set_status` | POST | Set user status |
-| `/api/get_status` | GET | Get user status |
-| `/api/generate` | POST | Generate profile for a new user |
-| `/api/chat` | POST | Chat with user personal agent |
-| `/api/generate_tweet` | POST | Generate tweets based on user profile and input message |
-| `/api/get_report` | GET | Get news report for the latest or specific date |
+
+| Endpoint | Method | Parameters | Description |
+|------|------|------|------|
+| `/api/list_info` | GET | `sort_by`, `order` | Get list of all user information |
+| `/api/get_info` | GET | `username` | Get complete information of specific user |
+| `/api/list_users` | GET | None | List all available users |
+| `/api/get_xinfo` | GET | `username` | Get user Twitter information |
+| `/api/get_profile` | GET | `username` | Get user raw profile |
+| `/api/get_conversation` | GET | `username`, `conversation_id`, `recent_n_messages` | Get conversation history |
+| `/api/set_status` | POST | `username`, `key`, `value` | Set user status |
+| `/api/get_status` | GET | `username`, `key` | Get user status |
+| `/api/generate` | POST | `username` | Generate profile for a new user |
+| `/api/chat` | POST | `username`, `message`, `prompt`, `prompt_mode`, `conversation_id` | Chat with user personal agent |
+| `/api/generate_tweet` | POST | `username`, `message`, `conversation_id` | Generate tweets based on user profile and input message |
+| `/api/get_report` | GET | `date_str`, `language`, `format` | Get news report for the latest or specific date |
 
 ## Environment Variables
 
@@ -341,9 +342,20 @@ The API uses standard HTTP status codes:
 {
   "username": "username",
   "message": "chat message",
+  "prompt": "optional, additional system prompt content",
+  "prompt_mode": "optional, 'append' or 'replace', default is 'append'",
   "conversation_id": "optional, conversation ID"
 }
 ```
+
+- **Parameters**:
+  - `username`: Required. The username to chat with.
+  - `message`: Required. The message to send to the agent.
+  - `prompt`: Optional. Additional system prompt content to customize the agent's behavior.
+  - `prompt_mode`: Optional. How to handle the additional prompt:
+    - `append`: (Default) Append the prompt to the user's profile description
+    - `replace`: Replace the user's profile description with the provided prompt
+  - `conversation_id`: Optional. Conversation ID for maintaining context.
 
 - **Response Example**:
 
