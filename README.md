@@ -5,7 +5,7 @@
 **AIP (Agent Interoperability Protocol)** is the first **Web3-native multi-agent communication standard**, built by Unibase.  
 It enables agents to easily connect, share memory, and collaborate across platforms, with secure on-chain identity and access control.
 
-> AIP = MCP + On-chain Identity + Decentralized Memory
+> AIP = MCP + gRPC + On-chain Identity + Decentralized Memory
 
 ---
 
@@ -104,7 +104,7 @@ uv run grpc_full_agent_gradio.py
 
 | Component        | Description                                              |
 |------------------|-----------------------------------------------------------|
-| **AIP Protocol**  | Agent communication standard (MCP + On-chain extensions) |
+| **AIP Protocol** | Agent communication standard (MCP + gRPC + On-chain extensions) |
 | **Membase**      | Decentralized memory storage for agent long-term memory   |
 | **Unibase DA**   | High-performance data availability and storage layer      |
 
