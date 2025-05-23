@@ -495,6 +495,9 @@ async def chat_api(
         profile = app.users[username]["profile"]
         description = get_description(username, profile)
         if prompt != "":
+            print(f"Prompt mode: {prompt_mode}")
+            print(f"Prompt: {prompt}")
+            
             if prompt_mode == "replace":
                 description = prompt
             else:

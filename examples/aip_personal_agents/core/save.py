@@ -38,6 +38,7 @@ def format_tweet_to_doc(tweet):
         content= tweet["author"]["name"] + " post:\n" + build_text(tweet),
         metadata={
             "type": "tweet",
+            "source": "tweet",
             "post_type": "reply" if tweet.get("isReply") else 
                         "quote" if tweet.get("isQuote") else 
                         "original",
