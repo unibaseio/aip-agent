@@ -173,7 +173,8 @@ async def refresh_users_task():
             users_len = len(finished_users)
             if users_len == 0:
                 print(f"No users to refresh at {datetime.now()}")
-                app.users = load_users()
+                users = load_users()
+                app.users = users
                 await asyncio.sleep(600)
                 continue
 
