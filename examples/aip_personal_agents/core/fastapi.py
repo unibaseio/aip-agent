@@ -115,7 +115,9 @@ def release_user_lock(username: str) -> None:
             pass
 
 async def load_user_agents():
-    for username in app.users:
+    usernames = list(app.users.keys())
+    usernames.sort()
+    for username in usernames:
         if not is_paying_user(username):  
             continue
         
@@ -230,7 +232,6 @@ def save_users_task():
         time.sleep(780)  # Refresh every 13 minutes
         try:
             print(f"Saving users tweets at {datetime.now()}")
-            app.users = load_users()
             users = list(app.users.keys())
             users.sort()
             for username in users:
