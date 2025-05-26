@@ -62,13 +62,16 @@ def load_usernames():
     return finished_users, unfinished_users
 
 def load_user_xinfo(user_name: str) -> dict:
-    if is_user_xinfo_exists(user_name):
-        with open(f"outputs/{user_name}/{user_name}_info.json", 'r', encoding='utf-8') as f:
-            content = f.read()
-            # Remove the ```json markers if they exist
-            content = content.replace('```json\n', '').replace('\n```', '')
-            info =  json.loads(content)
-            return info
+    try:
+        if is_user_xinfo_exists(user_name):
+            with open(f"outputs/{user_name}/{user_name}_info.json", 'r', encoding='utf-8') as f:
+                content = f.read()
+                # Remove the ```json markers if they exist
+                content = content.replace('```json\n', '').replace('\n```', '')
+                info =  json.loads(content)
+                return info
+    except:
+        pass
     return {}
 
 def load_user_tweets(user_name: str) -> list:
@@ -128,23 +131,27 @@ def load_user_summary(user_name: str) -> dict:
     }
 
 def load_user_airdrop_score(user_name: str) -> dict:
-    if is_user_airdrop_score_exists(user_name):
-        with open(f"outputs/{user_name}/{user_name}_airdrop_score.json", 'r', encoding='utf-8') as f:
-            content = f.read()
-            # Remove the ```json markers if they exist
-            content = content.replace('```json\n', '').replace('\n```', '')
-            airdrop_score = json.loads(content)
-            # ignore project_score, 75->100
-            #total_score = (engagement_score + influence_score + project_score + quality_score
-            total_score = (airdrop_score["engagement_score"] + airdrop_score["influence_score"] + airdrop_score["quality_score"]) *4 / 3
-            factor = 1.0
-            if airdrop_score.get("factor"):
-                factor = airdrop_score["factor"]
-            if airdrop_score.get("authenticity_factor"):
-                factor = airdrop_score["authenticity_factor"]
+    try:
+        if is_user_airdrop_score_exists(user_name):
+            with open(f"outputs/{user_name}/{user_name}_airdrop_score.json", 'r', encoding='utf-8') as f:
+                content = f.read()
+                # Remove the ```json markers if they exist
+                content = content.replace('```json\n', '').replace('\n```', '')
+                airdrop_score = json.loads(content)
+                # ignore project_score, 75->100
+                #total_score = (engagement_score + influence_score + project_score + quality_score
             
-            airdrop_score["total_score"] = round(total_score*factor, 2)
-            return airdrop_score
+                total_score = (airdrop_score["engagement_score"] + airdrop_score["influence_score"] + airdrop_score["quality_score"]) *4 / 3
+                factor = 1.0
+                if airdrop_score.get("factor"):
+                    factor = airdrop_score["factor"]
+                if airdrop_score.get("authenticity_factor"):
+                    factor = airdrop_score["authenticity_factor"]
+            
+                airdrop_score["total_score"] = round(total_score*factor, 2)
+                return airdrop_score
+    except:
+        pass
     return {}
 
 def write_user_tweets(user_name: str, tweets: List[Dict]):

@@ -127,7 +127,8 @@ async def load_user_agents():
             continue
 
         print("Initializing agent for " + username + "...")
-        app.agents[username] = FullAgentWrapper(
+        
+        useragent = FullAgentWrapper(
             agent_cls=CallbackAgent,
             name=app.agent_prefix + username,
             description=get_description(username, profile),
@@ -136,7 +137,8 @@ async def load_user_agents():
         )
     
         try:
-            await app.agents[username].initialize()
+            await useragent.initialize()
+            app.agents[username] = useragent
         except Exception as e:
             print(f"Error initializing agent: {str(e)}")
             raise e
@@ -213,7 +215,8 @@ async def refresh_users_task():
                     print(f"Skipping profile refresh for {username} because it's locked")
 
             print(f"Loading users list at {datetime.now()}")
-            app.users = load_users()
+            users = load_users()
+            app.users = users
             print(f"Loading user agents at {datetime.now()}")
             await load_user_agents()
             print(f"Users list refreshed at {datetime.now()}")
