@@ -78,16 +78,24 @@ def save_tweets_to_collection(user_name, collection_name):
   
     tweets = order_tweets(tweets, True)
     for tweet in tweets:
-        if rag.exists(tweet["id"]):
+        #if rag.exists(tweet["id"]):
             #print(f"Tweet {tweet['id']} already exists in {collection_name}")
+        #    break
+        existing_doc = rag.collection.get(ids=[tweet["id"]])
+        if len(existing_doc["ids"]) > 0:
+            print(f"Tweet {tweet['id']} already exists in {collection_name}")
             break
         doc = format_tweet_to_doc(tweet)
         rag.add_documents([doc])
     
     tweets = order_tweets(tweets, False)
     for tweet in tweets:
-        if rag.exists(tweet["id"]):
+        #if rag.exists(tweet["id"]):
             #print(f"Tweet {tweet['id']} already exists in {collection_name}")
+        #    break
+        existing_doc = rag.collection.get(ids=[tweet["id"]])
+        if len(existing_doc["ids"]) > 0:
+            print(f"Tweet {tweet['id']} already exists in {collection_name}")
             break
         doc = format_tweet_to_doc(tweet)
         rag.add_documents([doc])
