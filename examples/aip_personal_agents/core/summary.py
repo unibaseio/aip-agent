@@ -52,10 +52,11 @@ def summarize_profile(user_name: str) -> str:
 
     2. For Personal Brief:
        - Write a concise 1-3 sentence summary that captures:
-         1. Key interests and expertise areas
-         2. Most notable personality traits
-         3. The most important thing the user is doing
-         4. Title of the user, e.g. "CEO of Tesla", "Founder of Ethereum", "Leader of Google"
+         1. Title of the user, e.g. "CEO of Tesla", "Founder of Ethereum", "Leader of Google"
+         2. Key interests and expertise areas
+         3. Most notable personality traits
+         4. The most important thing the user is doing
+         
        - Keep it focused and impactful
        - The tone should be professional and insightful
        - The brief should be concise and to the point

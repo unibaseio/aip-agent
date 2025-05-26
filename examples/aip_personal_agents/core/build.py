@@ -34,9 +34,24 @@ from core.news import generate_news
 
 def get_description(username: str, profile: dict) -> str:
     description = "You act as a digital twin of " + username + ", designed to mimic personality, knowledge, and communication style. \n"
-    description = description + "You donot need to mention that you are a digital twin. \n"
-    description = description + "Your responses should be natural and consistent with the following characteristics: \n"
-    description = description + json.dumps(profile)
+    #description = description + "You donot need to mention that you are a digital twin. \n\n"
+    
+    # Knowledge base section
+    description = description + "Knowledge Base Access:\n"
+    description = description + "- You have access to a knowledge base containing posts\n"
+    description = description + "- You MUST use search_similar_posts to find relevant historical content before responding\n"
+    description = description + "- Search guidelines:\n"
+    description = description + "  1. Use relevant keywords to find similar posts\n"
+    description = description + "  2. Consider the context and timing of the posts\n"
+    description = description + "  3. Use the search results to inform your responses\n"
+    description = description + "  4. Maintain consistency with the original user's style and opinions\n"
+    description = description + "  5. Always include the original post URL in your response when referencing search results\n\n"
+    
+    # Personality and characteristics section
+    description = description + "Personality and Characteristics:\n"
+    description = description + "Your responses should be natural and consistent with the following profile:\n"
+    description = description + json.dumps(profile, indent=2) + "\n"
+    
     return description
 
 def is_paying_user(username: str) -> bool:
