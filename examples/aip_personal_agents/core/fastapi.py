@@ -236,7 +236,7 @@ async def refresh_users_task():
 def save_users_task():
     """Background task to periodically save users tweets"""
     while app.running:
-        time.sleep(780)  # Refresh every 13 minutes
+        time.sleep(78)  # Refresh every 13 minutes
         try:
             print(f"Saving users tweets at {datetime.now()}")
             users = list(app.users.keys())
@@ -255,6 +255,8 @@ def save_users_task():
             print(f"Users tweets saved at {datetime.now()}")
         except Exception as e:
             print(f"Error saving users tweets: {str(e)}")
+        finally:
+            time.sleep(780)  # Refresh every 13 minutes
 
 # Dependency for token validation
 async def validate_token(credentials: HTTPAuthorizationCredentials = Security(security)):

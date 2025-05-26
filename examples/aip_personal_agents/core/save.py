@@ -2,6 +2,7 @@ import json
 import os
 import sys
 import re
+import time
 from membase.knowledge.chroma import ChromaKnowledgeBase
 from membase.knowledge.document import Document
 
@@ -94,6 +95,7 @@ def save_tweets_to_collection(user_name, collection_name):
 def save_tweets(user_name):
     print(f"Saving tweets for {user_name}")
     save_tweets_to_collection(user_name, user_name)
+    time.sleep(60)
     common_collection_name = "kol_database"
     save_tweets_to_collection(user_name, common_collection_name)
 
