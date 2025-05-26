@@ -82,6 +82,7 @@ app.running = True
 app.user_locks = {}  # Store locks for each user (for both building and other operations)
 app.current_builds = 0  # Current number of builds in progress
 app.build_lock = Lock()  # Lock for protecting current_builds
+app.users_lock = Lock()  # Lock for protecting app.users dictionary
 app.max_concurrent_builds = 4  # Maximum number of concurrent builds
 app.users = {}
 app.candidates = []
@@ -115,7 +116,8 @@ def release_user_lock(username: str) -> None:
             pass
 
 async def load_user_agents():
-    usernames = list(app.users.keys())
+    with app.users_lock:
+        usernames = list(app.users.keys())
     usernames.sort()
     for username in usernames:
         if not is_paying_user(username):  
@@ -124,7 +126,8 @@ async def load_user_agents():
         if username in app.agents:
             continue
 
-        profile = app.users[username]["profile"]
+        with app.users_lock:
+            profile = app.users[username]["profile"]
         if profile is None or profile == {}:
             continue
 
@@ -164,7 +167,6 @@ async def refresh_users_task():
                     if get_user_lock(username):
                         try:
                             build_user(username)
-                            app.users[username] = load_user(username)
                         finally:
                             release_user_lock(username)
                     else:
@@ -174,8 +176,9 @@ async def refresh_users_task():
             if users_len == 0:
                 print(f"No users to refresh at {datetime.now()}")
                 users = load_users()
-                for username in users:
-                    app.users[username] = users[username]
+                with app.users_lock:
+                    for username in users:
+                        app.users[username] = users[username]
                 await asyncio.sleep(600)
                 continue
 
@@ -212,7 +215,6 @@ async def refresh_users_task():
                     try:
                         print(f"Refreshing profile for {i}/{users_len} user {username} at {datetime.now()}")
                         refresh_profile(username)
-                        app.users[username] = load_user(username)
                     finally:
                         release_user_lock(username)
                 else:
@@ -220,13 +222,15 @@ async def refresh_users_task():
 
             print(f"Loading users list at {datetime.now()}")
             users = load_users()
-            # Update existing users and add new ones
-            for username in users:
-                app.users[username] = users[username]
-            # Remove users that no longer exist
-            users_to_remove = [username for username in app.users if username not in users]
-            for username in users_to_remove:
-                del app.users[username]
+            # Update app.users with lock protection
+            with app.users_lock:
+                # Update existing users and add new ones
+                for username in users:
+                    app.users[username] = users[username]
+                # Remove users that no longer exist
+                users_to_remove = [username for username in app.users if username not in users]
+                for username in users_to_remove:
+                    del app.users[username]
             print(f"Loading user agents at {datetime.now()}")
             await load_user_agents()
             print(f"Users list refreshed at {datetime.now()}")
@@ -240,7 +244,8 @@ def save_users_task():
         time.sleep(780)  # Refresh every 13 minutes
         try:
             print(f"Saving users tweets at {datetime.now()}")
-            users = list(app.users.keys())
+            with app.users_lock:
+                users = list(app.users.keys())
             users.sort()
             for username in users:
                 print(f"Saving tweets for {username} at {datetime.now()}")
@@ -301,15 +306,15 @@ async def list_info_api(
     """
     try:
         res = []
-        for username in app.users:
-            resinfo = {
-                "username": username,
-                "summary": app.users[username].get("summary", {}),
-                "scores": app.users[username].get("scores", {}),
-                "xinfo": app.users[username].get("xinfo", {}),
-            }
-
-            res.append(resinfo)   
+        with app.users_lock:
+            for username in app.users:
+                resinfo = {
+                    "username": username,
+                    "summary": app.users[username].get("summary", {}),
+                    "scores": app.users[username].get("scores", {}),
+                    "xinfo": app.users[username].get("xinfo", {}),
+                }
+                res.append(resinfo)   
         
         # Sort the results
         def get_total_score(x):
@@ -334,17 +339,18 @@ async def get_info_api(username: str, token: str = Depends(validate_token)):
         if not username:
             raise HTTPException(status_code=400, detail="Missing username parameter")
 
-        if username not in app.users:
-            if username in app.candidates:
-                return {"success": False, "data": "Building..."}    
-            raise HTTPException(status_code=404, detail="User not found")
-        
-        res = {
-            "username": username,
-            "xinfo": app.users[username].get("xinfo", {}),
-            "summary": app.users[username].get("summary", {}),
-            "scores": app.users[username].get("scores", {}),
-        }    
+        with app.users_lock:
+            if username not in app.users:
+                if username in app.candidates:
+                    return {"success": False, "data": "Building..."}    
+                raise HTTPException(status_code=404, detail="User not found")
+            
+            res = {
+                "username": username,
+                "xinfo": app.users[username].get("xinfo", {}),
+                "summary": app.users[username].get("summary", {}),
+                "scores": app.users[username].get("scores", {}),
+            }    
 
         return {"success": True, "data": res}
     except Exception as e:
@@ -354,7 +360,8 @@ async def get_info_api(username: str, token: str = Depends(validate_token)):
 async def list_users_api(token: str = Depends(validate_token)):
     """List all available users"""
     try:
-        accounts = list(app.users.keys())
+        with app.users_lock:
+            accounts = list(app.users.keys())
         accounts.sort()  # Sort the accounts list alphabetically
         return {"success": True, "data": accounts}
     except Exception as e:
@@ -475,7 +482,6 @@ def build_user_sync(username: str):
         print(f"Starting build for {username}")
         update_user_status(username, "state", "building")
         build_user(username)
-        app.users[username] = load_user(username)
         update_user_status(username, "state", "built")
 
         print(f"Successfully completed build for {username}")
