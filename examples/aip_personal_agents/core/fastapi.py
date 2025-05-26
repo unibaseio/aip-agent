@@ -174,7 +174,8 @@ async def refresh_users_task():
             if users_len == 0:
                 print(f"No users to refresh at {datetime.now()}")
                 users = load_users()
-                app.users = users
+                for username in users:
+                    app.users[username] = users[username]
                 await asyncio.sleep(600)
                 continue
 
@@ -219,7 +220,13 @@ async def refresh_users_task():
 
             print(f"Loading users list at {datetime.now()}")
             users = load_users()
-            app.users = users
+            # Update existing users and add new ones
+            for username in users:
+                app.users[username] = users[username]
+            # Remove users that no longer exist
+            users_to_remove = [username for username in app.users if username not in users]
+            for username in users_to_remove:
+                del app.users[username]
             print(f"Loading user agents at {datetime.now()}")
             await load_user_agents()
             print(f"Users list refreshed at {datetime.now()}")
@@ -852,10 +859,10 @@ async def initialize(port: int = 5001, bearer_token: str = None) -> None:
         raise ValueError("Bearer token must be provided either through --bearer-token argument or BEARER_TOKEN environment variable")
 
     try:
-        app.users = load_users()
+        users = load_users()
+        for username in users:
+            app.users[username] = users[username]
 
-        app.candidates = []
-        app.refresh_counts = {}
     except Exception as e:
         print(f"Error loading users: {str(e)}")
         exit()
