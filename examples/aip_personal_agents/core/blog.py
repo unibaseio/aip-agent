@@ -104,6 +104,7 @@ def store_blog_to_db(url: str, date_str: str, collection_name: str, chunk_size: 
         metadata = {
             "title": title,
             "url": url,
+            "author": "Vitalik Buterin",
             "chunk_index": i,
             "total_chunks": len(chunks),
             "source": "blog",

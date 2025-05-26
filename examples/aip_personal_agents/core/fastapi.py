@@ -174,6 +174,7 @@ async def refresh_users_task():
                 continue
 
             # refresh tweets
+            print(f"Refreshing tweets for {len(finished_users)} users at {datetime.now()}")
             for i, username in enumerate(finished_users):
                 if username in app.candidates:
                     continue
@@ -190,9 +191,11 @@ async def refresh_users_task():
                     print(f"Skipping tweets refresh for {username} because it's locked")
 
             # refresh report
+            print(f"Generating daily report at {datetime.now()}")
             generate_daily_report()
 
             # refresh profile
+            print(f"Refreshing profile for {len(finished_users)} users at {datetime.now()}")
             for i, username in enumerate(finished_users):
                 if username in app.candidates:
                     continue
@@ -209,7 +212,9 @@ async def refresh_users_task():
                 else:
                     print(f"Skipping profile refresh for {username} because it's locked")
 
+            print(f"Loading users list at {datetime.now()}")
             app.users = load_users()
+            print(f"Loading user agents at {datetime.now()}")
             await load_user_agents()
             print(f"Users list refreshed at {datetime.now()}")
         except Exception as e:
