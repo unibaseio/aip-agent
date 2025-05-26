@@ -94,23 +94,25 @@ def create_user_xinfo(user_name: str):
     return info
 
 def load_user(user_name: str) -> Any:
-    print(f"load user: {user_name}")
+    print(f"Loading user: {user_name}")
     profile = load_user_profile(user_name)
-
+    print(f"Loading profile for {user_name}")
     summary = load_user_summary(user_name)
-
+    print(f"Loading summary for {user_name}")   
     scores = load_user_airdrop_score(user_name)
-
+    print(f"Loading scores for {user_name}")
     xinfo = get_user_xinfo(user_name)
-
+    print(f"Loading xinfo for {user_name}")
     return {"profile": profile, "summary": summary, "scores": scores, "xinfo": xinfo}
 
 # user dict: name -> summary
 def load_users() -> Dict[str, Any]:
     finished_users, unfinished_users = load_usernames()
     users = {}
+    print(f"Loading {len(finished_users)} finished users")
     for user_name in finished_users:
         users[user_name] = load_user(user_name)
+    print(f"Loading {len(unfinished_users)} unfinished users")
     for user_name in unfinished_users:
         users[user_name] = load_user(user_name)
     return users
