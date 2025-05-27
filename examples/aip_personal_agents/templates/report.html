@@ -371,6 +371,7 @@
                         <p>• Hover over content and click 📋 to copy</p>
                         <p>• Press <kbd>Ctrl+C</kbd> to copy visible content</p>
                         <p>• Press <kbd>Ctrl+Shift+C</kbd> to copy markdown</p>
+                        <p id="copyCompatInfo" style="margin-top: 10px; font-size: 0.8rem;"></p>
                     </div>
                 </div>
             </div>
@@ -457,6 +458,9 @@
                 </button>
                 <button class="copy-btn" onclick="copyToClipboard('html', '${format}', this)">
                     🌐 Copy HTML
+                </button>
+                <button class="copy-btn" onclick="selectAllContent()" style="background: #6c757d;">
+                    🔍 Select All
                 </button>
             `;
             content.appendChild(copySection);
@@ -610,11 +614,27 @@
             }, 3000);
         }
 
-        // Set today's date as default
+        // Set today's date as default and check copy compatibility
         document.addEventListener('DOMContentLoaded', function () {
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('dateInput').value = today;
+
+            // Check copy compatibility and show info
+            checkCopyCompatibility();
         });
+
+        function checkCopyCompatibility() {
+            const infoElement = document.getElementById('copyCompatInfo');
+            if (!infoElement) return;
+
+            if (navigator.clipboard && window.isSecureContext) {
+                infoElement.innerHTML = '✅ <span style="color: #28a745;">Modern clipboard API available</span>';
+            } else if (document.queryCommandSupported && document.queryCommandSupported('copy')) {
+                infoElement.innerHTML = '⚠️ <span style="color: #ffc107;">Using legacy copy method (works but may show browser warnings)</span>';
+            } else {
+                infoElement.innerHTML = '❌ <span style="color: #dc3545;">Copy functionality may not work in this browser</span>';
+            }
+        }
 
         // Allow Enter key to trigger load
         document.addEventListener('keypress', function (e) {
@@ -639,6 +659,53 @@
                 }
             }
         });
+
+        // Universal copy function that works in all browsers
+        async function copyTextToClipboard(text) {
+            // Try modern clipboard API first (requires HTTPS or localhost)
+            if (navigator.clipboard && window.isSecureContext) {
+                try {
+                    await navigator.clipboard.writeText(text);
+                    return;
+                } catch (err) {
+                    console.warn('Clipboard API failed, falling back to legacy method:', err);
+                }
+            }
+
+            // Fallback to legacy method
+            return new Promise((resolve, reject) => {
+                try {
+                    // Create a temporary textarea element
+                    const textArea = document.createElement('textarea');
+                    textArea.value = text;
+
+                    // Make it invisible but still selectable
+                    textArea.style.position = 'fixed';
+                    textArea.style.left = '-999999px';
+                    textArea.style.top = '-999999px';
+                    textArea.style.opacity = '0';
+                    textArea.style.pointerEvents = 'none';
+
+                    document.body.appendChild(textArea);
+
+                    // Select and copy the text
+                    textArea.focus();
+                    textArea.select();
+                    textArea.setSelectionRange(0, 99999); // For mobile devices
+
+                    const successful = document.execCommand('copy');
+                    document.body.removeChild(textArea);
+
+                    if (successful) {
+                        resolve();
+                    } else {
+                        reject(new Error('Copy command failed'));
+                    }
+                } catch (err) {
+                    reject(err);
+                }
+            });
+        }
 
         // Copy functionality
         async function copyToClipboard(type, currentFormat, buttonElement) {
@@ -685,14 +752,24 @@
                     return;
                 }
 
-                await navigator.clipboard.writeText(textToCopy);
+                await copyTextToClipboard(textToCopy);
 
                 // Use the button element passed as parameter or try to find it from event
                 const targetButton = buttonElement || event.target;
                 showCopySuccess(targetButton, type);
             } catch (err) {
                 console.error('Failed to copy: ', err);
-                showError('Failed to copy to clipboard. Please try again.');
+                let errorMessage = 'Failed to copy to clipboard.';
+
+                if (err.message && err.message.includes('clipboard')) {
+                    errorMessage += ' Try using Ctrl+C or accessing the page via HTTPS/localhost.';
+                } else if (err.message && err.message.includes('Copy command failed')) {
+                    errorMessage += ' Your browser may not support copying. Try selecting and copying manually.';
+                } else {
+                    errorMessage += ' Please try again or copy manually.';
+                }
+
+                showError(errorMessage);
             }
         }
 
@@ -721,12 +798,22 @@
                     return;
                 }
 
-                await navigator.clipboard.writeText(textContent);
+                await copyTextToClipboard(textContent);
                 const targetButton = buttonElement || event.target;
                 showCopySuccess(targetButton, 'content');
             } catch (err) {
                 console.error('Failed to copy content: ', err);
-                showError('Failed to copy content to clipboard');
+                let errorMessage = 'Failed to copy content to clipboard.';
+
+                if (err.message && err.message.includes('clipboard')) {
+                    errorMessage += ' Try using Ctrl+C or accessing the page via HTTPS/localhost.';
+                } else if (err.message && err.message.includes('Copy command failed')) {
+                    errorMessage += ' Your browser may not support copying. Try selecting and copying manually.';
+                } else {
+                    errorMessage += ' Please try again or select and copy manually.';
+                }
+
+                showError(errorMessage);
             }
         }
 
@@ -810,6 +897,30 @@
                 .replace(/>\s+/g, '') // Remove blockquotes
                 .replace(/^\s*[-*+]\s+/gm, '• ') // Convert list items
                 .replace(/^\s*\d+\.\s+/gm, '• '); // Convert numbered lists
+        }
+
+        function selectAllContent() {
+            const reportContent = document.querySelector('.report-content');
+            if (!reportContent) {
+                showToast('No content available to select', 'error');
+                return;
+            }
+
+            try {
+                // Create a range and select the content
+                const range = document.createRange();
+                range.selectNodeContents(reportContent);
+
+                // Clear any existing selection
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(range);
+
+                showToast('📝 Content selected! Press Ctrl+C to copy', 'info');
+            } catch (err) {
+                console.error('Failed to select content: ', err);
+                showToast('Failed to select content', 'error');
+            }
         }
     </script>
 </body>
