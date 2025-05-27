@@ -118,14 +118,10 @@ def store_blog_to_db(url: str, date_str: str, collection_name: str, chunk_size: 
             metadata=metadata,
         )
         
-        if rag.exists(doc_id):
-            rag.update_documents(doc)
-        else:
+        if not rag.exists(doc_id):
             rag.add_documents([doc])
 
-        if grag.exists(doc_id):
-            grag.update_documents(doc)
-        else:
+        if not grag.exists(doc_id):
             grag.add_documents([doc]) 
             
     print(f"Successfully stored blog content in {len(chunks)} chunks to vector database, collection: {collection_name}")

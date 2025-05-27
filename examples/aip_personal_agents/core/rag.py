@@ -76,10 +76,10 @@ def search_similar_posts(
     print(f"Searching {rag._collection_name} for similar posts to: {query}")
     docs = rag.retrieve(query, top_k=num_results, metadata_filter=metadata_filter, content_filter=content_filter)
     print(f"Found {len(docs)} documents")
-    if len(docs) == 0:
-        global kol_rag
-        print(f"Searching {kol_rag._collection_name} for similar posts to: {query}")
-        docs = kol_rag.retrieve(query, top_k=num_results, metadata_filter=metadata_filter, content_filter=content_filter)
-        print(f"Found {len(docs)} documents in kol_rag")
+    #if len(docs) == 0:
+    #    global kol_rag
+    #    print(f"Searching {kol_rag._collection_name} for similar posts to: {query}")
+    #    docs = kol_rag.retrieve(query, top_k=num_results, metadata_filter=metadata_filter, content_filter=content_filter)
+    #    print(f"Found {len(docs)} documents in kol_rag")
     # transform docs to list, with content,metadata, and doc_id
     return [{"name": doc.doc_id, "content": doc.content, "metadata": doc.metadata} for doc in docs]

@@ -3,6 +3,8 @@ from datetime import datetime
 from fastapi import FastAPI, Request, HTTPException, Depends, Header, Security
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 import os
 import json
 from concurrent.futures import ThreadPoolExecutor
@@ -67,6 +69,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mount static files
+try:
+    app.mount("/static", StaticFiles(directory="templates"), name="static")
+except Exception:
+    # If templates directory doesn't exist, create it
+    import os
+    os.makedirs("templates", exist_ok=True)
+    app.mount("/static", StaticFiles(directory="templates"), name="static")
 
 # Create security scheme
 security = HTTPBearer()
@@ -148,7 +159,7 @@ async def load_user_agents():
 async def refresh_users_task():
     """Background task to periodically refresh users list"""
     while app.running:
-        #await asyncio.sleep(600)
+        await asyncio.sleep(60)
         try:
             print(f"Refreshing users list at {datetime.now()}")
             finished_users, unfinished_users = load_usernames()
@@ -286,6 +297,19 @@ def validate_required_fields(required_fields: List[str]):
             )
         return data
     return dependency
+
+@app.get("/", response_class=HTMLResponse)
+async def report_dashboard():
+    """Serve the report dashboard HTML page"""
+    try:
+        with open("templates/report.html", "r", encoding="utf-8") as f:
+            html_content = f.read()
+        return HTMLResponse(content=html_content, status_code=200)
+    except FileNotFoundError:
+        return HTMLResponse(
+            content="<h1>Report dashboard not found</h1><p>Please ensure templates/report.html exists</p>",
+            status_code=404
+        )
 
 @app.get("/api/list_info")
 async def list_info_api(

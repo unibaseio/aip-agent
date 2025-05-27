@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web3 Daily Report Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .controls {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .control-group {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .control-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .control-item label {
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.9rem;
+        }
+
+        .control-item input,
+        .control-item select {
+            padding: 10px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .control-item input:focus,
+        .control-item select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            padding: 12px 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .content {
+            padding: 40px;
+            min-height: 400px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: #6c757d;
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #f5c6cb;
+            margin: 20px 0;
+        }
+
+        .report-content {
+            line-height: 1.8;
+            color: #333;
+        }
+
+        .report-content h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+            font-size: 2.2rem;
+        }
+
+        .report-content h2 {
+            color: #34495e;
+            margin: 30px 0 20px 0;
+            font-size: 1.6rem;
+            padding-left: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .report-content h3 {
+            color: #5a6c7d;
+            margin: 25px 0 15px 0;
+            font-size: 1.3rem;
+        }
+
+        .report-content p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+
+        .report-content ul,
+        .report-content ol {
+            margin: 15px 0;
+            padding-left: 30px;
+        }
+
+        .report-content li {
+            margin-bottom: 8px;
+        }
+
+        .report-content blockquote {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 10px 10px 0;
+            font-style: italic;
+        }
+
+        .report-content code {
+            background: #f1f3f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        }
+
+        .report-content pre {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+
+        .report-meta {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border: 1px solid #bbdefb;
+        }
+
+        .report-meta strong {
+            color: #1565c0;
+        }
+
+        .copy-section {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .copy-btn {
+            padding: 8px 16px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .copy-btn:hover {
+            background: #218838;
+            transform: translateY(-1px);
+        }
+
+        .copy-btn:active {
+            transform: translateY(0);
+        }
+
+        .copy-btn.copied {
+            background: #6c757d;
+        }
+
+        .copy-btn.copied::after {
+            content: ' ✓';
+        }
+
+        .report-content {
+            position: relative;
+        }
+
+        .copy-overlay {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 8px;
+            padding: 5px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+
+        .report-content:hover .copy-overlay {
+            display: block;
+        }
+
+        kbd {
+            background-color: #f1f3f4;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            color: #3c4043;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.8em;
+            padding: 2px 6px;
+            margin: 0 2px;
+        }
+
+        @media (max-width: 768px) {
+            .control-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .controls {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📰 Web3 Daily Report Dashboard</h1>
+            <p>Real-time Web3 news analysis and insights</p>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <div class="control-item">
+                    <label for="dateInput">Date (YYYY-MM-DD)</label>
+                    <input type="date" id="dateInput" placeholder="Leave empty for latest report">
+                </div>
+                <div class="control-item">
+                    <label for="languageSelect">Language</label>
+                    <select id="languageSelect">
+                        <option value="Chinese">中文</option>
+                        <option value="English">English</option>
+                    </select>
+                </div>
+                <div class="control-item">
+                    <label for="formatSelect">Format</label>
+                    <select id="formatSelect">
+                        <option value="markdown">Markdown</option>
+                        <option value="json">JSON</option>
+                    </select>
+                </div>
+                <div class="control-item">
+                    <label for="tokenInput">Bearer Token</label>
+                    <input type="password" id="tokenInput" placeholder="Enter your bearer token"
+                        value="unibase_personal_agent">
+                </div>
+            </div>
+            <button class="btn" onclick="loadReport()">📊 Load Report</button>
+        </div>
+
+        <div class="content" id="content">
+            <div class="loading" style="display: none;" id="loading">
+                Loading report...
+            </div>
+            <div id="reportContent">
+                <div style="text-align: center; color: #6c757d; padding: 60px;">
+                    <p style="margin-bottom: 20px;">
+                        👆 Click "Load Report" to fetch the latest news report
+                    </p>
+                    <div style="font-size: 0.9rem; opacity: 0.8;">
+                        <p>💡 <strong>Copy Tips:</strong></p>
+                        <p>• Use copy buttons above the report</p>
+                        <p>• Hover over content and click 📋 to copy</p>
+                        <p>• Press <kbd>Ctrl+C</kbd> to copy visible content</p>
+                        <p>• Press <kbd>Ctrl+Shift+C</kbd> to copy markdown</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function loadReport() {
+            const dateInput = document.getElementById('dateInput').value;
+            const language = document.getElementById('languageSelect').value;
+            const format = document.getElementById('formatSelect').value;
+            const token = document.getElementById('tokenInput').value;
+
+            if (!token) {
+                showError('Please enter a bearer token');
+                return;
+            }
+
+            const loading = document.getElementById('loading');
+            const content = document.getElementById('reportContent');
+
+            loading.style.display = 'block';
+            content.innerHTML = '';
+
+            try {
+                const params = new URLSearchParams({
+                    language: language,
+                    format: format
+                });
+
+                if (dateInput) {
+                    params.append('date_str', dateInput);
+                }
+
+                const response = await fetch(`/api/get_report?${params}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.detail || 'Failed to fetch report');
+                }
+
+                if (result.success) {
+                    displayReport(result.data, format, dateInput, language);
+                } else {
+                    throw new Error('API returned unsuccessful response');
+                }
+            } catch (error) {
+                showError(`Error loading report: ${error.message}`);
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        function displayReport(data, format, date, language) {
+            const content = document.getElementById('reportContent');
+
+            // Add metadata
+            const meta = document.createElement('div');
+            meta.className = 'report-meta';
+            meta.innerHTML = `
+                <strong>Report Date:</strong> ${date || 'Latest'} | 
+                <strong>Language:</strong> ${language} | 
+                <strong>Format:</strong> ${format} | 
+                <strong>Generated:</strong> ${new Date().toLocaleString()}
+            `;
+            content.appendChild(meta);
+
+            // Add copy buttons section
+            const copySection = document.createElement('div');
+            copySection.className = 'copy-section';
+            copySection.innerHTML = `
+                <button class="copy-btn" onclick="copyToClipboard('markdown', '${format}', this)">
+                    📋 Copy Markdown
+                </button>
+                <button class="copy-btn" onclick="copyToClipboard('text', '${format}', this)">
+                    📄 Copy Text
+                </button>
+                <button class="copy-btn" onclick="copyToClipboard('html', '${format}', this)">
+                    🌐 Copy HTML
+                </button>
+            `;
+            content.appendChild(copySection);
+
+            if (format === 'json') {
+                // Display JSON data in a formatted way
+                const jsonContainer = document.createElement('div');
+                jsonContainer.className = 'report-content';
+
+                if (typeof data === 'object') {
+                    // If it's a structured JSON object
+                    let htmlContent = '';
+                    for (const [key, value] of Object.entries(data)) {
+                        if (key === 'title') {
+                            htmlContent += `<h1>${value}</h1>`;
+                        } else if (Array.isArray(value)) {
+                            htmlContent += `<h2>${key}</h2><ul>`;
+                            value.forEach(item => {
+                                htmlContent += `<li>${item}</li>`;
+                            });
+                            htmlContent += '</ul>';
+                        } else {
+                            htmlContent += `<h2>${key}</h2><p>${value}</p>`;
+                        }
+                    }
+                    jsonContainer.innerHTML = htmlContent;
+                } else {
+                    // If it's raw text, display as preformatted
+                    const pre = document.createElement('pre');
+                    pre.style.background = '#f8f9fa';
+                    pre.style.padding = '20px';
+                    pre.style.borderRadius = '10px';
+                    pre.style.overflow = 'auto';
+                    pre.textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+                    jsonContainer.appendChild(pre);
+                }
+
+                // Add copy overlay for JSON content
+                const copyOverlay = document.createElement('div');
+                copyOverlay.className = 'copy-overlay';
+                copyOverlay.innerHTML = `
+                    <button class="copy-btn" onclick="copyContentArea(this)" title="Copy visible content">
+                        📋
+                    </button>
+                `;
+                jsonContainer.appendChild(copyOverlay);
+
+                content.appendChild(jsonContainer);
+            } else {
+                // Display markdown content
+                const markdownContainer = document.createElement('div');
+                markdownContainer.className = 'report-content';
+                markdownContainer.innerHTML = marked.parse(data);
+
+                // Add copy overlay for content area
+                const copyOverlay = document.createElement('div');
+                copyOverlay.className = 'copy-overlay';
+                copyOverlay.innerHTML = `
+                    <button class="copy-btn" onclick="copyContentArea(this)" title="Copy visible content">
+                        📋
+                    </button>
+                `;
+                markdownContainer.appendChild(copyOverlay);
+
+                content.appendChild(markdownContainer);
+            }
+
+            // Store the current data globally for copying
+            window.currentReportData = {
+                raw: data,
+                format: format,
+                date: date,
+                language: language
+            };
+        }
+
+        function showError(message) {
+            // Check if we're showing a copy error vs a general error
+            if (message.includes('copy') || message.includes('Copy')) {
+                // Show a temporary toast-style error for copy operations
+                showToast(message, 'error');
+            } else {
+                // Show the full error in the content area for other errors
+                const content = document.getElementById('reportContent');
+                content.innerHTML = `
+                    <div class="error">
+                        <strong>❌ Error:</strong> ${message}
+                    </div>
+                `;
+            }
+        }
+
+        function showToast(message, type = 'info') {
+            // Remove existing toast if any
+            const existingToast = document.querySelector('.toast');
+            if (existingToast) {
+                existingToast.remove();
+            }
+
+            // Create toast element
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            const colors = {
+                error: { bg: '#f8d7da', color: '#721c24', border: '#f5c6cb' },
+                success: { bg: '#d4edda', color: '#155724', border: '#c3e6cb' },
+                info: { bg: '#d1ecf1', color: '#0c5460', border: '#bee5eb' }
+            };
+            const colorScheme = colors[type] || colors.info;
+
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${colorScheme.bg};
+                color: ${colorScheme.color};
+                border: 1px solid ${colorScheme.border};
+                border-radius: 8px;
+                padding: 12px 20px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                z-index: 1000;
+                max-width: 300px;
+                font-size: 0.9rem;
+                animation: slideIn 0.3s ease-out;
+            `;
+            toast.textContent = message;
+
+            // Add animation styles
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slideIn {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+                @keyframes slideOut {
+                    from { transform: translateX(0); opacity: 1; }
+                    to { transform: translateX(100%); opacity: 0; }
+                }
+            `;
+            document.head.appendChild(style);
+
+            document.body.appendChild(toast);
+
+            // Auto remove after 3 seconds
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease-in';
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.remove();
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // Set today's date as default
+        document.addEventListener('DOMContentLoaded', function () {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('dateInput').value = today;
+        });
+
+        // Allow Enter key to trigger load
+        document.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                loadReport();
+            }
+        });
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', function (e) {
+            // Ctrl+C to copy content (when not in input field)
+            if (e.ctrlKey && e.key === 'c' && !e.target.matches('input, textarea')) {
+                e.preventDefault();
+                copyContentArea();
+            }
+
+            // Ctrl+Shift+C to copy markdown
+            if (e.ctrlKey && e.shiftKey && e.key === 'C') {
+                e.preventDefault();
+                if (window.currentReportData) {
+                    copyToClipboard('markdown', window.currentReportData.format);
+                }
+            }
+        });
+
+        // Copy functionality
+        async function copyToClipboard(type, currentFormat, buttonElement) {
+            if (!window.currentReportData) {
+                showError('Please load a report first before copying');
+                return;
+            }
+
+            let textToCopy = '';
+            const data = window.currentReportData.raw;
+
+            try {
+                switch (type) {
+                    case 'markdown':
+                        if (currentFormat === 'json' && typeof data === 'object') {
+                            // Convert JSON back to markdown-like format
+                            textToCopy = convertJsonToMarkdown(data);
+                        } else {
+                            textToCopy = data;
+                        }
+                        break;
+
+                    case 'text':
+                        if (currentFormat === 'json' && typeof data === 'object') {
+                            textToCopy = convertJsonToText(data);
+                        } else {
+                            // Convert markdown to plain text
+                            textToCopy = convertMarkdownToText(data);
+                        }
+                        break;
+
+                    case 'html':
+                        if (currentFormat === 'json' && typeof data === 'object') {
+                            textToCopy = convertJsonToHtml(data);
+                        } else {
+                            // Convert markdown to HTML
+                            textToCopy = marked.parse(data);
+                        }
+                        break;
+                }
+
+                if (!textToCopy || textToCopy.trim() === '') {
+                    showError('No content available to copy');
+                    return;
+                }
+
+                await navigator.clipboard.writeText(textToCopy);
+
+                // Use the button element passed as parameter or try to find it from event
+                const targetButton = buttonElement || event.target;
+                showCopySuccess(targetButton, type);
+            } catch (err) {
+                console.error('Failed to copy: ', err);
+                showError('Failed to copy to clipboard. Please try again.');
+            }
+        }
+
+        async function copyContentArea(buttonElement) {
+            const reportContent = document.querySelector('.report-content');
+            if (!reportContent) {
+                showError('Please load a report first before copying');
+                return;
+            }
+
+            try {
+                // Get the text content without HTML tags, excluding the copy overlay
+                const copyOverlay = reportContent.querySelector('.copy-overlay');
+                if (copyOverlay) {
+                    copyOverlay.style.display = 'none';
+                }
+
+                const textContent = reportContent.innerText || reportContent.textContent;
+
+                if (copyOverlay) {
+                    copyOverlay.style.display = '';
+                }
+
+                if (!textContent || textContent.trim() === '') {
+                    showError('No text content found to copy');
+                    return;
+                }
+
+                await navigator.clipboard.writeText(textContent);
+                const targetButton = buttonElement || event.target;
+                showCopySuccess(targetButton, 'content');
+            } catch (err) {
+                console.error('Failed to copy content: ', err);
+                showError('Failed to copy content to clipboard');
+            }
+        }
+
+        function showCopySuccess(button, type) {
+            // Show button feedback
+            const originalText = button.innerHTML;
+            button.classList.add('copied');
+            button.innerHTML = `✓ Copied`;
+
+            // Show toast notification
+            showToast(`✅ Successfully copied ${type} format!`, 'success');
+
+            setTimeout(() => {
+                button.classList.remove('copied');
+                button.innerHTML = originalText;
+            }, 2000);
+        }
+
+        function convertJsonToMarkdown(data) {
+            let markdown = '';
+            for (const [key, value] of Object.entries(data)) {
+                if (key === 'title') {
+                    markdown += `# ${value}\n\n`;
+                } else if (Array.isArray(value)) {
+                    markdown += `## ${key}\n\n`;
+                    value.forEach(item => {
+                        markdown += `* ${item}\n`;
+                    });
+                    markdown += '\n';
+                } else {
+                    markdown += `## ${key}\n\n${value}\n\n`;
+                }
+            }
+            return markdown;
+        }
+
+        function convertJsonToText(data) {
+            let text = '';
+            for (const [key, value] of Object.entries(data)) {
+                if (key === 'title') {
+                    text += `${value}\n\n`;
+                } else if (Array.isArray(value)) {
+                    text += `${key}\n`;
+                    value.forEach(item => {
+                        text += `- ${item}\n`;
+                    });
+                    text += '\n';
+                } else {
+                    text += `${key}\n${value}\n\n`;
+                }
+            }
+            return text;
+        }
+
+        function convertJsonToHtml(data) {
+            let html = '';
+            for (const [key, value] of Object.entries(data)) {
+                if (key === 'title') {
+                    html += `<h1>${value}</h1>`;
+                } else if (Array.isArray(value)) {
+                    html += `<h2>${key}</h2><ul>`;
+                    value.forEach(item => {
+                        html += `<li>${item}</li>`;
+                    });
+                    html += '</ul>';
+                } else {
+                    html += `<h2>${key}</h2><p>${value}</p>`;
+                }
+            }
+            return html;
+        }
+
+        function convertMarkdownToText(markdown) {
+            // Simple markdown to text conversion
+            return markdown
+                .replace(/#{1,6}\s+/g, '') // Remove headers
+                .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold
+                .replace(/\*(.*?)\*/g, '$1') // Remove italic
+                .replace(/\[(.*?)\]\(.*?\)/g, '$1') // Remove links, keep text
+                .replace(/`(.*?)`/g, '$1') // Remove code formatting
+                .replace(/>\s+/g, '') // Remove blockquotes
+                .replace(/^\s*[-*+]\s+/gm, '• ') // Convert list items
+                .replace(/^\s*\d+\.\s+/gm, '• '); // Convert numbered lists
+        }
+    </script>
+</body>
+
+</html>

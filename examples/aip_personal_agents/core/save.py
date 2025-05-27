@@ -103,9 +103,8 @@ def save_tweets_to_collection(user_name, collection_name):
 def save_tweets(user_name):
     print(f"Saving tweets for {user_name}")
     save_tweets_to_collection(user_name, user_name)
-    time.sleep(60)
-    common_collection_name = "kol_database"
-    save_tweets_to_collection(user_name, common_collection_name)
+    #common_collection_name = "kol_database"
+    #save_tweets_to_collection(user_name, common_collection_name)
 
 if __name__ == "__main__":
     default_x_name = "elonmusk"
