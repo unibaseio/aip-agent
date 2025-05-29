@@ -335,6 +335,8 @@ def load_report(date_str: str, language: str, type: str) -> str:
     if os.path.exists(report_file):
         with open(report_file, 'r', encoding='utf-8') as f:
             content = f.read()
+            # Remove the ```markdown markers if they exist
+            content = content.replace('```markdown\n', '').replace('\n```', '')
             return content
     return ""
 
@@ -346,6 +348,8 @@ def write_report(date_str: str, language: str, type: str, report: str):
             os.makedirs(f"reports/{date_str}")
     
     with open(report_file, 'w', encoding='utf-8') as f:
+        # Remove the ```markdown markers if they exist
+        report = report.replace('```markdown\n', '').replace('\n```', '')
         f.write(report)
     
 

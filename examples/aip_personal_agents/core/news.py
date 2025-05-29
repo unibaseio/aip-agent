@@ -29,8 +29,8 @@ def generate_news_report(language: str = "chinese", days: int = 3, hours: int = 
 
     Please analyze these tweets and generate a comprehensive industry report focused on the very latest developments (1-3 days). The report should follow this structure:
 
-    # 🌐 Web3 & AI Daily Report
-    
+    # 🌐 Web3 & AI Daily Report 
+
     ---
     
     **📅 Analysis Time**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}  

@@ -161,100 +161,116 @@ def generate_trading_report(language: str = "chinese", use_signals: bool = False
 
     Structure the report as follows:
 
-    # KOL Trading Signal Analysis Report
-    **Analysis Time**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-    **Data Range**: {len(tweets)} KOL tweets in {time_range}
+    # 📊 KOL Trading Signal Analysis Report
+    
+    ---
+    
+    **📅 Analysis Time**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}  
+    **📈 Data Range**: {len(tweets)} KOL tweets in {time_range} 
+    
+    ---
 
-    ## Core Trading Signals
+    ## 🎯 Core Trading Signals
 
-    ### Immediate Trading Opportunities
-    - **High Confidence Signals**: List 3-5 strongest trading signals
-    - **Entry Timing**: Specific buy/sell recommendations
-    - **Risk Assessment**: Risk level for each signal
-    - **Stop Loss Recommendations**: Specific stop loss settings
+    ### ⚡ Immediate Trading Opportunities
+    - **🔥 High Confidence Signals**: List 3-5 strongest trading signals
+    - **⏰ Entry Timing**: Specific buy/sell recommendations
+    - **⚠️ Risk Assessment**: Risk level for each signal
+    - **🛑 Stop Loss Recommendations**: Specific stop loss settings
 
-    ### Price Prediction Summary
-    - **Short-term Predictions** (1-7 days): Price direction based on KOL consensus
-    - **Medium-term Predictions** (1-4 weeks): Technical and fundamental analysis
-    - **Key Price Levels**: Support and resistance levels
-    - **Catalyst Events**: Upcoming events that may affect prices
+    ### 🔮 Price Prediction Summary
+    - **📊 Short-term Predictions** (1-7 days): Price direction based on KOL consensus
+    - **📈 Medium-term Predictions** (1-4 weeks): Technical and fundamental analysis
+    - **🎯 Key Price Levels**: Support and resistance levels
+    - **🚀 Catalyst Events**: Upcoming events that may affect prices
 
-    ## Focus Assets
+    ## 💎 Focus Assets
 
-    ### Hot Coin Analysis
+    ### 🔥 Hot Coin Analysis
     Detailed analysis for each frequently mentioned coin:
-    - **Current Sentiment**: Overall KOL attitude
-    - **Technical Indicators**: Technical analysis from tweets
-    - **Fundamental Changes**: Latest project developments
-    - **Trading Recommendations**: Specific operational strategies
+    - **💭 Current Sentiment**: Overall KOL attitude
+    - **📊 Technical Indicators**: Technical analysis from tweets
+    - **🔧 Fundamental Changes**: Latest project developments
+    - **💰 Trading Recommendations**: Specific operational strategies
 
-    ### Risk Warnings
-    - **High-Risk Assets**: Coins requiring caution
-    - **Market Risks**: Overall market risk factors
-    - **Regulatory Risks**: Policy-related risks
+    ### ⚠️ Risk Warnings
+    - **🚨 High-Risk Assets**: Coins requiring caution
+    - **📉 Market Risks**: Overall market risk factors
+    - **⚖️ Regulatory Risks**: Policy-related risks
 
-    ## KOL Influence Analysis
+    ## 👑 KOL Influence Analysis
 
-    ### Top KOL Opinions
-    - **Vitalik Buterin**: Latest views and impact
-    - **CZ (Binance)**: Exchange-related signals
-    - **Elon Musk**: Market sentiment impact
-    - **Other Important KOLs**: Ranked by influence
+    ### 🌟 Top KOL Opinions
+    - **🔶 Vitalik Buterin**: Latest views and impact
+    - **🟡 CZ (Binance)**: Exchange-related signals
+    - **🚀 Elon Musk**: Market sentiment impact
+    - **👥 Other Important KOLs**: Ranked by influence
 
-    ### Sentiment Indicators
-    - **Overall Market Sentiment**: Bull/Bear/Sideways
-    - **FOMO Index**: Panic buying level
-    - **FUD Index**: Panic selling level
-    - **Consensus Level**: KOL opinion consistency
+    ### 🎭 Sentiment Indicators
+    - **🎯 Overall Market Sentiment**: Bull/Bear/Sideways
+    - **🔥 FOMO Index**: Panic buying level
+    - **😰 FUD Index**: Panic selling level
+    - **🤝 Consensus Level**: KOL opinion consistency
 
-    ## Deep Market Insights
+    ## 🔍 Deep Market Insights
 
-    ### Capital Flow Analysis
-    - **Hot Money Flow**: Preferred sectors for capital
-    - **Institutional Movements**: Whale and institutional actions
-    - **Retail Sentiment**: Retail investor behavior
+    ### 💸 Capital Flow Analysis
+    - **🌊 Hot Money Flow**: Preferred sectors for capital
+    - **🐋 Institutional Movements**: Whale and institutional actions
+    - **👥 Retail Sentiment**: Retail investor behavior
 
-    ### Macro Factors
-    - **Regulatory Dynamics**: Latest policy impacts
-    - **Technical Development**: Blockchain technology progress
-    - **Market Structure**: Exchange and infrastructure changes
+    ### 🌐 Macro Factors
+    - **⚖️ Regulatory Dynamics**: Latest policy impacts
+    - **⚡ Technical Development**: Blockchain technology progress
+    - **🏗️ Market Structure**: Exchange and infrastructure changes
 
-    ## Immediate Action Recommendations
+    ## 🎯 Immediate Action Recommendations
 
-    ### Today's Trading Strategy
-    1. **Execute Immediately**: Trades requiring immediate action
-    2. **Watch and Wait**: Signals needing further confirmation
-    3. **Long-term Positioning**: Quality projects suitable for DCA
+    ### 📅 Today's Trading Strategy
+    1. **⚡ Execute Immediately**: Trades requiring immediate action
+    2. **👀 Watch and Wait**: Signals needing further confirmation
+    3. **📈 Long-term Positioning**: Quality projects suitable for DCA
 
-    ### Key Events Next 7 Days
-    - **Important Releases**: Project updates and launches
-    - **Conference Events**: Events that may impact the market
-    - **Technical Milestones**: Important technical nodes
+    ### 📆 Key Events Next 7 Days
+    - **🚀 Important Releases**: Project updates and launches
+    - **🎪 Conference Events**: Events that may impact the market
+    - **⚡ Technical Milestones**: Important technical nodes
 
-    ## Risk Management
+    ## 🛡️ Risk Management
 
-    ### Risk Control Recommendations
-    - **Position Management**: Recommended position allocation
-    - **Stop Loss Strategy**: Specific risk control methods
-    - **Capital Management**: Fund usage recommendations
+    ### 🎯 Risk Control Recommendations
+    - **⚖️ Position Management**: Recommended position allocation
+    - **🛑 Stop Loss Strategy**: Specific risk control methods
+    - **💰 Capital Management**: Fund usage recommendations
 
-    ### Dynamic Adjustments
-    - **Signal Changes**: How to adjust strategy based on new information
-    - **Market Changes**: Strategies for different market environments
+    ### 🔄 Dynamic Adjustments
+    - **📊 Signal Changes**: How to adjust strategy based on new information
+    - **🌊 Market Changes**: Strategies for different market environments
 
-    ## Summary and Outlook
+    ---
 
-    ### Key Points
+    ## 📝 Summary and Outlook
+
+    ### 🎯 Key Points
     - Most important 3-5 trading opportunities
     - Most critical risk points to watch
     - Next important market turning point
 
-    ### Market Outlook
-    - Short-term market direction prediction
-    - Medium-term trend judgment
-    - Long-term investment recommendations
+    ### 🔮 Market Outlook
+    - **📊 Short-term**: Market direction prediction
+    - **📈 Medium-term**: Trend judgment
+    - **🚀 Long-term**: Investment recommendations
 
-    **Disclaimer**: This report is for reference only and does not constitute investment advice. Investment involves risks, please be cautious.
+    ### 🕐 Next Action Items
+    - Priority trades to execute today
+    - Signals to monitor over next 24 hours
+    - Key price levels to watch
+
+    ---
+    
+    > **⚠️ Risk Disclaimer**: This report is for reference only and does not constitute investment advice. Investment involves risks, please be cautious.  
+    > **🔄 Last Updated**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}  
+    > **📊 Signal Confidence**: Based on {len(tweets)} KOL tweets analysis
 
     Requirements:
     1. All analysis must be based on specific tweet content
@@ -267,6 +283,11 @@ def generate_trading_report(language: str = "chinese", use_signals: bool = False
     8. Maintain objective and rational analysis
     9. Focus on actionable insights with evidence
     10. Output the entire report in {language} (keep coin names and specialized terms like eth, defi, NFTs, DOGE, etc. in their original form) in Markdown format
+    11. Use badges, emojis, and visual elements to make the report more engaging
+    12. Add appropriate emoji icons for each section and subsection
+    13. Use horizontal dividers (---) to separate major sections
+    14. Include status badges and metadata in a visually appealing format
+    15. Make the trading recommendations clear and actionable with proper visual hierarchy
     """
 
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))    
@@ -314,42 +335,59 @@ def generate_quick_signals(language: str = "chinese", days: int = 0, hours: int 
 
     Structure as follows:
 
-    # ⚡ Immediate Trading Signals
-    **Analysis Time**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-    **Data Range**: {len(tweets)} KOL tweets in {time_range}
+    # ⚡ Quick Trading Signals
     
-    ## 🚨 Urgent Signals (Act Within 1-4 Hours)
-    - [List the most time-sensitive signals requiring immediate action]
-    - [Include specific entry points, confidence levels, and reasoning]
+    **📅 Analysis Time**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}  
+    **📊 Data**: {len(tweets)} KOL tweets in {time_range}  
+    **⏱️ Validity**: Next 4-12 hours
     
-    ## 📈 Strong Buy Signals
-    - [Specific buy recommendations with entry ranges]
-    - [Include stop-loss and take-profit levels where possible]
+    ---
     
-    ## 📉 Strong Sell Signals  
+    ## 🚨 Urgent Signals (1-4 Hours)
+    - [Most time-sensitive signals with entry points and confidence levels]
+    - [Mark urgency: 🔴 Critical | 🟡 Important | 🟢 Monitor]
+    
+    ## 📈 Buy Signals
+    - [Specific buy recommendations with entry ranges and stop-loss]
+    - [Confidence: ⭐⭐⭐ High | ⭐⭐ Medium | ⭐ Low]
+    
+    ## 📉 Sell Signals
     - [Specific sell recommendations with exit strategies]
-    - [Include risk factors and timing considerations]
+    - [Timing: 🚨 Immediate | ⚠️ Soon | 👀 Watch]
     
-    ## ⚠️ Risk Warnings
-    - [Critical risks to be aware of in the next 24 hours]
-    - [Market conditions that could invalidate signals]
+    ## ⚠️ Key Risks
+    - [Critical risks for next 24 hours]
+    - [Risk level: 🔴 High | 🟠 Medium | 🟡 Low]
+    
+    ---
     
     ## 📊 Signal Summary
-    - **Total Signals**: [Number of actionable signals found]
-    - **High Confidence**: [Number of high-confidence signals]
-    - **Time Sensitivity**: [Most urgent timeframe for action]
-    - **Market Sentiment**: [Overall sentiment from KOL analysis]
+    - **Total Signals**: [Number] | **High Confidence**: [Number]
+    - **Market Sentiment**: [Bull/Bear/Neutral] | **Trend**: [Direction]
+    - **Top KOL**: [Most influential recent opinion]
     
-    **⏰ Validity**: These signals are most relevant for the next 4-12 hours
-    **🔄 Next Update**: Recommended to refresh analysis every 6 hours
+    ## ⏰ Action Items
+    - [ ] Execute high-confidence signals within 2 hours
+    - [ ] Set stop losses for all new positions
+    - [ ] Monitor key price levels and news
+    
+    ---
+    
+    > **⚠️ Warning**: High-risk signals for experienced traders only. Use proper risk management.  
+    > **🔄 Next Update**: {(datetime.now() + timedelta(hours=6)).strftime('%Y-%m-%d %H:%M:%S')}
 
     Requirements:
-    1. Prioritize signals by urgency and confidence
+    1. Keep each section concise with only essential information
     2. Include specific price levels and percentages where mentioned
-    3. Provide clear reasoning for each signal
-    4. Highlight any conflicting signals or uncertainty
-    5. Focus on actionable insights that can be executed quickly
-    6. Output the entire report in {language} (keep coin names and specialized terms like eth, defi, NFTs, DOGE,etc. in their original form) in Markdown format
+    3. Provide clear reasoning for top 3-5 signals only
+    4. Focus on actionable insights for next 4-12 hours
+    5. Use visual indicators for urgency and confidence
+    6. Include only the most critical risks and opportunities
+    7. Prioritize brevity while maintaining professional quality
+    8. Use horizontal dividers (---) to separate major sections
+    9. Add appropriate emoji icons for each section and subsection
+    10. Include status badges and metadata in a visually appealing format
+    11. Output in {language} (keep coin names like eth, defi, NFTs, DOGE, BTC in original form) in Markdown format
     """
     
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
