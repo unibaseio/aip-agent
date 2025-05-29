@@ -349,6 +349,14 @@
                     </select>
                 </div>
                 <div class="control-item">
+                    <label for="typeSelect">Type</label>
+                    <select id="typeSelect">
+                        <option value="news">News</option>
+                        <option value="trading">Trading</option>
+                        <option value="trading_short">Trading Short</option>
+                    </select>
+                </div>
+                <div class="control-item">
                     <label for="tokenInput">Bearer Token</label>
                     <input type="password" id="tokenInput" placeholder="Enter your bearer token" value="">
                 </div>
@@ -383,6 +391,7 @@
             const dateInput = document.getElementById('dateInput').value;
             const language = document.getElementById('languageSelect').value;
             const format = document.getElementById('formatSelect').value;
+            const type = document.getElementById('typeSelect').value;
             const token = document.getElementById('tokenInput').value;
 
             if (!token) {
@@ -399,7 +408,8 @@
             try {
                 const params = new URLSearchParams({
                     language: language,
-                    format: format
+                    format: format,
+                    type: type
                 });
 
                 if (dateInput) {
@@ -421,7 +431,7 @@
                 }
 
                 if (result.success) {
-                    displayReport(result.data, format, dateInput, language);
+                    displayReport(result.data, format, dateInput, language, type);
                 } else {
                     throw new Error('API returned unsuccessful response');
                 }
@@ -432,7 +442,7 @@
             }
         }
 
-        function displayReport(data, format, date, language) {
+        function displayReport(data, format, date, language, type) {
             const content = document.getElementById('reportContent');
 
             // Add metadata
@@ -442,6 +452,7 @@
                 <strong>Report Date:</strong> ${date || 'Latest'} | 
                 <strong>Language:</strong> ${language} | 
                 <strong>Format:</strong> ${format} | 
+                <strong>Type:</strong> ${type} | 
                 <strong>Generated:</strong> ${new Date().toLocaleString()}
             `;
             content.appendChild(meta);
@@ -533,7 +544,8 @@
                 raw: data,
                 format: format,
                 date: date,
-                language: language
+                language: language,
+                type: type
             };
         }
 

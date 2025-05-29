@@ -27,10 +27,11 @@ from core.common import (
     remove_user_profile,
     update_system_status, 
     update_user_status,
-    write_news_report, 
+    write_report, 
     write_user_xinfo
 )
-from core.news import generate_news
+from core.news import generate_news_report
+from core.trading import generate_trading_report, generate_quick_signals
 
 def get_description(username: str, profile: dict) -> str:
     description = "You act as a digital twin of " + username + ", designed to mimic personality, knowledge, and communication style. \n"
@@ -117,7 +118,7 @@ def load_users() -> Dict[str, Any]:
         users[user_name] = load_user(user_name)
     return users
 
-def generate_daily_report():
+def generate_daily_news_report():
     status = load_system_status()
     date_str = datetime.now().strftime("%Y-%m-%d")
     languages = ["chinese", "english"]
@@ -128,14 +129,54 @@ def generate_daily_report():
     
         print(f"Generating daily report at: {date_str} for {language}")
         try:
-            report = generate_news(language)
-            write_news_report(date_str, language, report)
-            write_news_report("", language, report)   
+            report = generate_news_report(language)
+            write_report(date_str, language, "news", report)
+            write_report("", language, "news", report)   
         except Exception as e:
             print(f"Generating daily report fail: {str(e)}")
         finally:
             # in case generate repeatly
             update_system_status(f"report_{language}_updated_at", date_str)
+
+def generate_daily_trading_report():
+    status = load_system_status()
+    date_str = datetime.now().strftime("%Y-%m-%d")
+    languages = ["chinese", "english"]
+    for language in languages:
+        if status.get(f"trading_report_{language}_updated_at", "") == date_str:
+            print(f"Daily trading report already exists at: {date_str} for {language}")
+            continue
+    
+        print(f"Generating daily trading report at: {date_str} for {language}")
+        try:
+            report = generate_trading_report(language)
+            write_report(date_str, language, "trading", report)
+            write_report("", language, "trading", report)   
+        except Exception as e:
+            print(f"Generating daily trading report fail: {str(e)}")
+        finally:
+            # in case generate repeatly
+            update_system_status(f"trading_report_{language}_updated_at", date_str)
+
+def generate_daily_trading_short_report():
+    status = load_system_status()
+    date_str = datetime.now().strftime("%Y-%m-%d")
+    languages = ["chinese", "english"]
+    for language in languages:
+        if status.get(f"trading_short_report_{language}_updated_at", "") == date_str:
+            print(f"Daily trading short report already exists at: {date_str} for {language}")
+            continue
+    
+        print(f"Generating daily trading report at: {date_str} for {language}")
+        try:
+            report = generate_quick_signals(language, days=1, hours=2)
+            write_report(date_str, language, "trading_short", report)
+            write_report("", language, "trading_short", report)   
+        except Exception as e:
+            print(f"Generating daily trading short report fail: {str(e)}")
+        finally:
+            # in case generate repeatly
+            update_system_status(f"trading_short_report_{language}_updated_at", date_str)
 
 def build_user(user_name: str):
     now = datetime.now()

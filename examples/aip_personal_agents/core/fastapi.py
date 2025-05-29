@@ -21,7 +21,9 @@ from membase.chain.chain import membase_id
 from aip_agent.agents.custom_agent import CallbackAgent
 from aip_agent.agents.full_agent import FullAgentWrapper
 from core.build import (
-    generate_daily_report,
+    generate_daily_news_report,
+    generate_daily_trading_report,
+    generate_daily_trading_short_report,
     get_description,
     get_try_count,
     load_user, 
@@ -38,7 +40,7 @@ from core.common import (
     load_usernames, 
     load_user_status, 
     update_user_status,
-    load_news_report
+    load_report
 )
 from core.rag import search_similar_posts, switch_user
 from core.save import save_tweets
@@ -84,7 +86,7 @@ security = HTTPBearer()
 
 # Create separate thread pool executors
 build_executor = ThreadPoolExecutor(max_workers=6)  # For build_user_sync
-refresh_executor = ThreadPoolExecutor(max_workers=2)  # For refresh/save_users_task
+refresh_executor = ThreadPoolExecutor(max_workers=4)  # For refresh/save_users_task
 
 # Flag to control background tasks
 app.running = True
@@ -174,8 +176,13 @@ async def refresh_users_task():
                 if app.refresh_counts[username] < 3 or app.refresh_counts[username] % 100 == 0:
                     if get_user_lock(username):
                         try:
-                            build_user(username)
+                            # Use thread pool executor to avoid blocking event loop
+                            await asyncio.get_event_loop().run_in_executor(
+                                refresh_executor, build_user, username
+                            )
                             app.users[username] = load_user(username)
+                        except Exception as e:
+                            print(f"Error building user {username}: {str(e)}")
                         finally:
                             release_user_lock(username)
                     else:
@@ -201,15 +208,56 @@ async def refresh_users_task():
                 if get_user_lock(username):
                     try:
                         print(f"Refreshing tweets for {i}/{users_len} user {username} at {datetime.now()}")
-                        refresh_tweets(username)
+                        # Use thread pool executor to avoid blocking event loop
+                        await asyncio.get_event_loop().run_in_executor(
+                            refresh_executor, refresh_tweets, username
+                        )
+                    except Exception as e:
+                        print(f"Error refreshing tweets for {username}: {str(e)}")
                     finally:
                         release_user_lock(username)
                 else:
                     print(f"Skipping tweets refresh for {username} because it's locked")
 
-            # refresh report
-            print(f"Generating daily report at {datetime.now()}")
-            generate_daily_report()
+            # Generate reports using thread pool executor to avoid blocking event loop
+            print(f"Generating daily news report at {datetime.now()}")
+            try:
+                await asyncio.wait_for(
+                    asyncio.get_event_loop().run_in_executor(
+                        refresh_executor, generate_daily_news_report
+                    ),
+                    timeout=300  # 5 minutes timeout
+                )
+            except asyncio.TimeoutError:
+                print(f"Daily news report generation timed out after 5 minutes")
+            except Exception as e:
+                print(f"Error generating daily news report: {str(e)}")
+
+            print(f"Generating daily trading short report at {datetime.now()}")
+            try:
+                await asyncio.wait_for(
+                    asyncio.get_event_loop().run_in_executor(
+                        refresh_executor, generate_daily_trading_short_report
+                    ),
+                    timeout=300  # 5 minutes timeout
+                )
+            except asyncio.TimeoutError:
+                print(f"Daily trading short report generation timed out after 5 minutes")
+            except Exception as e:
+                print(f"Error generating daily trading short report: {str(e)}")
+
+            print(f"Generating daily trading report at {datetime.now()}")
+            try:
+                await asyncio.wait_for(
+                    asyncio.get_event_loop().run_in_executor(
+                        refresh_executor, generate_daily_trading_report
+                    ),
+                    timeout=600  # 10 minutes timeout
+                )
+            except asyncio.TimeoutError:
+                print(f"Daily trading report generation timed out after 10 minutes")
+            except Exception as e:
+                print(f"Error generating daily trading report: {str(e)}")
 
             # refresh profile
             print(f"Refreshing profile for {len(finished_users)} users at {datetime.now()}")
@@ -222,7 +270,12 @@ async def refresh_users_task():
                 if get_user_lock(username):
                     try:
                         print(f"Refreshing profile for {i}/{users_len} user {username} at {datetime.now()}")
-                        refresh_profile(username)
+                        # Use thread pool executor to avoid blocking event loop
+                        await asyncio.get_event_loop().run_in_executor(
+                            refresh_executor, refresh_profile, username
+                        )
+                    except Exception as e:
+                        print(f"Error refreshing profile for {username}: {str(e)}")
                     finally:
                         release_user_lock(username)
                 else:
@@ -244,10 +297,10 @@ async def refresh_users_task():
             print(f"Error refreshing users: {str(e)}")
         await asyncio.sleep(600)  # Refresh every 10 minutes
 
-def save_users_task():
+async def save_users_task():
     """Background task to periodically save users tweets"""
     while app.running:
-        time.sleep(78)  # Refresh every 13 minutes
+        await asyncio.sleep(78)  # Refresh every 13 minutes
         try:
             print(f"Saving users tweets at {datetime.now()}")
             users = list(app.users.keys())
@@ -256,7 +309,10 @@ def save_users_task():
                 print(f"Saving tweets for {username} at {datetime.now()}")
                 if get_user_lock(username):
                     try:
-                        save_tweets(username)
+                        # Use thread pool executor to avoid blocking event loop
+                        await asyncio.get_event_loop().run_in_executor(
+                            refresh_executor, save_tweets, username
+                        )
                     except Exception as e:
                         print(f"Error saving tweets for {username}: {str(e)}")
                     finally:
@@ -267,7 +323,7 @@ def save_users_task():
         except Exception as e:
             print(f"Error saving users tweets: {str(e)}")
         finally:
-            time.sleep(780)  # Refresh every 13 minutes
+            await asyncio.sleep(780)  # Refresh every 13 minutes
 
 # Dependency for token validation
 async def validate_token(credentials: HTTPAuthorizationCredentials = Security(security)):
@@ -704,6 +760,7 @@ async def get_status_api(
 async def get_report_api(
     date_str: Optional[str] = None,
     language: Optional[str] = "Chinese",
+    type: Optional[str] = "news",
     format: Optional[str] = "markdown",
     token: str = Depends(validate_token)
 ):
@@ -712,6 +769,7 @@ async def get_report_api(
     Args:
         date_str: Optional date string in format 'YYYY-MM-DD'. If not specified, returns the latest report.
         language: Optional language for the report (default: "Chinese", alternative: "English").
+        type: Optional type of the report (default: "news", alternative: "trading", "trading_short").
         format: Optional output format (default: "markdown", alternative: "json").
     """
     try:
@@ -724,14 +782,14 @@ async def get_report_api(
 
         if date_str is None:
             # Load the latest report
-            report = load_news_report("", language)
+            report = load_report("", language, type)
             if not report or report == "":
-                raise HTTPException(status_code=404, detail="Latest news report not found")
+                raise HTTPException(status_code=404, detail="Latest report not found")
         else:
             # Load report for specific date
-            report = load_news_report(date_str, language)
+            report = load_report(date_str, language, type)
             if not report or report == "":
-                raise HTTPException(status_code=404, detail=f"News report for date {date_str} not found")
+                raise HTTPException(status_code=404, detail=f"Report for date {date_str} not found")
         
         # Process different output formats
         if format == "json":
@@ -801,7 +859,7 @@ async def shutdown_app_async():
     except Exception as e:
         print(f"Error shutting down thread pools: {str(e)}")
 
-    # Cancel the refresh_users_task
+    # Cancel the background tasks
     if hasattr(app, 'refresh_task'):
         print("Cancelling refresh task...")
         try:
@@ -816,6 +874,21 @@ async def shutdown_app_async():
                 print(f"Error waiting for refresh task: {str(e)}")
         except Exception as e:
             print(f"Error cancelling refresh task: {str(e)}")
+
+    if hasattr(app, 'save_task'):
+        print("Cancelling save task...")
+        try:
+            app.save_task.cancel()
+            try:
+                await asyncio.wait_for(app.save_task, timeout=5.0)
+            except asyncio.TimeoutError:
+                print("Timeout waiting for save task to cancel")
+            except asyncio.CancelledError:
+                print("Save task cancelled successfully")
+            except Exception as e:
+                print(f"Error waiting for save task: {str(e)}")
+        except Exception as e:
+            print(f"Error cancelling save task: {str(e)}")
 
     print("Application has been completely shut down")
 
@@ -911,10 +984,10 @@ async def initialize(port: int = 5001, bearer_token: str = None) -> None:
         print(f"Error loading user agents: {str(e)}")
         exit()
 
-    # Start the background refresh task in a separate thread
+    # Start the background refresh task and save task as async tasks
     app.refresh_task = asyncio.create_task(refresh_users_task())
-    refresh_executor.submit(save_users_task)
-    print("Background refresh/save task started")
+    app.save_task = asyncio.create_task(save_users_task())
+    print("Background refresh/save tasks started")
 
     # Start uvicorn server
     config = uvicorn.Config(app, host="0.0.0.0", port=port, log_level="info")

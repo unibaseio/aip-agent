@@ -9,6 +9,7 @@ AIP Personal Agents is a personal intelligent agent system that generates person
 - Real-time query processing
 - Operation log recording
 - User-friendly web interface
+- Daily report dashboard for news and trading insights
 
 ## Installation & Configuration
 
@@ -28,11 +29,40 @@ OPENAI_API_KEY="your_openai_api_key"
 # GRADIO Server configuration
 GRADIO_SERVER_NAME=127.0.0.1
 GRADIO_SERVER_PORT=7860
+
+# Report Dashboard configuration
+BEARER_TOKEN="your_bearer_token"  # Required for accessing the report dashboard
 ```
 
 Note: Replace the placeholder values with your actual API keys and account information.
 
 ## Usage
+
+### Report Dashboard
+
+The report dashboard provides daily insights and analysis in both news and trading domains.
+
+#### Features:
+- Daily news reports
+- Trading analysis reports
+- Short-form trading insights
+- Multiple language support (Chinese/English)
+- Multiple format options (Markdown/JSON)
+- Copy functionality for easy sharing
+
+#### Accessing the Dashboard:
+1. Navigate to the root URL of the server
+2. Enter your bearer token
+3. Select report parameters:
+   - Date (optional, defaults to latest)
+   - Language (Chinese/English)
+   - Format (Markdown/JSON)
+   - Type (News/Trading/Trading Short)
+
+#### Report Types:
+- **News**: Daily Web3 news summary and analysis
+- **Trading**: Comprehensive trading market analysis
+- **Trading Short**: Concise trading insights and highlights
 
 ### Single User Mode (personal_agent_gradio.py)
 

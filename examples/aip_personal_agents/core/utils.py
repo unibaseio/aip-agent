@@ -162,8 +162,8 @@ def markdown_to_json(result: str) -> dict:
 
 
 if __name__ == "__main__":
-    from core.common import load_news_report
-    report = load_news_report("2025-05-26", "chinese")
+    from core.common import load_report
+    report = load_report("2025-05-26", "chinese", "news")
     print(report)
     json_data = markdown_to_json(report)
     print(json_data)

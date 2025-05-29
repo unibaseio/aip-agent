@@ -92,11 +92,11 @@ def order_tweets(tweets, reverse=False):
     
     return sorted(tweets, key=lambda x: parse_date(x["createdAt"]), reverse=reverse)
 
-def load_user_tweets_within(user_name: str, days: int):
+def load_user_tweets_within(user_name: str, days: int, hours: int = 0):
     tweets = load_user_tweets(user_name)
     
     # filter tweets to get latest 3m 
-    three_months_ago = datetime.now().astimezone() - timedelta(days=days)
+    three_months_ago = datetime.now().astimezone() - timedelta(days=days, hours=hours)
     recent_tweets = [
         tweet for tweet in tweets 
         if datetime.strptime(tweet["createdAt"], "%a %b %d %H:%M:%S %z %Y") > three_months_ago
@@ -322,20 +322,28 @@ def update_system_status(key: str, value: str):
             # Release the lock
             fcntl.flock(f.fileno(), fcntl.LOCK_UN)
 
-def load_news_report(date_str: str, language: str) -> str:
-    report_file = f"outputs/news_report_{date_str}_{language}.md"
-    if date_str == "":
-        report_file = f"outputs/news_report_{language}.md"
+def load_report(date_str: str, language: str, type: str) -> str:
+    report_file = f"reports/{type}_report_{language}.md"
+    if date_str != "":
+        report_file = f"reports/{date_str}/{type}_report_{language}.md"
+        if not os.path.exists(f"reports/{date_str}"):
+            os.makedirs(f"reports/{date_str}")
+        if not os.path.exists(report_file) and os.path.exists(f"reports/{type}_report_{date_str}_{language}.md"):
+            # move old report file to here
+            shutil.move(f"reports/{type}_report_{date_str}_{language}.md", report_file)
+
     if os.path.exists(report_file):
         with open(report_file, 'r', encoding='utf-8') as f:
             content = f.read()
             return content
     return ""
 
-def write_news_report(date_str: str, language: str, report: str):
-    report_file = f"outputs/news_report_{date_str}_{language}.md"
-    if date_str == "":
-        report_file = f"outputs/news_report_{language}.md"
+def write_report(date_str: str, language: str, type: str, report: str):
+    report_file = f"reports/{type}_report_{language}.md"
+    if date_str != "":
+        report_file = f"reports/{date_str}/{type}_report_{language}.md"
+        if not os.path.exists(f"reports/{date_str}"):
+            os.makedirs(f"reports/{date_str}")
     
     with open(report_file, 'w', encoding='utf-8') as f:
         f.write(report)
