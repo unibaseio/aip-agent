@@ -42,13 +42,13 @@ def register_server(
 
 def search_server_config(
         query: Annotated[str, "The query to search for"],
-        num_results: Annotated[int, "The number of results to return"] = 5,
+        num_results: Annotated[int, "The number of results to return"] = 10,
         metadata_filter: Annotated[dict, "The metadata filter"] = None,
         content_filter: Annotated[str, "The content filter"] = None,
         ):
     if metadata_filter is None:
         metadata_filter = {}
-    metadata_filter["type"] = "tool"
+    #metadata_filter["type"] = "tool"
     metadata_filter["state"] = "running"
     docs = rag.retrieve(query, top_k=num_results, metadata_filter=metadata_filter, content_filter=content_filter)
 
