@@ -107,7 +107,8 @@ async def periodic_connectivity_check(check_interval: int = 30):
         try:
             # Get all running servers
             running_servers = search_server_config("", num_results=1000)
-            
+            print(f"running_servers: {len(running_servers)}")
+
             for server_info in running_servers:
                 print(server_info)
                 server_name = server_info["server_name"]
