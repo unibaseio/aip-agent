@@ -71,6 +71,7 @@ async def check_server_connectivity(agent_id: str) -> bool:
         if grpc_runtime is None:
             return True
         try:
+            logging.info(f"Checking connectivity for {agent_id}")
             await asyncio.wait_for(
                 grpc_runtime.send_message(
                     InteractionMessage(
