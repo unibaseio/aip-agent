@@ -82,12 +82,12 @@ async def check_server_connectivity(agent_id: str) -> bool:
                     AgentId(agent_id, "default"),
                     sender=AgentId(membase_id, "default")
                 ),
-                timeout=15.0  # 15 seconds timeout
+                timeout=10.0  # 10 seconds timeout
             )
             failed_attempts[agent_id] = 0
             return True
         except asyncio.TimeoutError:
-            print("Heartbeat message timed out after 15 seconds")
+            logging.warning(f"Heartbeat message timed out after 10 seconds for {agent_id}")
             failed_attempts[agent_id] = failed_attempts.get(agent_id, 0) + 1
             if failed_attempts[agent_id] >= 3:
                 logging.error(f"Server {agent_id} marked as stopped after 3 failed attempts")
@@ -108,6 +108,7 @@ async def periodic_connectivity_check(check_interval: int = 30):
             running_servers = search_server_config("", num_results=100)
             
             for server_info in running_servers:
+                print(server_info)
                 server_name = server_info["server_name"]
                 server_config = server_info["config"]
                 state = server_config.get("state", "stopped")
