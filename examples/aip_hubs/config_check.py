@@ -51,6 +51,7 @@ def update_server_state(server_name: str, new_state: str):
         # Get current document
         existing_doc = rag.collection.get(ids=[server_name])
         if len(existing_doc["ids"]) > 0:
+            print(f"existing_doc: {existing_doc}")
             doc = existing_doc["documents"][0]
             # Update metadata state
             updated_metadata = doc.metadata.copy()
