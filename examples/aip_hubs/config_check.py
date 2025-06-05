@@ -28,6 +28,7 @@ rag = ChromaKnowledgeBase(
 # Store failed connection attempts
 failed_attempts = {}
 grpc_runtime = None
+max_failed_attempts = 1
 
 def search_server_config(
         query: Annotated[str, "The query to search for"],
@@ -63,17 +64,16 @@ def update_server_state(server_name: str, new_state: str):
             rag.update_documents(updated_doc)
             logging.info(f"Updated server {server_name} state to {new_state}")
 
-async def check_server_connectivity(agent_id: str) -> bool:
+async def check_server_connectivity(agent_id: str):
     """Check if a server is reachable via gRPC connection"""
-    try:
-        # Create a temporary runtime for connectivity check
-        global grpc_runtime
-        if grpc_runtime is None:
-            return True
-        global failed_attempts
-        try:
-            logging.info(f"Checking connectivity for {agent_id}")
-            await asyncio.wait_for(
+    global grpc_runtime
+    global failed_attempts
+    if grpc_runtime is None:
+        return
+    
+    try:    
+        logging.info(f"Checking connectivity for {agent_id}")
+        await asyncio.wait_for(
                 grpc_runtime.send_message(
                     InteractionMessage(
                         action="heartbeat",
@@ -84,20 +84,17 @@ async def check_server_connectivity(agent_id: str) -> bool:
                     sender=AgentId(membase_id, "default")
                 ),
                 timeout=10.0  # 10 seconds timeout
-            )
-            failed_attempts[agent_id] = 0
-            return True
-        except asyncio.TimeoutError:
-            logging.warning(f"Heartbeat message timed out after 10 seconds for {agent_id}")
-            failed_attempts[agent_id] = failed_attempts.get(agent_id, 0) + 1
-            if failed_attempts[agent_id] >= 3:
-                logging.error(f"Server {agent_id} marked as stopped after 3 failed attempts")
-                return False
-            return True
-        
+        )
+        failed_attempts[agent_id] = 0
     except Exception as e:
         logging.warning(f"Connection failed: {e}")
-        return False
+        failed_attempts[agent_id] = failed_attempts.get(agent_id, 0) + 1
+    finally:
+        if failed_attempts[agent_id] >= max_failed_attempts:
+            logging.error(f"Server {agent_id} marked as stopped after {max_failed_attempts} failed attempts")
+            update_server_state(agent_id, "stopped")
+        else:
+            logging.info(f"Server {agent_id} is healthy")
 
 async def periodic_connectivity_check(check_interval: int = 30):
     """Periodically check connectivity of running servers"""
@@ -118,24 +115,17 @@ async def periodic_connectivity_check(check_interval: int = 30):
                     continue
                 
                 # Check connectivity
-                is_connected = await check_server_connectivity(server_name)
-                
-                if is_connected:
-                    logging.info(f"Server {server_name} is healthy")
-                else:
-                    logging.warning(f"Server {server_name} connection failed. Attempts: {failed_attempts[server_name]}")
-                    
-                    # Mark as stopped after 3 failed attempts
-                    if failed_attempts[server_name] >= 3:
-                        update_server_state(server_name, "stopped")
-                        logging.error(f"Server {server_name} marked as stopped after 3 failed attempts")
-            
+                try:
+                    await check_server_connectivity(server_name)
+                except Exception as e:
+                    logging.error(f"Error checking connectivity for {server_name}: {e}")
+
             # Wait before next check cycle
             await asyncio.sleep(check_interval)
             
         except Exception as e:
             logging.error(f"Error in connectivity check cycle: {e}")
-            await asyncio.sleep(check_interval)
+            await asyncio.sleep(10)
 
 async def main(address: str, enable_periodic_check: bool = True, check_interval: int = 30) -> None:
     global grpc_runtime
