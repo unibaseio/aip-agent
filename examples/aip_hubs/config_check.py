@@ -70,6 +70,7 @@ async def check_server_connectivity(agent_id: str) -> bool:
         global grpc_runtime
         if grpc_runtime is None:
             return True
+        global failed_attempts
         try:
             logging.info(f"Checking connectivity for {agent_id}")
             await asyncio.wait_for(
@@ -105,7 +106,7 @@ async def periodic_connectivity_check(check_interval: int = 30):
     while True:
         try:
             # Get all running servers
-            running_servers = search_server_config("", num_results=100)
+            running_servers = search_server_config("", num_results=1000)
             
             for server_info in running_servers:
                 print(server_info)
