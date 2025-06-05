@@ -151,14 +151,7 @@ async def main(address: str, enable_periodic_check: bool = True, check_interval:
         asyncio.create_task(periodic_connectivity_check(check_interval))
     
     # Keep the main runtime running
-    try:
-        while True:
-            await asyncio.sleep(1)
-    except KeyboardInterrupt:
-        logging.info("Shutting down...")
-        if grpc_runtime:
-            await grpc_runtime.stop()
-
+    await grpc_runtime.stop_when_signal()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run a config check for agent status.")
