@@ -28,7 +28,6 @@ rag = ChromaKnowledgeBase(
 # Store failed connection attempts
 failed_attempts = {}
 grpc_runtime = None
-config_id = "config_check"
 
 def search_server_config(
         query: Annotated[str, "The query to search for"],
@@ -77,10 +76,10 @@ async def check_server_connectivity(agent_id: str) -> bool:
                     InteractionMessage(
                         action="heartbeat",
                         content="ok",
-                        source=config_id,
+                        source=membase_id,
                     ),
                     AgentId(agent_id, "default"),
-                    sender=AgentId(config_id, "default")
+                    sender=AgentId(membase_id, "default")
                 ),
                 timeout=15.0  # 15 seconds timeout
             )
