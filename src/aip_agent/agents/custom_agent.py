@@ -4,7 +4,10 @@ from autogen_core import (
     message_handler,
 )
 
-from aip_agent.workflows.llm.augmented_llm import AugmentedLLM
+from aip_agent.workflows.llm.augmented_llm import (
+    AugmentedLLM, 
+    RequestParams
+)
 
 from aip_agent.message.message import InteractionMessage
 from membase.memory.message import Message
@@ -44,7 +47,12 @@ class CallbackAgent(RoutedAgent):
         memory = self._memory.get_memory()
         memory.add(Message(content=message.content, name=self.id.type, role="user", metadata={"source": message.source}))
         try:
-            response = await self._llm.generate_str(message.content)
+            response = await self._llm.generate_str(
+                    message.content,
+                    request_params=RequestParams(
+                        use_history=False,
+                    )
+                )
         except Exception as e:
             response = "I'm sorry, I couldn't generate a response to that message due to an error:" + str(e)
         memory.add(Message(content=response, name=self.id.type, role="assistant", metadata={"source": message.source}))
