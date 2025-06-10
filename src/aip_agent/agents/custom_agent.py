@@ -50,7 +50,7 @@ class CallbackAgent(RoutedAgent):
             response = await self._llm.generate_str(
                     message.content,
                     request_params=RequestParams(
-                        use_history=False,
+                        use_history=False
                     )
                 )
         except Exception as e:
