@@ -2,7 +2,7 @@ import argparse
 import asyncio
 import logging
 import signal
-
+from datetime import datetime
 import requests
 import os
 from dotenv import load_dotenv
@@ -15,17 +15,26 @@ from membase.chain.chain import membase_id
 load_dotenv()
 API_KEY = os.getenv("CRYPTOPANIC_API_KEY")
 
+cache_news = {}
+
 def get_crypto_news(kind: str = "news", num_pages: int = 1) -> str:
+  now = datetime.now().strftime("%Y-%m-%d %H")
+  if now in cache_news:
+    print(f"Cache hit for {now}")
+    return cache_news[now]
+  print(f"Cache miss for {now}")
   news = fetch_crypto_news(kind, num_pages)
   readable = concatenate_news(news)
+  cache_news[now] = readable
   return readable
 
 def fetch_crypto_news_page(kind: str = "news", page: int = 1): 
   try:
     url = "https://cryptopanic.com/api/v1/posts/"
+    #url = "https://cryptopanic.com/api/developer/v2/posts/"
     params = {
       "auth_token": API_KEY,
-      "kind": "news",  # news, analysis, videos
+      "kind": kind,  # news, analysis, videos
       "regions": "en",  
       "page": page      
     }
