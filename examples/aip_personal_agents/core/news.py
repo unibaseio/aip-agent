@@ -211,7 +211,7 @@ def generate_news_report_for_user(user_id: str, language: str = "chinese", days:
     
     if not user_profile:
         print(f"No user profile found for {user_id}, generating generic report")
-        return generate_news_report(language=language, days=days, hours=hours)
+        return ""
     
     # Get recent tweets
     tweets, begin_time, end_time = get_recent_tweets(days=days, hours=hours)
