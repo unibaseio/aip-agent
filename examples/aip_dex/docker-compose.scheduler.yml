@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: aip_dex
+      POSTGRES_USER: aip_user
+      POSTGRES_PASSWORD: aip_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+      - ./data/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aip_user -d aip_dex"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis (optional, for caching)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./data/redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # AIP DEX Token Scheduler
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile.scheduler
+    environment:
+      - DATABASE_URL=postgresql://aip_user:aip_password@postgres:5432/aip_dex
+      - BIRDEYE_API_KEY=${BIRDEYE_API_KEY}
+      - REDIS_URL=redis://redis:6379/0
+      - LOG_LEVEL=INFO
+      - DEFAULT_CHAIN=bsc
+      - DEFAULT_FETCH_LIMIT=50
+      - DEFAULT_INTERVAL_HOURS=1
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./data/logs:/app/logs
+      - ./.env:/app/.env
+    restart: unless-stopped
+    command: ["python", "run_scheduler.py", "--interval", "1"]
+
+  # Optional: Monitoring with Grafana + Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./data/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./data/prometheus:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - ./data/grafana:/var/lib/grafana
+      - ./data/grafana_dashboards:/etc/grafana/provisioning/dashboards
+      - ./data/grafana_datasources:/etc/grafana/provisioning/datasources
+
+networks:
+  default:
+    name: aip_dex_network 
