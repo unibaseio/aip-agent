@@ -77,6 +77,7 @@ INTEGRATION FLOW:
 4. All data automatically saved to history tables for trend analysis
 """
 
+import asyncio
 from typing import Dict, Any, Optional, List
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
@@ -263,12 +264,15 @@ class TokenService:
             # Check if recently updated using token's metrics_updated_at field
             should_update = force_update
             
+            print(f"Token metrics updated at: {token.metrics_updated_at} {should_update}")
             if not should_update and token.metrics_updated_at:
                 one_hour_ago = datetime.now(UTC) - timedelta(hours=1)
                 should_update = self._is_datetime_before(token.metrics_updated_at, one_hour_ago)
             else:
                 should_update = True
 
+            print(f"Should update: {should_update}")
+            
             result = {
                 "success": True,
                 "token_id": token_id,
@@ -283,14 +287,17 @@ class TokenService:
             if should_update:
                 # STEP 1: Update token stats from Moralis
                 moralis_stats = None
+                print(f"Updating token stats for {token.symbol}")
                 if token.contract_address:
+                    print(f"Updating token stats for {token.symbol} with address {token.contract_address}")
                     # Get comprehensive token stats from Moralis
                     moralis_stats = await self.moralis.get_token_stats(
                         token.contract_address,
                         token.chain
                     )
-                    
+                    print(f"Updated Moralis stats: {moralis_stats}")
                     if moralis_stats:
+                        await asyncio.sleep(1)
                         result["moralis_updated"] = True
                         result["moralis_stats"] = moralis_stats
                 
@@ -600,10 +607,34 @@ class TokenService:
             db.rollback()
             return None
 
+    def _sanitize_price_change(self, value: float, max_value: float = 999999.0) -> float:
+        """Sanitize price change values to prevent database overflow"""
+        if value is None:
+            return 0.0
+        
+        # Convert to float if it's not already
+        try:
+            float_value = float(value)
+        except (ValueError, TypeError):
+            return 0.0
+        
+        # Cap extreme values to prevent database overflow
+        if abs(float_value) > max_value:
+            # Log the extreme value for monitoring
+            print(f"Warning: Extreme price change value {float_value}% capped to {max_value if float_value > 0 else -max_value}%")
+            return max_value if float_value > 0 else -max_value
+        
+        return float_value
+
     async def _create_pool_metric_from_data(self, db: Session, pool: TokenPool, 
                                           pool_data: Dict[str, Any]) -> Optional[PoolMetric]:
         """Create pool metric from DexScreener data with enhanced fields"""
         try:
+            # Sanitize price change values to prevent database overflow
+            price_change_1h = self._sanitize_price_change(pool_data.get('price_change_1h', 0))
+            price_change_6h = self._sanitize_price_change(pool_data.get('price_change_6h', 0))
+            price_change_24h = self._sanitize_price_change(pool_data.get('price_change_24h', 0))
+            
             metric = PoolMetric(
                 pool_id=pool.id,
                 price_usd=Decimal(str(pool_data.get('price_usd', 0))),
@@ -618,10 +649,10 @@ class TokenService:
                 liquidity_base=Decimal('0'),
                 liquidity_quote=Decimal('0'),
                 
-                # Enhanced price changes (1h, 6h, 24h)
-                price_change_1h=Decimal(str(pool_data.get('price_change_1h', 0))),
-                price_change_6h=Decimal(str(pool_data.get('price_change_6h', 0))),
-                price_change_24h=Decimal(str(pool_data.get('price_change_24h', 0))),
+                # Enhanced price changes (1h, 6h, 24h) - with sanitization
+                price_change_1h=Decimal(str(price_change_1h)),
+                price_change_6h=Decimal(str(price_change_6h)),
+                price_change_24h=Decimal(str(price_change_24h)),
                 
                 # Enhanced transaction data (1h, 6h, 24h)
                 txns_1h_buys=pool_data.get('buys_1h', 0),

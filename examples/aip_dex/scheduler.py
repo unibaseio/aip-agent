@@ -122,6 +122,8 @@ class TokenDataScheduler:
         
         for token in tokens:
             try:
+                logger.info(f"Updating pools for token {token.symbol}")
+                print(f"Updating pools for token {token.symbol}")
                 stats["processed_tokens"] += 1
                 
                 # Use simplified TokenService method to update token pools
@@ -157,6 +159,7 @@ class TokenDataScheduler:
         
         for token in tokens:
             try:
+                logger.info(f"Calculating metrics and signals for {token.symbol}")
                 # Use simplified TokenService method to update token metrics and signals
                 result = await self.token_service.update_token(
                     db=db,
@@ -164,9 +167,12 @@ class TokenDataScheduler:
                     force_update=False
                 )
                 
-                if result.get("success") and (result.get("metrics_updated") or result.get("signals_updated")):
-                    stats["calculated"] += 1
-                    logger.debug(f"Calculated metrics and signals for {token.symbol}")
+                if result.get("success"): 
+                    if result.get("metrics_updated") or result.get("signals_updated"):
+                        stats["calculated"] += 1
+                        logger.debug(f"Calculated metrics and signals for {token.symbol}")
+                    else:
+                        logger.debug(f"No metrics or signals needed to be updated for {token.symbol}")
                 else:
                     stats["errors"] += 1
                     logger.warning(f"Failed to calculate metrics for {token.symbol}: {result.get('error', 'Unknown error')}")
@@ -235,14 +241,14 @@ class TokenDataScheduler:
         finally:
             db.close()
     
-    async def run_scheduler(self, interval_hours: int = 1, update_all_tokens: bool = True):
+    async def run_scheduler(self, interval_minutes: int = 61, update_all_tokens: bool = True):
         """Run the scheduler continuously
         
         Args:
-            interval_hours: Update interval in hours
+            interval_minutes: Update interval in minutes
             update_all_tokens: If True, update pools for all tokens in database
         """
-        logger.info(f"Starting scheduler with {interval_hours} hour interval")
+        logger.info(f"Starting scheduler with {interval_minutes} minute interval")
         logger.info(f"Update mode: {'All database tokens' if update_all_tokens else 'New tokens only'}")
         
         # Initialize database
@@ -254,7 +260,7 @@ class TokenDataScheduler:
         # Schedule periodic updates
         while True:
             try:
-                await asyncio.sleep(interval_hours * 3600)  # Convert hours to seconds
+                await asyncio.sleep(interval_minutes * 60)  # Convert minutes to seconds
                 await self.run_single_update(update_all_tokens=update_all_tokens)
             except KeyboardInterrupt:
                 logger.info("Scheduler interrupted by user")
@@ -279,11 +285,11 @@ async def main():
     scheduler = TokenDataScheduler(chain="bsc", fetch_limit=50)
     
     try:
-        await scheduler.run_scheduler(interval_hours=1)
+        await scheduler.run_scheduler(interval_minutes=61)
     except KeyboardInterrupt:
         logger.info("Shutting down scheduler...")
     finally:
         await scheduler.cleanup()
 
 if __name__ == "__main__":
-    asyncio.run(main()) 
+    asyncio.run(main())     

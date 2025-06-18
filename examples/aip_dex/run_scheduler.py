@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Simple script to run the AIP DEX Token Data Scheduler
-Usage: python run_scheduler.py [--chain CHAIN] [--limit LIMIT] [--interval HOURS]
+Usage: python run_scheduler.py [--chain CHAIN] [--limit LIMIT] [--interval MINUTES]
 """
 
 import argparse
@@ -21,7 +21,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Run AIP DEX Token Data Scheduler")
     parser.add_argument("--chain", default="bsc", help="Blockchain chain (default: bsc)")
     parser.add_argument("--limit", type=int, default=50, help="Number of top tokens to fetch (default: 50)")
-    parser.add_argument("--interval", type=int, default=1, help="Update interval in hours (default: 1)")
+    parser.add_argument("--interval", type=int, default=61, help="Update interval in minutes (default: 61)")
     parser.add_argument("--single-run", action="store_true", help="Run once and exit (for testing)")
     parser.add_argument("--update-new-only", action="store_true", help="Only update pools for newly fetched tokens (default: update all)")
     return parser.parse_args()
@@ -55,7 +55,7 @@ async def main():
     print("=" * 40)
     print(f"Chain: {args.chain}")
     print(f"Token limit: {args.limit}")
-    print(f"Update interval: {args.interval} hour(s)")
+    print(f"Update interval: {args.interval} minute(s)")
     print(f"Single run mode: {args.single_run}")
     print(f"Update mode: {'New tokens only' if args.update_new_only else 'All database tokens'}")
     print("=" * 40)
@@ -74,10 +74,10 @@ async def main():
             await scheduler.run_single_update(update_all_tokens=not args.update_new_only)
             print("✅ Single update completed successfully!")
         else:
-            print(f"🔄 Starting continuous scheduler (every {args.interval} hour(s))")
+            print(f"🔄 Starting continuous scheduler (every {args.interval} minute(s))")
             print("Press Ctrl+C to stop...")
             await scheduler.run_scheduler(
-                interval_hours=args.interval,
+                interval_minutes=args.interval,
                 update_all_tokens=not args.update_new_only
             )
     

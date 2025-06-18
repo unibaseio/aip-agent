@@ -8,12 +8,14 @@ This example demonstrates:
 4. Batch operations for multiple tokens
 """
 
+import argparse
 import asyncio
+import sys
 from sqlalchemy.orm import Session
 from models.database import get_db, init_database
 from services.token_service import TokenService
 
-async def example_single_token_workflow():
+async def example_single_token_workflow(token_symbol: str = "beeper", chain: str = "bsc"):
     """Example: Complete workflow for a single token"""
     print("=== Single Token Workflow ===")
     
@@ -26,8 +28,8 @@ async def example_single_token_workflow():
         print("Step 1: Creating/getting token...")
         token = await token_service.get_or_create_token(
             db=db,
-            symbol="beeper",
-            chain="bsc",
+            symbol=token_symbol,
+            chain=chain,
         )
         
         if not token:
@@ -50,7 +52,7 @@ async def example_single_token_workflow():
         token_result = await token_service.update_token(
             db=db,
             token_id=str(token.id),
-            force_update=True
+            force_update=False
         )
         print(f"Token update result: {token_result}")
         
@@ -69,7 +71,12 @@ async def example_single_token_workflow():
             print(f"24h Volume: ${decision_data['current_metrics'].get('total_volume_24h', 0):,.2f}")
             print(f"RSI: {decision_data['technical_indicators'].get('rsi_14d', 'N/A')}")
             print(f"Signal Strength: {decision_data['technical_indicators'].get('signal_strength', 'N/A')}")
-            print(f"Volatility: {decision_data['technical_indicators'].get('volatility_24h', 'N/A'):.2f}%")
+            
+            # Handle volatility formatting safely
+            volatility = decision_data['technical_indicators'].get('volatility_24h')
+            volatility_str = f"{volatility:.2f}%" if volatility is not None else "N/A"
+            print(f"Volatility: {volatility_str}")
+            
             print(f"Risk Level: {decision_data['risk_factors'].get('volatility_level', 'N/A')}")
             
             # Data completeness check
@@ -171,7 +178,9 @@ async def example_batch_workflow():
             # Show rankings
             print(f"\nTop tokens by signal strength:")
             for i, (symbol, data) in enumerate(analysis['rankings']['by_signal_strength'][:3]):
-                print(f"  {i+1}. {symbol}: {data['signal_strength']:.3f}")
+                signal_strength = data.get('signal_strength')
+                signal_str = f"{signal_strength:.3f}" if signal_strength is not None else "N/A"
+                print(f"  {i+1}. {symbol}: {signal_str}")
                 
     except Exception as e:
         print(f"Error in batch workflow: {e}")
@@ -217,6 +226,11 @@ async def example_maintenance_workflow():
 
 async def main():
     """Run all example workflows"""
+    parser = argparse.ArgumentParser(description="Run AIP DEX Token Data Scheduler")
+    parser.add_argument("--token-symbol", type=str, default="beeper", help="Token symbol")
+    parser.add_argument("--chain", type=str, default="bsc", help="Chain")
+    args = parser.parse_args()
+
     print("TokenService Complete Data Management Examples")
     print("=" * 50)
     
@@ -229,7 +243,7 @@ async def main():
     print()
     
     # Run single token workflow
-    await example_single_token_workflow()
+    await example_single_token_workflow(args.token_symbol, args.chain)
     
     # Run batch workflow
     await example_batch_workflow()

@@ -5,7 +5,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import text
 from sqlalchemy_utils import database_exists, create_database
 import uuid
-from datetime import datetime, UTC
+from datetime import datetime, UTC, timedelta
 import os
 from dotenv import load_dotenv
 import time
@@ -92,7 +92,7 @@ class Token(Base):
     logo_uri = Column(Text)
     created_at = Column(DateTime, default=lambda: datetime.now(UTC))
     updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
-    metrics_updated_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    metrics_updated_at = Column(DateTime)
 
     __table_args__ = (
         UniqueConstraint('contract_address', 'chain', name='uq_token_contract_chain'),
@@ -150,10 +150,10 @@ class PoolMetric(Base):
     liquidity_base = Column(DECIMAL(30, 18))
     liquidity_quote = Column(DECIMAL(30, 18))
     
-    # Price changes from DexScreener (1h, 6h, 24h)
-    price_change_1h = Column(DECIMAL(10, 4))
-    price_change_6h = Column(DECIMAL(10, 4))  # Added 6h price change
-    price_change_24h = Column(DECIMAL(10, 4))
+    # Price changes from DexScreener (1h, 6h, 24h) - increased precision for extreme values
+    price_change_1h = Column(DECIMAL(15, 4))
+    price_change_6h = Column(DECIMAL(15, 4))  # Added 6h price change
+    price_change_24h = Column(DECIMAL(15, 4))
     
     # Transaction data from DexScreener (1h, 6h, 24h)
     txns_1h_buys = Column(Integer, default=0)
@@ -234,27 +234,27 @@ class TokenMetric(Base):
     unique_wallets_6h = Column(Integer)
     unique_wallets_24h = Column(Integer)
     
-    # Moralis Analytics - Price Changes (enhanced with 5m)
-    price_change_5m = Column(DECIMAL(10, 4))
-    price_change_1h = Column(DECIMAL(10, 4))
-    price_change_6h = Column(DECIMAL(10, 4))
-    price_change_24h = Column(DECIMAL(10, 4))
+    # Moralis Analytics - Price Changes (enhanced with 5m) - increased precision for extreme values
+    price_change_5m = Column(DECIMAL(15, 4))
+    price_change_1h = Column(DECIMAL(15, 4))
+    price_change_6h = Column(DECIMAL(15, 4))
+    price_change_24h = Column(DECIMAL(15, 4))
     
-    # Moralis Holder Stats - Holder Changes (enhanced with 5m, 3d)
+    # Moralis Holder Stats - Holder Changes (enhanced with 5m, 3d) - increased precision for extreme values
     holder_change_5m = Column(Integer)  # Added 5m data
-    holder_change_5m_percent = Column(DECIMAL(10, 4))
+    holder_change_5m_percent = Column(DECIMAL(15, 4))
     holder_change_1h = Column(Integer)
-    holder_change_1h_percent = Column(DECIMAL(10, 4))
+    holder_change_1h_percent = Column(DECIMAL(15, 4))
     holder_change_6h = Column(Integer)
-    holder_change_6h_percent = Column(DECIMAL(10, 4))
+    holder_change_6h_percent = Column(DECIMAL(15, 4))
     holder_change_24h = Column(Integer)
-    holder_change_24h_percent = Column(DECIMAL(10, 4))
+    holder_change_24h_percent = Column(DECIMAL(15, 4))
     holder_change_3d = Column(Integer)  # Added 3d data
-    holder_change_3d_percent = Column(DECIMAL(10, 4))
+    holder_change_3d_percent = Column(DECIMAL(15, 4))
     holder_change_7d = Column(Integer)
-    holder_change_7d_percent = Column(DECIMAL(10, 4))
+    holder_change_7d_percent = Column(DECIMAL(15, 4))
     holder_change_30d = Column(Integer)
-    holder_change_30d_percent = Column(DECIMAL(10, 4))
+    holder_change_30d_percent = Column(DECIMAL(15, 4))
     
     # Moralis Holder Stats - Holder Distribution
     whales_count = Column(Integer)  # Large holders
@@ -278,8 +278,8 @@ class TokenMetric(Base):
     holders_by_transfer = Column(Integer)
     holders_by_airdrop = Column(Integer)
     
-    # BirdEye compatibility fields
-    volume_change_24h = Column(DECIMAL(10, 4))  # BirdEye volume change percentage
+    # BirdEye compatibility fields - increased precision for extreme values
+    volume_change_24h = Column(DECIMAL(15, 4))  # BirdEye volume change percentage
     
     # Enhanced price and liquidity data from aggregators
     total_fdv = Column(DECIMAL(20, 2))  # Moralis fully diluted valuation
@@ -325,10 +325,10 @@ class PoolMetricHistory(Base):
     liquidity_base = Column(DECIMAL(30, 18))
     liquidity_quote = Column(DECIMAL(30, 18))
     
-    # Price change indicators (enhanced with 6h data)
-    price_change_1h = Column(DECIMAL(10, 4))
-    price_change_6h = Column(DECIMAL(10, 4))  # Added 6h price change
-    price_change_24h = Column(DECIMAL(10, 4))
+    # Price change indicators (enhanced with 6h data) - increased precision for extreme values
+    price_change_1h = Column(DECIMAL(15, 4))
+    price_change_6h = Column(DECIMAL(15, 4))  # Added 6h price change
+    price_change_24h = Column(DECIMAL(15, 4))
     
     # Transaction activity (enhanced with 6h data)
     txns_1h_buys = Column(Integer, default=0)
@@ -361,15 +361,15 @@ class TokenMetricsHistory(Base):
     total_liquidity_usd = Column(DECIMAL(20, 2))  # Market depth
     market_cap = Column(DECIMAL(20, 2))           # Market valuation
     
-    # Key trend indicators
-    price_change_24h = Column(DECIMAL(10, 4))     # Price momentum
+    # Key trend indicators - increased precision for extreme values
+    price_change_24h = Column(DECIMAL(15, 4))     # Price momentum
     signal_strength = Column(Float)               # Trading signal
     trend_direction = Column(Text)                # Trend direction
     
     # Enhanced Moralis metrics for historical analysis (critical ones only)
     buy_volume_24h = Column(DECIMAL(20, 2))       # Buy pressure
     sell_volume_24h = Column(DECIMAL(20, 2))      # Sell pressure
-    holder_change_24h_percent = Column(DECIMAL(10, 4))  # Holder momentum
+    holder_change_24h_percent = Column(DECIMAL(15, 4))  # Holder momentum - increased precision
     
     # Additional key Moralis metrics for comprehensive historical analysis
     total_buyers_24h = Column(Integer)            # Buyer activity
@@ -377,10 +377,10 @@ class TokenMetricsHistory(Base):
     unique_wallets_24h = Column(Integer)          # Wallet engagement
     holder_count = Column(Integer)                # Total holders
     
-    # Enhanced price change tracking
-    price_change_5m = Column(DECIMAL(10, 4))      # Short-term momentum
-    price_change_1h = Column(DECIMAL(10, 4))      # Hourly momentum
-    price_change_6h = Column(DECIMAL(10, 4))      # 6-hour momentum
+    # Enhanced price change tracking - increased precision for extreme values
+    price_change_5m = Column(DECIMAL(15, 4))      # Short-term momentum
+    price_change_1h = Column(DECIMAL(15, 4))      # Hourly momentum
+    price_change_6h = Column(DECIMAL(15, 4))      # 6-hour momentum
     
     # Key holder distribution (top level only)
     top10_supply_percent = Column(DECIMAL(5, 2))  # Concentration risk

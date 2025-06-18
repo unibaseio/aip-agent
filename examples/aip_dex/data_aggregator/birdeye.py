@@ -25,6 +25,7 @@ class BirdEyeProvider:
         """Make HTTP request with error handling"""
         try:
             response = await self.session.get(url, headers=headers, params=params)
+            print(f"Response: {response.json()}")
             response.raise_for_status()
             return response.json()
         except httpx.RequestError as e:
@@ -58,19 +59,21 @@ class BirdEyeProvider:
         # Process and standardize token data
         processed_tokens = []
         for token in tokens:
+            print(f"Token: {token}")
             processed_token = {
                 "name": token.get("name"),
                 "symbol": token.get("symbol"),
                 "address": token.get("address"),
-                "price_usd": float(token.get("price", 0)),
-                "volume_24h": float(token.get("v24hUSD", 0)),
-                "volume_change_24h": float(token.get("v24hChangePercent", 0)),
-                "market_cap": float(token.get("mc", 0)),
-                "liquidity": float(token.get("liquidity", 0)),
-                "decimals": int(token.get("decimals", 18)),
+                "price_usd": float(token.get("price") or 0),
+                "volume_24h": float(token.get("v24hUSD") or 0),
+                "volume_change_24h": float(token.get("v24hChangePercent") or 0),
+                "market_cap": float(token.get("mc") or 0),
+                "liquidity": float(token.get("liquidity") or 0),
+                "decimals": int(token.get("decimals") or 18),
                 "logo_uri": token.get("logoURI"),
                 "last_trade_unix_time": token.get("lastTradeUnixTime")
             }
+            print(f"Processed token: {processed_token}")
             processed_tokens.append(processed_token)
         
         return {
