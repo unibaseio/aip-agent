@@ -36,6 +36,7 @@ def create_indexes():
     indexes = [
         "CREATE INDEX IF NOT EXISTS idx_tokens_symbol ON tokens(symbol)",
         "CREATE INDEX IF NOT EXISTS idx_tokens_contract_chain ON tokens(contract_address, chain)",
+        "CREATE INDEX IF NOT EXISTS idx_tokens_metrics_updated_at ON tokens(metrics_updated_at)",
         "CREATE INDEX IF NOT EXISTS idx_pool_metrics_pool_updated ON pool_metrics(pool_id, updated_at)",
         "CREATE INDEX IF NOT EXISTS idx_pool_metrics_history_recorded ON pool_metrics_history(pool_id, recorded_at)",
         "CREATE INDEX IF NOT EXISTS idx_token_metrics_updated ON token_metrics(token_id, updated_at)",
@@ -91,7 +92,8 @@ class Token(Base):
     logo_uri = Column(Text)
     created_at = Column(DateTime, default=lambda: datetime.now(UTC))
     updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
-    
+    metrics_updated_at = Column(DateTime, default=lambda: datetime.now(UTC))
+
     __table_args__ = (
         UniqueConstraint('contract_address', 'chain', name='uq_token_contract_chain'),
     )

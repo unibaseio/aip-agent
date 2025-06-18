@@ -87,8 +87,8 @@ class DexScreenerProvider:
     async def get_token_address(self, chain_id: str, symbol: str) -> str:
         """Get token base data by chain ID and contract address using /tokens/v1/{chainId}/{tokenAddresses}"""
         res = await self.search_token(chain_id, symbol, limit=1)
-        if not res or not res.get("tokens"):
-            return {}
+        if not res or not res.get("pools"):
+            return ""
         if len(res["pools"]) == 0:
             return ""
         return res["pools"][0].get("base_address")

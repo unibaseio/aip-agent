@@ -135,6 +135,7 @@ class TokenService:
                 contract_address=contract_address,
                 chain=chain,
                 decimals=decimals or 18,
+                metrics_updated_at=None  # Mark as needing update
             )
             db.add(token)
             db.commit()
@@ -153,6 +154,7 @@ class TokenService:
             contract_address=token_data.get('contract_address', contract_address),
             chain=token_data.get('chain', chain or 'bsc'),
             decimals=token_data.get('decimals', 18),
+            metrics_updated_at=None  # Mark as needing update
         )
         
         db.add(token)
@@ -162,7 +164,7 @@ class TokenService:
 
     async def update_token_pools(self, db: Session, token_id: str, 
                                 force_update: bool = False) -> Dict[str, Any]:
-        """Update token pools, pool metrics and signals"""
+        """Update token pools, pool metrics and signals. Uses metrics_updated_at field to check if update is needed (> 1 hour)"""
         try:
             # Get token
             token = db.query(Token).filter(Token.id == token_id).first()
@@ -172,17 +174,18 @@ class TokenService:
                     "error": f"Token with id {token_id} not found"
                 }
 
-            # Check if recently updated (avoid too frequent updates)
-            existing_pools = db.query(TokenPool).filter(TokenPool.base_token_id == token_id).all()
+            # Check if recently updated using metrics_updated_at field
             should_update = force_update
             
-            if not should_update and existing_pools:
-                thirty_minutes_ago = datetime.now(UTC) - timedelta(minutes=30)
-                recent_updates = [p for p in existing_pools if p.updated_at and self._is_datetime_after(p.updated_at, thirty_minutes_ago)]
-                should_update = len(recent_updates) == 0
-            elif not existing_pools:
+            if not should_update and token.metrics_updated_at:
+                one_hour_ago = datetime.now(UTC) - timedelta(hours=1)
+                should_update = self._is_datetime_before(token.metrics_updated_at, one_hour_ago)
+            else:
                 should_update = True
 
+            # Get existing pools count for result
+            existing_pools = db.query(TokenPool).filter(TokenPool.base_token_id == token_id).all()
+            
             result = {
                 "success": True,
                 "token_id": token_id,
@@ -247,7 +250,7 @@ class TokenService:
 
     async def update_token(self, db: Session, token_id: str, 
                           force_update: bool = False) -> Dict[str, Any]:
-        """Update token stats from Moralis, save to history, calculate signals and update metrics"""
+        """Update token stats from Moralis, save to history, calculate signals and update metrics. Uses metrics_updated_at field to check if update is needed (> 1 hour)"""
         try:
             # Get token
             token = db.query(Token).filter(Token.id == token_id).first()
@@ -257,13 +260,12 @@ class TokenService:
                     "error": f"Token with id {token_id} not found"
                 }
 
-            # Check if recently updated
-            existing_metric = db.query(TokenMetric).filter(TokenMetric.token_id == token_id).first()
+            # Check if recently updated using token's metrics_updated_at field
             should_update = force_update
             
-            if not should_update and existing_metric:
-                thirty_minutes_ago = datetime.now(UTC) - timedelta(minutes=30)
-                should_update = not existing_metric.last_calculation_at or self._is_datetime_before(existing_metric.last_calculation_at, thirty_minutes_ago)
+            if not should_update and token.metrics_updated_at:
+                one_hour_ago = datetime.now(UTC) - timedelta(hours=1)
+                should_update = self._is_datetime_before(token.metrics_updated_at, one_hour_ago)
             else:
                 should_update = True
 
@@ -328,6 +330,12 @@ class TokenService:
                         token_metric.trend_direction = self._map_signal_to_trend_direction(signals.get("signal", "HOLD"))
                         db.commit()
                         db.refresh(token_metric)
+                        
+                # Finally update metrics_updated_at field after successful update
+                if result.get("moralis_updated") or result.get("metrics_updated") or result.get("signals_updated"):
+                    token.metrics_updated_at = datetime.now(UTC)
+                    db.commit()
+                    db.refresh(token)
 
             return result
             
@@ -389,14 +397,14 @@ class TokenService:
             }
 
     async def get_tokens_requiring_update(self, db: Session, max_age_hours: int = 1) -> List[str]:
-        """Get list of token IDs that need data updates"""
+        """Get list of token IDs that need data updates based on metrics_updated_at field"""
         try:
             cutoff_time = datetime.now(UTC) - timedelta(hours=max_age_hours)
             
-            # Get tokens that haven't been updated recently or have no metrics
-            tokens_needing_update = db.query(Token.id).outerjoin(TokenMetric).filter(
-                (TokenMetric.last_calculation_at.is_(None)) |
-                (TokenMetric.last_calculation_at < cutoff_time)
+            # Get tokens that haven't been updated recently using metrics_updated_at field
+            tokens_needing_update = db.query(Token.id).filter(
+                (Token.metrics_updated_at.is_(None)) |
+                (Token.metrics_updated_at < cutoff_time)
             ).all()
             
             return [str(token.id) for token in tokens_needing_update]
@@ -406,6 +414,14 @@ class TokenService:
             return []
 
     # ===== HELPER METHODS =====
+    
+    def _token_needs_update(self, token: Token, max_age_hours: int = 1) -> bool:
+        """Check if token needs metrics update based on metrics_updated_at field"""
+        if not token.metrics_updated_at:
+            return True
+            
+        cutoff_time = datetime.now(UTC) - timedelta(hours=max_age_hours)
+        return self._is_datetime_before(token.metrics_updated_at, cutoff_time)
 
     def _map_signal_to_trend_direction(self, signal: str) -> str:
         """Map trading signal to database trend_direction format"""
