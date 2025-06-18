@@ -832,12 +832,12 @@ class TokenService:
             return None
 
     async def _get_historical_token_metrics(self, db: Session, token_id: str, 
-                                           days: int = 7, use_history_table: bool = True) -> List[Dict[str, Any]]:
+                                           days: int = 7, use_history_table: bool = True, daily_sample: bool = False) -> List[Dict[str, Any]]:
         """Get historical TokenMetric records for trend analysis"""
         try:
             if use_history_table:
                 # Use dedicated history table for better performance and more data
-                return await self._get_historical_token_metrics_from_history(db, token_id, days)
+                return await self._get_historical_token_metrics_from_history(db, token_id, days, daily_sample)
             
             # Fallback to current TokenMetric table (legacy method)
             cutoff_date = datetime.now(UTC) - timedelta(days=days)
@@ -1477,7 +1477,7 @@ class TokenService:
             return False
 
     async def _get_historical_token_metrics_from_history(self, db: Session, token_id: str, 
-                                                       days: int = 30) -> List[Dict[str, Any]]:
+                                                       days: int = 30, daily_sample: bool = False) -> List[Dict[str, Any]]:
             """Get historical TokenMetric records from history table for comprehensive analysis"""
             try:
                 # Get historical metrics from the last N days
@@ -1490,7 +1490,13 @@ class TokenService:
                 ).order_by(desc(TokenMetricsHistory.recorded_at)).all()
                 
                 historical_data = []
+                seen_dates = set()
                 for record in history_records:
+                    record_date = record.recorded_at.date()
+                    if daily_sample and record_date in seen_dates:
+                        print(f"Skipping duplicate record at date: {record.recorded_at}")
+                        continue
+                    seen_dates.add(record_date)
                     historical_data.append({
                         "timestamp": record.recorded_at.isoformat(),
                         "weighted_price_usd": float(record.weighted_price_usd or 0),
@@ -1529,7 +1535,7 @@ class TokenService:
             token_metric = db.query(TokenMetric).filter(TokenMetric.token_id == token_id).first()
             
             # Get historical metrics for trend analysis (last 30 days)
-            historical_metrics = await self._get_historical_token_metrics(db, token_id, days=30)
+            historical_metrics = await self._get_historical_token_metrics(db, token_id, days=30, daily_sample=True)
             
             # Get active pools
             pools = db.query(TokenPool).filter(
