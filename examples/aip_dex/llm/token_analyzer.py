@@ -183,46 +183,46 @@ class TokenDecisionAnalyzer:
         ## Analysis Requirements
         Please conduct in-depth analysis based on all the above data from the following aspects:
         
-        1. **Overall Conclusion**
+        **IMPORTANT: Please format your response using markdown with icons before each section title.**
+        
+        1. **🎯 Overall Conclusion**
            - {conclusion}
 
-        2. **Technical Analysis Summary**
+        2. **📊 Technical Analysis Summary**
            - RSI and moving average indicators interpretation
            - Price trend and breakout signal analysis
            - Volatility and technical pattern assessment
 
-        2. **Fundamental Analysis**
+        3. **🏛️ Fundamental Analysis**
            - Trading volume and liquidity health
            - Market participation and activity level
            - Holder structure and stability
 
-        3. **Market Sentiment Analysis**
+        4. **🌡️ Market Sentiment Analysis**
            - Buy/sell pressure comparison
            - Trader behavior patterns
            - Short-term and medium-term sentiment changes
 
-        4. **Risk Assessment**
+        5. **⚠️ Risk Assessment**
            - Major risk factors identification
            - Risk level rating
            - Risk management recommendations
 
-        5. **Trading Recommendations**
+        6. **💰 Trading Recommendations**
            - Clear trading signals (STRONG BUY/BUY/WATCH/HOLD/SELL/STRONG SELL)
            - Suggested entry/exit price levels
            - Stop-loss and take-profit recommendations
            - Position size management suggestions
 
-        6. **Summary**
+        7. **📝 Summary**
            - Overall score (1-10 scale)
            - Investment timeframe recommendations
            - Key monitoring indicators
 
-        Please provide detailed and professional analysis, ensuring recommendations are based on data and logic.
+        Please provide detailed and professional analysis using proper markdown formatting with icons, ensuring recommendations are based on data and logic.
         """
         
         return prompt
-    
-
     
     def _fallback_analysis(self, decision_data: Dict[str, Any]) -> Dict[str, Any]:
         """Fallback analysis when LLM call fails"""

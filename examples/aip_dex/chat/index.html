@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIP DEX Chat - Token Analysis Assistant</title>
+    <!-- Markdown parsing library -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
+    <!-- Syntax highlighting for code blocks -->
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .chat-container {
+            width: 95%;
+            max-width: 1200px;
+            height: 85vh;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .chat-header {
+            background: linear-gradient(90deg, #4f46e5, #7c3aed);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .chat-header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .chat-header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .status-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 12px;
+            height: 12px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 12px 18px;
+            border-radius: 18px;
+            line-height: 1.4;
+            word-wrap: break-word;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+
+        .message.assistant {
+            align-self: flex-start;
+            background: #f3f4f6;
+            color: #374151;
+            border-bottom-left-radius: 5px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .message.error {
+            align-self: center;
+            background: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+            text-align: center;
+        }
+
+        .message.loading {
+            align-self: flex-start;
+            background: #f3f4f6;
+            color: #6b7280;
+            border: 1px solid #e5e7eb;
+        }
+
+        /* Markdown content styling */
+        .message-content h1,
+        .message-content h2,
+        .message-content h3,
+        .message-content h4,
+        .message-content h5,
+        .message-content h6 {
+            margin: 0.5em 0;
+            font-weight: 600;
+        }
+
+        .message-content h1 {
+            font-size: 1.5em;
+        }
+
+        .message-content h2 {
+            font-size: 1.3em;
+        }
+
+        .message-content h3 {
+            font-size: 1.1em;
+        }
+
+        .message-content p {
+            margin: 0.5em 0;
+            line-height: 1.6;
+        }
+
+        .message-content ul,
+        .message-content ol {
+            margin: 0.5em 0;
+            padding-left: 1.5em;
+        }
+
+        .message-content li {
+            margin: 0.2em 0;
+        }
+
+        .message-content blockquote {
+            border-left: 4px solid #4f46e5;
+            margin: 0.5em 0;
+            padding-left: 1em;
+            color: #6b7280;
+            font-style: italic;
+        }
+
+        .message-content code {
+            background: rgba(0, 0, 0, 0.1);
+            padding: 0.1em 0.3em;
+            border-radius: 3px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9em;
+        }
+
+        .message.user .message-content code {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .message-content pre {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+            padding: 1em;
+            margin: 0.5em 0;
+            overflow-x: auto;
+        }
+
+        .message.user .message-content pre {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .message-content pre code {
+            background: none;
+            padding: 0;
+            border-radius: 0;
+        }
+
+        .message-content table {
+            border-collapse: collapse;
+            margin: 0.5em 0;
+            width: 100%;
+        }
+
+        .message-content th,
+        .message-content td {
+            border: 1px solid #e5e7eb;
+            padding: 0.5em;
+            text-align: left;
+        }
+
+        .message-content th {
+            background: #f9fafb;
+            font-weight: 600;
+        }
+
+        .message.user .message-content th {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .message.user .message-content th,
+        .message.user .message-content td {
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .message-content a {
+            color: #4f46e5;
+            text-decoration: none;
+        }
+
+        .message-content a:hover {
+            text-decoration: underline;
+        }
+
+        .message.user .message-content a {
+            color: #e0e7ff;
+        }
+
+        .message-content hr {
+            border: none;
+            border-top: 1px solid #e5e7eb;
+            margin: 1em 0;
+        }
+
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: #6b7280;
+            border-radius: 50%;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+
+            0%,
+            60%,
+            100% {
+                transform: translateY(0);
+            }
+
+            30% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .chat-input-container {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .chat-input-form {
+            display: flex;
+            gap: 10px;
+            align-items: end;
+        }
+
+        .input-group {
+            flex: 1;
+            position: relative;
+        }
+
+        .chat-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 16px;
+            line-height: 1.4;
+            resize: none;
+            transition: all 0.2s ease;
+            min-height: 48px;
+            max-height: 120px;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .chat-input::placeholder {
+            color: #9ca3af;
+        }
+
+        .options-container {
+            margin-top: 8px;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: #4f46e5;
+        }
+
+        .checkbox-container label {
+            font-size: 14px;
+            color: #6b7280;
+            cursor: pointer;
+        }
+
+        .send-button {
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            height: 48px;
+            min-width: 80px;
+        }
+
+        .send-button:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        }
+
+        .send-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .welcome-message {
+            text-align: center;
+            color: #6b7280;
+            font-style: italic;
+            margin: 20px 0;
+        }
+
+        /* Scrollbar styling */
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 3px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Responsive design */
+        @media (max-width: 1024px) {
+            .chat-container {
+                width: 95%;
+                max-width: 900px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .chat-container {
+                width: 98%;
+                height: 90vh;
+                margin: 5vh 0;
+            }
+
+            .chat-header h1 {
+                font-size: 20px;
+            }
+
+            .message {
+                max-width: 90%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="status-indicator" id="statusIndicator"></div>
+            <h1>AIP DEX Token Analyzer</h1>
+            <p>智能代币分析助手 - 支持多DEX数据分析</p>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+            <div class="welcome-message">
+                👋 欢迎使用AIP DEX Token分析助手！<br>
+                您可以询问关于代币价格、流动性、套利机会等问题。
+            </div>
+        </div>
+
+        <div class="chat-input-container">
+            <form class="chat-input-form" id="chatForm">
+                <div class="input-group">
+                    <textarea class="chat-input" id="messageInput" placeholder="输入您的问题... 例如：分析BEEPER的价格趋势"
+                        rows="1"></textarea>
+                    <div class="options-container">
+                        <div class="checkbox-container">
+                            <input type="checkbox" id="includePoolsCheckbox">
+                            <label for="includePoolsCheckbox">包含流动性池详细信息</label>
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" class="send-button" id="sendButton">
+                    发送
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        class ChatApp {
+            constructor() {
+                this.baseUrl = 'http://127.0.0.1:8000'; // API base URL
+                this.messagesContainer = document.getElementById('chatMessages');
+                this.messageInput = document.getElementById('messageInput');
+                this.sendButton = document.getElementById('sendButton');
+                this.chatForm = document.getElementById('chatForm');
+                this.includePoolsCheckbox = document.getElementById('includePoolsCheckbox');
+                this.statusIndicator = document.getElementById('statusIndicator');
+
+                this.initializeMarkdown();
+                this.initializeEventListeners();
+                this.checkApiHealth();
+            }
+
+            initializeMarkdown() {
+                // Configure marked options
+                if (typeof marked !== 'undefined') {
+                    marked.setOptions({
+                        breaks: true, // Convert \n to <br>
+                        gfm: true, // GitHub Flavored Markdown
+                        headerIds: false, // Don't add IDs to headers
+                        mangle: false, // Don't mangle email addresses
+                        sanitize: false, // We'll handle sanitization ourselves
+                        smartLists: true,
+                        smartypants: false
+                    });
+                }
+            }
+
+            // Simple HTML sanitization to prevent XSS
+            sanitizeHtml(html) {
+                const temp = document.createElement('div');
+                temp.innerHTML = html;
+
+                // Remove script tags and event handlers
+                const scripts = temp.querySelectorAll('script');
+                scripts.forEach(script => script.remove());
+
+                const allElements = temp.querySelectorAll('*');
+                allElements.forEach(element => {
+                    // Remove dangerous attributes
+                    const attributes = [...element.attributes];
+                    attributes.forEach(attr => {
+                        if (attr.name.startsWith('on') || attr.name === 'style') {
+                            element.removeAttribute(attr.name);
+                        }
+                    });
+                });
+
+                return temp.innerHTML;
+            }
+
+            initializeEventListeners() {
+                // Form submission
+                this.chatForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.sendMessage();
+                });
+
+                // Auto-resize textarea
+                this.messageInput.addEventListener('input', () => {
+                    this.autoResizeTextarea();
+                });
+
+                // Enter key handling
+                this.messageInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.sendMessage();
+                    }
+                });
+            }
+
+            autoResizeTextarea() {
+                this.messageInput.style.height = 'auto';
+                const scrollHeight = this.messageInput.scrollHeight;
+                const maxHeight = 120;
+                this.messageInput.style.height = Math.min(scrollHeight, maxHeight) + 'px';
+            }
+
+            async checkApiHealth() {
+                try {
+                    const response = await fetch(`${this.baseUrl}/api/v1/health`);
+                    if (response.ok) {
+                        this.setConnectionStatus(true);
+                    } else {
+                        this.setConnectionStatus(false);
+                    }
+                } catch (error) {
+                    this.setConnectionStatus(false);
+                    console.error('API health check failed:', error);
+                }
+            }
+
+            setConnectionStatus(isConnected) {
+                if (isConnected) {
+                    this.statusIndicator.style.background = '#10b981';
+                    this.statusIndicator.title = 'API连接正常';
+                } else {
+                    this.statusIndicator.style.background = '#ef4444';
+                    this.statusIndicator.title = 'API连接失败';
+                }
+            }
+
+            addMessage(content, type = 'user') {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${type}`;
+
+                if (type === 'loading') {
+                    messageDiv.innerHTML = `
+                        <div class="typing-indicator">
+                            <span>正在分析</span>
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                        </div>
+                    `;
+                } else {
+                    const contentDiv = document.createElement('div');
+                    contentDiv.className = 'message-content';
+
+                    if (type === 'assistant' && typeof marked !== 'undefined') {
+                        // Parse markdown for assistant messages
+                        try {
+                            const htmlContent = marked.parse(content);
+                            const sanitizedContent = this.sanitizeHtml(htmlContent);
+                            contentDiv.innerHTML = sanitizedContent;
+
+                            // Highlight code blocks if Prism is available
+                            if (typeof Prism !== 'undefined') {
+                                setTimeout(() => {
+                                    Prism.highlightAllUnder(contentDiv);
+                                }, 0);
+                            }
+                        } catch (error) {
+                            console.error('Markdown parsing error:', error);
+                            contentDiv.textContent = content;
+                        }
+                    } else {
+                        // Plain text for user messages and fallback
+                        contentDiv.textContent = content;
+                    }
+
+                    messageDiv.appendChild(contentDiv);
+                }
+
+                this.messagesContainer.appendChild(messageDiv);
+                this.scrollToBottom();
+
+                return messageDiv;
+            }
+
+            scrollToBottom() {
+                this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+            }
+
+            async sendMessage() {
+                const message = this.messageInput.value.trim();
+                if (!message) return;
+
+                const includePools = this.includePoolsCheckbox.checked;
+
+                // Add user message
+                this.addMessage(message, 'user');
+
+                // Clear input
+                this.messageInput.value = '';
+                this.autoResizeTextarea();
+
+                // Disable send button
+                this.sendButton.disabled = true;
+                this.sendButton.textContent = '发送中...';
+
+                // Add loading message
+                const loadingMessage = this.addMessage('', 'loading');
+
+                try {
+                    const response = await fetch(`${this.baseUrl}/api/v1/chat`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            message: message,
+                            include_pools: includePools
+                        })
+                    });
+
+                    // Remove loading message
+                    loadingMessage.remove();
+
+                    if (!response.ok) {
+                        throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+                    }
+
+                    const data = await response.json();
+
+                    // Add assistant response
+                    this.addMessage(data.response, 'assistant');
+
+                    // Update connection status
+                    this.setConnectionStatus(true);
+
+                } catch (error) {
+                    // Remove loading message
+                    loadingMessage.remove();
+
+                    // Add error message
+                    this.addMessage(`错误: ${error.message}`, 'error');
+
+                    // Update connection status
+                    this.setConnectionStatus(false);
+
+                    console.error('Chat API error:', error);
+                } finally {
+                    // Re-enable send button
+                    this.sendButton.disabled = false;
+                    this.sendButton.textContent = '发送';
+                    this.messageInput.focus();
+                }
+            }
+        }
+
+        // Initialize the chat app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            new ChatApp();
+        });
+    </script>
+</body>
+
+</html>
