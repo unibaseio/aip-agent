@@ -89,6 +89,7 @@ from data_aggregator.dex_screener import DexScreenerProvider
 from data_aggregator.moralis import MoralisProvider
 from data_aggregator.birdeye import BirdEyeProvider
 from indicators.calculator import TokenSignalCalculator
+from llm.token_analyzer import TokenDecisionAnalyzer
 
 class TokenService:
     """Simplified TokenService with three core methods"""
@@ -1656,108 +1657,126 @@ class TokenService:
             print(f"Error getting token decision data: {e}")
             return None
 
-    async def get_multiple_tokens_decision_data(self, db: Session, token_ids: List[str]) -> Dict[str, Any]:
-        """Get decision data for multiple tokens for comparison"""
-        try:
-            tokens_data = {}
-            
-            for token_id in token_ids:
-                token_data = await self.get_token_decision_data(db, token_id)
-                if token_data:
-                    tokens_data[token_id] = token_data
-            
-            # Add comparative analysis
-            if len(tokens_data) > 1:
-                comparative_analysis = self._analyze_tokens_comparison(tokens_data)
-                return {
-                    "tokens": tokens_data,
-                    "comparative_analysis": comparative_analysis
-                }
-            
-            return {"tokens": tokens_data}
-            
-        except Exception as e:
-            print(f"Error getting multiple tokens decision data: {e}")
-            return {}
-
-    def _analyze_tokens_comparison(self, tokens_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Analyze multiple tokens for comparison"""
-        try:
-            # Extract key metrics for comparison
-            metrics_comparison = {}
-            
-            for token_id, data in tokens_data.items():
-                token_symbol = data["token_info"]["symbol"]
-                current_metrics = data.get("current_metrics", {})
-                technical_indicators = data.get("technical_indicators", {})
-                risk_factors = data.get("risk_factors", {})
-                
-                metrics_comparison[token_symbol] = {
-                    "price_usd": current_metrics.get("weighted_price_usd", 0),
-                    "volume_24h": current_metrics.get("total_volume_24h", 0),
-                    "market_cap": current_metrics.get("market_cap", 0),
-                    "rsi": technical_indicators.get("rsi_14d", 50),
-                    "volatility": technical_indicators.get("volatility_24h", 0),
-                    "signal_strength": technical_indicators.get("signal_strength", 0.5),
-                    "risk_score": self._calculate_risk_score(risk_factors)
-                }
-            
-            # Rankings
-            rankings = {
-                "by_signal_strength": sorted(metrics_comparison.items(), key=lambda x: x[1]["signal_strength"], reverse=True),
-                "by_volume": sorted(metrics_comparison.items(), key=lambda x: x[1]["volume_24h"], reverse=True),
-                "by_market_cap": sorted(metrics_comparison.items(), key=lambda x: x[1]["market_cap"], reverse=True),
-                "by_risk_score": sorted(metrics_comparison.items(), key=lambda x: x[1]["risk_score"])
-            }
-            
-            return {
-                "metrics_comparison": metrics_comparison,
-                "rankings": rankings,
-                "summary": {
-                    "total_tokens": len(tokens_data),
-                    "tokens_with_buy_signal": len([t for t in tokens_data.values() if t.get("technical_indicators", {}).get("signal_strength", 0) > 0.7]),
-                    "tokens_with_sell_signal": len([t for t in tokens_data.values() if t.get("technical_indicators", {}).get("signal_strength", 0) < 0.3]),
-                    "high_risk_tokens": len([t for t in tokens_data.values() if self._calculate_risk_score(t.get("risk_factors", {})) > 0.7])
-                }
-            }
-            
-        except Exception as e:
-            print(f"Error analyzing tokens comparison: {e}")
-            return {}
-
-    def _calculate_risk_score(self, risk_factors: Dict[str, Any]) -> float:
-        """Calculate overall risk score from risk factors"""
-        try:
-            risk_score = 0.0
-            
-            # Volatility risk
-            volatility_level = risk_factors.get("volatility_level", "LOW")
-            if volatility_level == "HIGH":
-                risk_score += 0.3
-            elif volatility_level == "MEDIUM":
-                risk_score += 0.15
-            
-            # Technical risks
-            if risk_factors.get("rsi_overbought", False):
-                risk_score += 0.2
-            if risk_factors.get("concentration_risk", False):
-                risk_score += 0.2
-            if risk_factors.get("holder_decline", False):
-                risk_score += 0.15
-            if risk_factors.get("low_liquidity", False):
-                risk_score += 0.15
-            
-            return min(1.0, risk_score)
-            
-        except Exception as e:
-            print(f"Error calculating risk score: {e}")
-            return 0.5
-
     async def close(self):
-        """Close all provider connections"""
-        try:    
+        """Close all data provider connections"""
+        try:
             await self.dex_screener.close()
-            await self.moralis.close()  
+            await self.moralis.close()
             await self.birdeye.close()
         except Exception as e:
-            print(f"Error closing connections: {e}") 
+            print(f"Warning: Error closing connections: {e}")
+
+    async def process_chat_message(self, db: Session, message: str, include_pools: bool = False) -> str:
+        """
+        Process chat message and return response data for LLM analysis
+        Enhanced version: Get token list → LLM token identification → Get decision data → LLM analysis
+        
+        Args:
+            db: Database session
+            message: User's chat message
+            include_pools: Whether to include detailed pool analysis
+            
+        Returns:
+            Dict containing response, signal_data, intent, and optional pool_analysis
+        """
+        try:
+            token_analyzer = TokenDecisionAnalyzer()
+            
+            # Step 1: Get available token list from database
+            available_tokens = self._get_available_tokens_list(db)
+            
+            if not available_tokens:
+                return f"No tokens found in the database. Please add some tokens first. Available tokens: {', '.join([t['symbol'] for t in available_tokens])}"
+            
+            # Step 2: Use LLM to determine which token the user is asking about
+            llm_token_analysis = await token_analyzer.llm_identify_target_token(message, available_tokens)
+            
+            print(f"LLM token analysis: {llm_token_analysis}")
+
+            if not llm_token_analysis.get("token_found"):
+                return f"I couldn't identify a specific token from your message. Available tokens: {', '.join([t['symbol'] for t in available_tokens])}"
+            
+            target_token_symbol = llm_token_analysis.get("token_symbol")
+            
+            # Step 3: Check if the identified token exists in our list
+            token_exists = any(token['symbol'].upper() == target_token_symbol.upper() for token in available_tokens)
+            
+            if not token_exists:
+                similar_tokens = [t['symbol'] for t in available_tokens if target_token_symbol.lower() in t['symbol'].lower() or t['symbol'].lower() in target_token_symbol.lower()]
+                suggestion = f" Did you mean: {', '.join(similar_tokens[:3])}?" if similar_tokens else ""
+                return f"Token {target_token_symbol} is not available in our database.{suggestion}"
+            
+            # Step 4: Get or create token and retrieve decision data
+            token = await self.get_or_create_token(db, symbol=target_token_symbol, chain="bsc")
+            if not token:
+                return f"Sorry, I couldn't retrieve data for token {target_token_symbol}."
+
+            print(f"Analysing token: {token.symbol}")                
+            # Get comprehensive token analysis
+            decision_data = await self.get_token_decision_data(db, str(token.id))
+            
+            if not decision_data:
+                return f"I found {target_token_symbol} but couldn't retrieve current analysis data. The token might be new or have limited trading data."
+            
+            # Step 5: Use LLM to analyze the decision data and generate response
+            llm_analysis = await token_analyzer.analyze_token_data_for_user_intent(
+                decision_data, llm_token_analysis.get("user_intent", None)
+            )
+
+            print(f"LLM analysis: {llm_analysis}")
+            
+            return llm_analysis
+            
+        except Exception as e:
+            print(f"Error processing chat message: {e}")
+            return {
+                "response": f"Sorry, I encountered an error while analyzing your request: {str(e)}",
+                "signal_data": None,
+                "intent": None,
+                "pool_analysis": None,
+                "available_tokens": None
+            }
+
+    def _get_available_tokens_list(self, db: Session, limit: int = 100) -> List[Dict[str, Any]]:
+        """Get list of available tokens from database"""
+        try:
+            tokens = db.query(Token).limit(limit).all()
+            
+            token_list = []
+            for token in tokens:
+                token_info = {
+                    "id": str(token.id),
+                    "symbol": token.symbol,
+                    "name": token.name,
+                    "chain": token.chain,
+                    "contract_address": token.contract_address
+                }
+                token_list.append(token_info)
+            
+            return token_list
+        except Exception as e:
+            print(f"Error getting available tokens: {e}")
+            return []
+
+    
+    def _format_pool_analysis(self, pools: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Format pool analysis data for response"""
+        if not pools:
+            return []
+        
+        formatted_pools = []
+        for pool in pools:
+            formatted_pool = {
+                "dex": pool.get("dex", "Unknown"),
+                "price_usd": pool.get("price_usd", 0),
+                "liquidity_usd": pool.get("liquidity_usd", 0),
+                "volume_24h": pool.get("volume_24h", 0),
+                "price_change_24h": pool.get("price_change_24h", 0)
+            }
+            formatted_pools.append(formatted_pool)
+        
+        return formatted_pools
+
+    
+
+    

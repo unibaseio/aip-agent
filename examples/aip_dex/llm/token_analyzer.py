@@ -23,7 +23,7 @@ class TokenDecisionAnalyzer:
             prompt = self._create_comprehensive_analysis_prompt(decision_data)
             
             response = await self.client.chat.completions.create(
-                model="gpt-4-turbo-preview",
+                model="gpt-4.1-mini",
                 messages=[
                     {
                         "role": "system", 
@@ -74,7 +74,7 @@ class TokenDecisionAnalyzer:
         IMPORTANT: Please respond in Chinese (中文) for all analysis and recommendations.
         """
     
-    def _create_comprehensive_analysis_prompt(self, decision_data: Dict[str, Any]) -> str:
+    def _create_comprehensive_analysis_prompt(self, decision_data: Dict[str, Any], user_intent: str = None) -> str:
         """Create comprehensive analysis prompt"""
         token_info = decision_data.get("token_info", {})
         current_metrics = decision_data.get("current_metrics", {})
@@ -89,9 +89,16 @@ class TokenDecisionAnalyzer:
         trader_ratio = moralis_data.get("trader_activity", {}).get("trader_ratio", 1)
         concentration_risk = moralis_data.get("distribution", {}).get("concentration_risk", "UNKNOWN")
         
-        prompt = f"""
-        Please analyze the complete token data below and provide trading recommendations:
+        if user_intent:
+            prompt = f"""
+            Please analyze the complete token data below and provide trading recommendations according to the user's intent: {user_intent}:
+            """
+        else:
+            prompt = f"""
+            Please analyze the complete token data below and provide trading recommendations:
+            """
 
+        prompt += f"""
         ## Basic Information
         Token Name: {token_info.get('name', 'N/A')}
         Token Symbol: ${token_info.get('symbol', 'N/A')}
@@ -165,12 +172,21 @@ class TokenDecisionAnalyzer:
         if historical_data:
             prompt += f"\n## Historical Data\nTotal of {len(historical_data)} historical data points covering the past 30 days performance.\n"
         
-        prompt += """
+        conclusion = ""
+        if user_intent:
+            conclusion = f"Please provide a short conclusion according to the user's intent: {user_intent}."
+        else:
+            conclusion = "Please provide a short conclusion for trading advice."
+
+        prompt += f"""
 
         ## Analysis Requirements
         Please conduct in-depth analysis based on all the above data from the following aspects:
+        
+        1. **Overall Conclusion**
+           - {conclusion}
 
-        1. **Technical Analysis Summary**
+        2. **Technical Analysis Summary**
            - RSI and moving average indicators interpretation
            - Price trend and breakout signal analysis
            - Volatility and technical pattern assessment
@@ -249,6 +265,76 @@ class TokenDecisionAnalyzer:
             },
             "fallback_mode": True
         }
+    
+    async def llm_identify_target_token(self, message: str, available_tokens: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Use LLM to identify which token the user is asking about"""
+        try:
+            # Create token list for LLM context
+            token_symbols = [token['symbol'] for token in available_tokens]
+            
+            prompt = f"""
+            Analyze the user's message and determine which cryptocurrency token they are asking about.
+            
+            User message: "{message}"
+            
+            Available tokens in our database: {', '.join(token_symbols)}
+            
+            Please respond with a JSON object containing:
+            - "token_found": true/false (whether you identified a specific token)
+            - "token_symbol": the token symbol (if found)
+            - "user_intent": "price_analysis", "signal_analysis", "general_analysis", or "trading_advice"
+            - "confidence": confidence score from 0.0 to 1.0
+            
+            Examples:
+            - "What's the price of BTC?" -> {{"token_found": true, "token_symbol": "BTC", "token_info": "Bitcoin", "user_intent": "price_analysis", "confidence": 0.9}}
+            - "Should I buy PEPE?" -> {{"token_found": true, "token_symbol": "PEPE", "token_info": "Pepe token", "user_intent": "trading_advice", "confidence": 0.8}}
+            - "Hello" -> {{"token_found": false, "token_symbol": null, "token_info": null, "user_intent": "general", "confidence": 0.1}}
+            """
+            
+            response = await self.client.chat.completions.create(
+                model="gpt-4.1-mini",
+                messages=[
+                    {"role": "system", "content": "You are a cryptocurrency analysis assistant. Analyze user messages to identify which token they're asking about."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.1,
+                max_tokens=300
+            )
+            
+            content = response.choices[0].message.content
+            
+            # Extract JSON from response
+            import json
+            import re
+            json_match = re.search(r'\{.*\}', content, re.DOTALL)
+            if json_match:
+                return json.loads(json_match.group())
+            else:
+                return {"token_found": False, "token_symbol": None, "token_info": None, "user_intent": "general", "confidence": 0.0}
+                
+        except Exception as e:
+            print(f"Error in LLM token identification: {e}")
+            return {"token_found": False, "token_symbol": None, "token_info": None, "user_intent": "general", "confidence": 0.0}
+    
+    
+    async def analyze_token_data_for_user_intent(self, decision_data: Dict[str, Any], user_intent: str) -> Dict[str, Any]:
+        system_prompt = self._get_system_prompt()
+        user_prompt = self._create_comprehensive_analysis_prompt(decision_data)
+
+        response = await self.client.chat.completions.create(
+            model="gpt-4.1-mini",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            temperature=0.1,
+            max_tokens=2000
+        )
+
+        content = response.choices[0].message.content
+        print(f"LLM analysis response: \n {content}")
+
+        return content
 
 # Helper functions
 async def analyze_token_with_llm(decision_data: Dict[str, Any], api_key: Optional[str] = None) -> Dict[str, Any]:
