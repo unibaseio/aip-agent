@@ -81,7 +81,7 @@ import asyncio
 from typing import Dict, Any, Optional, List
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
-from datetime import datetime, timedelta, UTC
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
 from models.database import Token, TokenPool, PoolMetric, TokenMetric, PoolMetricHistory, TokenMetricsHistory
@@ -133,7 +133,7 @@ class TokenService:
                 token.symbol = symbol
             if contract_address and token.contract_address != contract_address:
                 token.contract_address = contract_address
-            token.updated_at = datetime.now(UTC)
+            token.updated_at = datetime.now(timezone.utc)
             try:
                 db.commit()
                 db.refresh(token)
@@ -239,7 +239,7 @@ class TokenService:
             should_update = force_update
             
             if not should_update and token.metrics_updated_at:
-                one_hour_ago = datetime.now(UTC) - timedelta(hours=1)
+                one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
                 should_update = self._is_datetime_before(token.metrics_updated_at, one_hour_ago)
             else:
                 should_update = True
@@ -326,7 +326,7 @@ class TokenService:
             
             print(f"Token metrics updated at: {token.metrics_updated_at} {should_update}")
             if not should_update and token.metrics_updated_at:
-                one_hour_ago = datetime.now(UTC) - timedelta(hours=1)
+                one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
                 should_update = self._is_datetime_before(token.metrics_updated_at, one_hour_ago)
             else:
                 should_update = True
@@ -400,7 +400,7 @@ class TokenService:
                         
                 # Finally update metrics_updated_at field after successful update
                 if result.get("moralis_updated") or result.get("metrics_updated") or result.get("signals_updated"):
-                    token.metrics_updated_at = datetime.now(UTC)
+                    token.metrics_updated_at = datetime.now(timezone.utc)
                     db.commit()
                     db.refresh(token)
 
@@ -466,7 +466,7 @@ class TokenService:
     async def get_tokens_requiring_update(self, db: Session, max_age_hours: int = 1) -> List[str]:
         """Get list of token IDs that need data updates based on metrics_updated_at field"""
         try:
-            cutoff_time = datetime.now(UTC) - timedelta(hours=max_age_hours)
+            cutoff_time = datetime.now(timezone.utc) - timedelta(hours=max_age_hours)
             
             # Get tokens that haven't been updated recently using metrics_updated_at field
             tokens_needing_update = db.query(Token.id).filter(
@@ -487,7 +487,7 @@ class TokenService:
         if not token.metrics_updated_at:
             return True
             
-        cutoff_time = datetime.now(UTC) - timedelta(hours=max_age_hours)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=max_age_hours)
         return self._is_datetime_before(token.metrics_updated_at, cutoff_time)
 
     def _map_signal_to_trend_direction(self, signal: str) -> str:
@@ -524,7 +524,7 @@ class TokenService:
                 print(f"Warning: timestamp {timestamp_float} seems too large, skipping")
                 return None
             
-            return datetime.fromtimestamp(timestamp_float, UTC)
+            return datetime.fromtimestamp(timestamp_float, timezone.utc)
             
         except (ValueError, TypeError, OSError) as e:
             print(f"Error converting timestamp {timestamp}: {e}")
@@ -533,11 +533,11 @@ class TokenService:
     def _calculate_data_age_hours(self, dt: datetime) -> Optional[float]:
         """Safely calculate data age in hours, handling timezone differences"""
         try:
-            now = datetime.now(UTC)
+            now = datetime.now(timezone.utc)
             
             # If dt has no timezone info, assume UTC
             if dt.tzinfo is None:
-                dt = dt.replace(tzinfo=UTC)
+                dt = dt.replace(tzinfo=timezone.utc)
             
             # Calculate the difference
             diff = now - dt
@@ -552,11 +552,11 @@ class TokenService:
         try:
             # If dt has no timezone info, assume UTC
             if dt.tzinfo is None:
-                dt = dt.replace(tzinfo=UTC)
+                dt = dt.replace(tzinfo=timezone.utc)
             
             # If compare_dt has no timezone info, assume UTC
             if compare_dt.tzinfo is None:
-                compare_dt = compare_dt.replace(tzinfo=UTC)
+                compare_dt = compare_dt.replace(tzinfo=timezone.utc)
             
             return dt > compare_dt
             
@@ -569,11 +569,11 @@ class TokenService:
         try:
             # If dt has no timezone info, assume UTC
             if dt.tzinfo is None:
-                dt = dt.replace(tzinfo=UTC)
+                dt = dt.replace(tzinfo=timezone.utc)
             
             # If compare_dt has no timezone info, assume UTC
             if compare_dt.tzinfo is None:
-                compare_dt = compare_dt.replace(tzinfo=UTC)
+                compare_dt = compare_dt.replace(tzinfo=timezone.utc)
             
             return dt < compare_dt
             
@@ -624,7 +624,7 @@ class TokenService:
                 print(f"Updating existing pool for {token.symbol} on {token.chain} with pair address {pool_data.get('pair_address', '')}")
                 # Update existing pool
                 existing_pool.is_active = True
-                existing_pool.updated_at = datetime.now(UTC)
+                existing_pool.updated_at = datetime.now(timezone.utc)
                 # Update additional fields from DexScreener
                 if pool_data.get("pair_created_at"):
                     existing_pool.pair_created_at = self._safe_timestamp_to_datetime(pool_data["pair_created_at"])
@@ -755,7 +755,7 @@ class TokenService:
                 market_cap=metric.market_cap,
                 fdv=metric.fdv,
                 data_source='dexscreener',
-                recorded_at=datetime.now(UTC)
+                recorded_at=datetime.now(timezone.utc)
             )
             db.add(history)
             
@@ -818,7 +818,7 @@ class TokenService:
                 existing_metric.total_volume_24h = Decimal(str(total_volume_24h))
                 existing_metric.total_liquidity_usd = Decimal(str(total_liquidity_usd))
                 existing_metric.pools_count = len(pools)
-                existing_metric.last_calculation_at = datetime.now(UTC)
+                existing_metric.last_calculation_at = datetime.now(timezone.utc)
                 metric = existing_metric
             else:
                 metric = TokenMetric(
@@ -829,7 +829,7 @@ class TokenService:
                     total_liquidity_usd=Decimal(str(total_liquidity_usd)),
                     pools_count=len(pools),
                     trend_direction="sideways",  # Set default value to satisfy constraint
-                    last_calculation_at=datetime.now(UTC)
+                    last_calculation_at=datetime.now(timezone.utc)
                 )
                 db.add(metric)
             
@@ -892,7 +892,7 @@ class TokenService:
                 "strength": strength,
                 "avg_price_change_24h": avg_price_change_24h,
                 "avg_volume_24h": avg_volume_24h,
-                "calculated_at": datetime.now(UTC).isoformat()
+                "calculated_at": datetime.now(timezone.utc).isoformat()
             }
             
         except Exception as e:
@@ -908,7 +908,7 @@ class TokenService:
                 return await self._get_historical_token_metrics_from_history(db, token_id, days, daily_sample)
             
             # Fallback to current TokenMetric table (legacy method)
-            cutoff_date = datetime.now(UTC) - timedelta(days=days)
+            cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
             
             # Get all TokenMetric records for this token
             metrics = db.query(TokenMetric).filter(
@@ -1046,7 +1046,7 @@ class TokenService:
                 token_metric.holders_by_airdrop = moralis_stats.get("holders_by_airdrop", 0)
                 
                 # Update timestamp
-                token_metric.last_calculation_at = datetime.now(UTC)
+                token_metric.last_calculation_at = datetime.now(timezone.utc)
                 
                 db.commit()
                 db.refresh(token_metric)
@@ -1361,7 +1361,7 @@ class TokenService:
                     "volume_adjustment": volume_adjustment,
                     "moralis_adjustment": moralis_adjustment
                 },
-                "calculated_at": datetime.now(UTC).isoformat()
+                "calculated_at": datetime.now(timezone.utc).isoformat()
             }
             
         except Exception as e:
@@ -1434,7 +1434,7 @@ class TokenService:
                     "volume_adjustment": volume_adjustment,
                     "moralis_adjustment": moralis_adjustment
                 },
-                "calculated_at": datetime.now(UTC).isoformat()
+                "calculated_at": datetime.now(timezone.utc).isoformat()
             }
             
         except Exception as e:
@@ -1479,7 +1479,7 @@ class TokenService:
                 # Meta
                 pools_count=0,  # Will be updated later from pool data
                 data_source="moralis",
-                recorded_at=datetime.now(UTC)
+                recorded_at=datetime.now(timezone.utc)
             )
             
             db.add(history)
@@ -1532,7 +1532,7 @@ class TokenService:
                 # Meta
                 pools_count=token_metric.pools_count,
                 data_source=source,
-                recorded_at=datetime.now(UTC)
+                recorded_at=datetime.now(timezone.utc)
             )
             
             db.add(history)
@@ -1549,7 +1549,7 @@ class TokenService:
             """Get historical TokenMetric records from history table for comprehensive analysis"""
             try:
                 # Get historical metrics from the last N days
-                cutoff_date = datetime.now(UTC) - timedelta(days=days)
+                cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
                 
                 # Get historical records from TokenMetricsHistory table
                 history_records = db.query(TokenMetricsHistory).filter(

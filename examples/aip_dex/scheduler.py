@@ -6,7 +6,7 @@ Periodically fetches top tokens and updates pool data with metrics and signals
 
 import asyncio
 import logging
-from datetime import datetime, timedelta, UTC
+from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Any, Optional
 from sqlalchemy.orm import Session
 
@@ -191,7 +191,7 @@ class TokenDataScheduler:
             update_all_tokens: If True, update pools for all tokens in database.
                               If False, only update pools for newly fetched tokens.
         """
-        start_time = datetime.now(UTC)
+        start_time = datetime.now(timezone.utc)
         logger.info("=" * 50)
         logger.info(f"Starting scheduled update at {start_time}")
         
@@ -223,7 +223,7 @@ class TokenDataScheduler:
             signal_stats = await self.calculate_and_save_signals(db, all_tokens)
             
             # Log summary
-            end_time = datetime.now(UTC)
+            end_time = datetime.now(timezone.utc)
             duration = end_time - start_time
             
             logger.info("Update completed successfully!")

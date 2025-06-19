@@ -5,7 +5,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import text
 from sqlalchemy_utils import database_exists, create_database
 import uuid
-from datetime import datetime, UTC, timedelta
+from datetime import datetime, timedelta, timezone
 import os
 from dotenv import load_dotenv
 import time
@@ -90,8 +90,8 @@ class Token(Base):
     decimals = Column(Integer, default=18)
     image_url = Column(Text)
     logo_uri = Column(Text)
-    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
-    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     metrics_updated_at = Column(DateTime)
 
     __table_args__ = (
@@ -115,7 +115,7 @@ class TokenPool(Base):
     chain = Column(Text, nullable=False)
     pair_address = Column(Text, nullable=False)
     fee_tier = Column(Integer)  # e.g., 3000 for 0.3%
-    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     is_active = Column(Boolean, default=True)
     
     # Additional fields from DexScreener
@@ -169,7 +169,7 @@ class PoolMetric(Base):
     
     # Metadata
     data_source = Column(Text)  # 'dexscreener', 'moralis', 'birdeye'
-    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     
     # Relationship
     pool = relationship("TokenPool", back_populates="pool_metrics")
@@ -293,8 +293,8 @@ class TokenMetric(Base):
     
     # Meta
     pools_count = Column(Integer, default=0)
-    last_calculation_at = Column(DateTime, default=lambda: datetime.now(UTC))
-    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
+    last_calculation_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     
     __table_args__ = (
         CheckConstraint("trend_direction IN ('bullish', 'bearish', 'sideways')", name='check_trend_direction'),
