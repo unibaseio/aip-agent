@@ -110,24 +110,38 @@ class TokenService:
         if symbol:
             symbol = symbol.upper()
         
-        # Try to find existing token
-        query = db.query(Token)
-        if symbol and symbol != "":
-            query = query.filter(Token.symbol == symbol)
-        if contract_address and contract_address != "":
-            query = query.filter(Token.contract_address == contract_address)
-        if chain and chain != "":
-            query = query.filter(Token.chain == chain)
+        # Try to find existing token by unique constraint (contract_address + chain)
+        token = None
+        if contract_address and chain:
+            token = db.query(Token).filter(
+                Token.contract_address == contract_address,
+                Token.chain == chain
+            ).first()
         
-        token = query.first()
+        # If not found by contract_address+chain, try by symbol+chain
+        if not token and symbol and chain:
+            token = db.query(Token).filter(
+                Token.symbol == symbol,
+                Token.chain == chain
+            ).first()
+        
         if token:
             # Update existing token with new data if provided
             if name and token.name != name:
                 token.name = name
+            if symbol and token.symbol != symbol:
+                token.symbol = symbol
+            if contract_address and token.contract_address != contract_address:
+                token.contract_address = contract_address
             token.updated_at = datetime.now(UTC)
-            db.commit()
-            db.refresh(token)
-            return token
+            try:
+                db.commit()
+                db.refresh(token)
+                return token
+            except Exception as e:
+                db.rollback()
+                print(f"Error updating existing token: {e}")
+                return token
         
         # If all required data is provided, create token directly
         if contract_address and chain and symbol and contract_address != "" and chain != "" and symbol != "" and name != "":
@@ -140,29 +154,74 @@ class TokenService:
                 metrics_updated_at=None  # Mark as needing update
             )
             db.add(token)
-            db.commit()
-            db.refresh(token)
-            return token
+            try:
+                db.commit()
+                db.refresh(token)
+                return token
+            except Exception as e:
+                db.rollback()
+                print(f"Error creating token, trying to find existing: {e}")
+                # Try to find existing token again in case it was created by another process
+                existing_token = db.query(Token).filter(
+                    Token.contract_address == contract_address,
+                    Token.chain == chain
+                ).first()
+                if existing_token:
+                    return existing_token
+                else:
+                    print(f"Failed to create or find token: {e}")
+                    return None
         
         # If missing data, resolve token data from external sources
-        token_data = await self._resolve_token_data(symbol, contract_address, chain)
-        if not token_data or not token_data.get('symbol'):
+        try:
+            token_data = await self._resolve_token_data(symbol, contract_address, chain)
+            if not token_data or not token_data.get('symbol'):
+                return None
+        except Exception as e:
+            print(f"Error resolving token data: {e}")
             return None
         
         # Create new token with resolved data
+        resolved_contract_address = token_data.get('contract_address', contract_address)
+        resolved_chain = token_data.get('chain', chain or 'bsc')
+        
+        # Check one more time if token exists with resolved data
+        if resolved_contract_address and resolved_chain:
+            existing_token = db.query(Token).filter(
+                Token.contract_address == resolved_contract_address,
+                Token.chain == resolved_chain
+            ).first()
+            if existing_token:
+                return existing_token
+        
         token = Token(
             name=token_data.get('name', name or symbol),
             symbol=token_data.get('symbol'),
-            contract_address=token_data.get('contract_address', contract_address),
-            chain=token_data.get('chain', chain or 'bsc'),
+            contract_address=resolved_contract_address,
+            chain=resolved_chain,
             decimals=token_data.get('decimals', 18),
             metrics_updated_at=None  # Mark as needing update
         )
         
         db.add(token)
-        db.commit()
-        db.refresh(token)
-        return token
+        try:
+            db.commit()
+            db.refresh(token)
+            return token
+        except Exception as e:
+            db.rollback()
+            print(f"Error creating resolved token, trying to find existing: {e}")
+            # Try to find existing token again in case it was created by another process
+            existing_token = db.query(Token).filter(
+                Token.contract_address == resolved_contract_address,
+                Token.chain == resolved_chain
+            ).first()
+            if existing_token:
+                return existing_token
+            else:
+                print(f"Failed to create or find resolved token: {e}")
+                return None
+        
 
     async def update_token_pools(self, db: Session, token_id: str, 
                                 force_update: bool = False) -> Dict[str, Any]:
@@ -608,8 +667,12 @@ class TokenService:
             db.rollback()
             return None
 
-    def _sanitize_price_change(self, value: float, max_value: float = 999999.0) -> float:
-        """Sanitize price change values to prevent database overflow"""
+    def _sanitize_price_change(self, value: float, max_value: float = 99999.0) -> float:
+        """Sanitize price change values to prevent database overflow
+        
+        Database field is DECIMAL(15,4) which can store up to 99999999999.9999
+        But for price changes, we cap at 99999.0% to prevent extreme values
+        """
         if value is None:
             return 0.0
         
@@ -619,7 +682,12 @@ class TokenService:
         except (ValueError, TypeError):
             return 0.0
         
+        # Handle infinite or NaN values
+        if not float_value or abs(float_value) == float('inf') or float_value != float_value:  # NaN check
+            return 0.0
+        
         # Cap extreme values to prevent database overflow
+        # DECIMAL(15,4) can store up to 99999999999.9999, but we cap at reasonable percentage
         if abs(float_value) > max_value:
             # Log the extreme value for monitoring
             print(f"Warning: Extreme price change value {float_value}% capped to {max_value if float_value > 0 else -max_value}%")
@@ -930,30 +998,30 @@ class TokenService:
                 token_metric.unique_wallets_6h = moralis_stats.get("unique_wallets_6h", 0)
                 token_metric.unique_wallets_24h = moralis_stats.get("unique_wallets_24h", 0)
                 
-                # Price changes
-                token_metric.price_change_5m = Decimal(str(moralis_stats.get("price_change_5m", 0)))
-                token_metric.price_change_1h = Decimal(str(moralis_stats.get("price_change_1h", 0)))
-                token_metric.price_change_6h = Decimal(str(moralis_stats.get("price_change_6h", 0)))
-                token_metric.price_change_24h = Decimal(str(moralis_stats.get("price_change_24h", 0)))
+                # Price changes - with sanitization to prevent database overflow
+                token_metric.price_change_5m = Decimal(str(self._sanitize_price_change(moralis_stats.get("price_change_5m", 0))))
+                token_metric.price_change_1h = Decimal(str(self._sanitize_price_change(moralis_stats.get("price_change_1h", 0))))
+                token_metric.price_change_6h = Decimal(str(self._sanitize_price_change(moralis_stats.get("price_change_6h", 0))))
+                token_metric.price_change_24h = Decimal(str(self._sanitize_price_change(moralis_stats.get("price_change_24h", 0))))
                 
                 # Holder stats from combined data
                 token_metric.holder_count = moralis_stats.get("total_holders", 0)
                 
-                # Holder changes
+                # Holder changes - with sanitization for percentage fields
                 token_metric.holder_change_5m = moralis_stats.get("holder_change_5m", 0)
-                token_metric.holder_change_5m_percent = Decimal(str(moralis_stats.get("holder_change_5m_percent", 0)))
+                token_metric.holder_change_5m_percent = Decimal(str(self._sanitize_price_change(moralis_stats.get("holder_change_5m_percent", 0))))
                 token_metric.holder_change_1h = moralis_stats.get("holder_change_1h", 0)
-                token_metric.holder_change_1h_percent = Decimal(str(moralis_stats.get("holder_change_1h_percent", 0)))
+                token_metric.holder_change_1h_percent = Decimal(str(self._sanitize_price_change(moralis_stats.get("holder_change_1h_percent", 0))))
                 token_metric.holder_change_6h = moralis_stats.get("holder_change_6h", 0)
-                token_metric.holder_change_6h_percent = Decimal(str(moralis_stats.get("holder_change_6h_percent", 0)))
+                token_metric.holder_change_6h_percent = Decimal(str(self._sanitize_price_change(moralis_stats.get("holder_change_6h_percent", 0))))
                 token_metric.holder_change_24h = moralis_stats.get("holder_change_24h", 0)
-                token_metric.holder_change_24h_percent = Decimal(str(moralis_stats.get("holder_change_24h_percent", 0)))
+                token_metric.holder_change_24h_percent = Decimal(str(self._sanitize_price_change(moralis_stats.get("holder_change_24h_percent", 0))))
                 token_metric.holder_change_3d = moralis_stats.get("holder_change_3d", 0)
-                token_metric.holder_change_3d_percent = Decimal(str(moralis_stats.get("holder_change_3d_percent", 0)))
+                token_metric.holder_change_3d_percent = Decimal(str(self._sanitize_price_change(moralis_stats.get("holder_change_3d_percent", 0))))
                 token_metric.holder_change_7d = moralis_stats.get("holder_change_7d", 0)
-                token_metric.holder_change_7d_percent = Decimal(str(moralis_stats.get("holder_change_7d_percent", 0)))
+                token_metric.holder_change_7d_percent = Decimal(str(self._sanitize_price_change(moralis_stats.get("holder_change_7d_percent", 0))))
                 token_metric.holder_change_30d = moralis_stats.get("holder_change_30d", 0)
-                token_metric.holder_change_30d_percent = Decimal(str(moralis_stats.get("holder_change_30d_percent", 0)))
+                token_metric.holder_change_30d_percent = Decimal(str(self._sanitize_price_change(moralis_stats.get("holder_change_30d_percent", 0))))
                 
                 # Holder distribution
                 token_metric.whales_count = moralis_stats.get("whales_count", 0)
@@ -1387,11 +1455,11 @@ class TokenService:
                 total_liquidity_usd=Decimal(str(moralis_stats.get("total_liquidity_usd", 0))),
                 market_cap=Decimal(str(moralis_stats.get("total_fdv", 0))),
                 
-                # Price changes
-                price_change_5m=Decimal(str(moralis_stats.get("price_change_5m", 0))),
-                price_change_1h=Decimal(str(moralis_stats.get("price_change_1h", 0))),
-                price_change_6h=Decimal(str(moralis_stats.get("price_change_6h", 0))),
-                price_change_24h=Decimal(str(moralis_stats.get("price_change_24h", 0))),
+                # Price changes - with sanitization to prevent database overflow
+                price_change_5m=Decimal(str(self._sanitize_price_change(moralis_stats.get("price_change_5m", 0)))),
+                price_change_1h=Decimal(str(self._sanitize_price_change(moralis_stats.get("price_change_1h", 0)))),
+                price_change_6h=Decimal(str(self._sanitize_price_change(moralis_stats.get("price_change_6h", 0)))),
+                price_change_24h=Decimal(str(self._sanitize_price_change(moralis_stats.get("price_change_24h", 0)))),
                 
                 # Buy/Sell volumes
                 buy_volume_24h=Decimal(str(moralis_stats.get("buy_volume_24h", 0))),
@@ -1404,7 +1472,7 @@ class TokenService:
                 
                 # Holder metrics
                 holder_count=moralis_stats.get("total_holders", 0),
-                holder_change_24h_percent=Decimal(str(moralis_stats.get("holder_change_24h_percent", 0))),
+                holder_change_24h_percent=Decimal(str(self._sanitize_price_change(moralis_stats.get("holder_change_24h_percent", 0)))),
                 top10_supply_percent=Decimal(str(moralis_stats.get("top10_supply_percent", 0))),
                 whales_count=moralis_stats.get("whales_count", 0),
                 

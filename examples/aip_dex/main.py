@@ -1,8 +1,16 @@
-from fastapi import FastAPI, Depends, HTTPException, Query
+from fastapi import FastAPI, Depends, HTTPException, Query, Security, Request
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse, HTMLResponse
 from contextlib import asynccontextmanager
 from sqlalchemy.orm import Session
 from typing import List, Optional
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 from models.database import create_tables, create_indexes, get_db, Token
 from services.token_service import TokenService
@@ -74,11 +82,35 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Mount static files directory for CSS, JS, and other static assets
+chat_static_path = os.path.join(os.path.dirname(__file__), "chat")
+if os.path.exists(chat_static_path):
+    app.mount("/static", StaticFiles(directory=chat_static_path), name="static")
+
+# Set bearer token from environment variable
+app.bearer_token = os.getenv("DEX_BEARER_TOKEN", "aip-dex-default-token-2025")
+
 # All routes are now defined directly in this file
+security = HTTPBearer()
+
+# Dependency for token validation
+async def validate_token(credentials: HTTPAuthorizationCredentials = Security(security)):
+    """Validate bearer token"""
+    if not credentials:
+        print("❌ Missing Authorization header")
+        raise HTTPException(status_code=401, detail="Missing Authorization header")
+    
+    token = credentials.credentials
+    if token != app.bearer_token:
+        print(f"❌ Invalid bearer token attempted: {token[:10]}...")
+        raise HTTPException(status_code=403, detail="Invalid bearer token")
+    
+    print("✅ Bearer token validated successfully")
+    return token
 
 # ===== TOKEN ENDPOINTS =====
 
-@app.get("/api/v1/tokens", response_model=List[TokenResponse])
+@app.get("/api/v1/tokens", response_model=List[TokenResponse], dependencies=[Depends(validate_token)])
 async def tokens_api(
     limit: int = Query(50, ge=1, le=100),
     chain: Optional[str] = Query(None),
@@ -105,7 +137,7 @@ async def tokens_api(
     
     return result
 
-@app.post("/api/v1/add_token", response_model=TokenResponse)
+@app.post("/api/v1/add_token", response_model=TokenResponse, dependencies=[Depends(validate_token)])
 async def add_token_api(
     symbol: str,
     chain: str,
@@ -147,7 +179,7 @@ async def add_token_api(
 
 # ===== CHAT ENDPOINTS =====
 
-@app.post("/api/v1/chat", response_model=ChatResponse)
+@app.post("/api/v1/chat", response_model=ChatResponse, dependencies=[Depends(validate_token)])
 async def chat_api(request: ChatRequest, db: Session = Depends(get_db)):
     """Process chat message with enhanced multi-DEX analysis"""
     try:
@@ -173,13 +205,53 @@ async def health_check():
         "features": ["Token Management", "Chat Interface"]
     }
 
-@app.get("/")
-async def root():
-    """Simple root endpoint"""
+# ===== WEB INTERFACE ROUTES =====
+
+@app.get("/", response_class=HTMLResponse)
+async def chat_interface():
+    """Serve the chat interface HTML page"""
+    try:
+        chat_html_path = os.path.join(os.path.dirname(__file__), "chat", "index.html")
+        with open(chat_html_path, "r", encoding="utf-8") as f:
+            html_content = f.read()
+        
+        # Replace the API base URL to use relative paths since we're serving from the same server
+        html_content = html_content.replace(
+            "this.baseUrl = 'http://127.0.0.1:8000';",
+            "this.baseUrl = '';"
+        )
+        
+        return HTMLResponse(content=html_content)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Chat interface not found")
+
+@app.get("/chat", response_class=HTMLResponse)
+async def chat_page():
+    """Alternative route for the chat interface"""
+    return await chat_interface()
+
+@app.get("/api/info")
+async def api_info():
+    """API information and available endpoints"""
     return {
-        "message": "AIP DEX Signal Aggregator",
+        "service": "AIP DEX Signal Aggregator",
         "version": "1.0.0",
-        "docs": "/docs"
+        "features": [
+            "Token Management",
+            "Multi-DEX Analysis", 
+            "Pool-Level Metrics",
+            "Arbitrage Detection",
+            "LLM Chat Interface"
+        ],
+        "endpoints": {
+            "chat_interface": "/",
+            "api_docs": "/docs",
+            "api_redoc": "/redoc",
+            "health_check": "/api/v1/health",
+            "tokens": "/api/v1/tokens",
+            "add_token": "/api/v1/add_token",
+            "chat": "/api/v1/chat"
+        }
     }
 
 if __name__ == "__main__":

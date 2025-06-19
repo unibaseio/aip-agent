@@ -332,6 +332,7 @@ class TokenDecisionAnalyzer:
         )
 
         content = response.choices[0].message.content
+        content = content.replace("```markdown", "").replace("```", "")
         print(f"LLM analysis response: \n {content}")
 
         return content

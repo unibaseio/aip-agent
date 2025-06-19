@@ -24,6 +24,11 @@ async def example_single_token_workflow(token_symbol: str = "beeper", chain: str
     db = next(get_db())
     
     try:
+        # Step 0: Get all available tokens from database
+        print("Step 0: Getting all available tokens from database...")
+        tokens = token_service._get_available_tokens_list(db=db)
+        print(f"Token list: {tokens}")
+        
         # Step 1: Create or get token
         print("Step 1: Creating/getting token...")
         token = await token_service.get_or_create_token(
@@ -159,28 +164,6 @@ async def example_batch_workflow():
         print(f"  Total tokens: {batch_result['total_tokens']}")
         print(f"  Successfully updated: {batch_result['updated_tokens']}")
         print(f"  Failed: {batch_result['failed_tokens']}")
-        
-        # Step 3: Get comparative analysis
-        print("Step 3: Getting comparative analysis...")
-        comparison_data = await token_service.get_multiple_tokens_decision_data(
-            db=db,
-            token_ids=token_ids
-        )
-        
-        if comparison_data.get('comparative_analysis'):
-            analysis = comparison_data['comparative_analysis']
-            print(f"\nComparative Analysis:")
-            print(f"  Total tokens analyzed: {analysis['summary']['total_tokens']}")
-            print(f"  Tokens with buy signals: {analysis['summary']['tokens_with_buy_signal']}")
-            print(f"  Tokens with sell signals: {analysis['summary']['tokens_with_sell_signal']}")
-            print(f"  High risk tokens: {analysis['summary']['high_risk_tokens']}")
-            
-            # Show rankings
-            print(f"\nTop tokens by signal strength:")
-            for i, (symbol, data) in enumerate(analysis['rankings']['by_signal_strength'][:3]):
-                signal_strength = data.get('signal_strength')
-                signal_str = f"{signal_strength:.3f}" if signal_strength is not None else "N/A"
-                print(f"  {i+1}. {symbol}: {signal_str}")
                 
     except Exception as e:
         print(f"Error in batch workflow: {e}")

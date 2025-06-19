@@ -309,6 +309,47 @@
             border-top: 1px solid #e5e7eb;
         }
 
+        .token-input-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+
+        .token-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: monospace;
+        }
+
+        .token-input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+        }
+
+        .token-save-button {
+            padding: 8px 16px;
+            background: #059669;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .token-save-button:hover {
+            background: #047857;
+        }
+
+        .token-saved {
+            background: #10b981 !important;
+        }
+
         .chat-input-form {
             display: flex;
             gap: 10px;
@@ -458,6 +499,10 @@
         </div>
 
         <div class="chat-input-container">
+            <div class="token-input-container">
+                <input type="text" class="token-input" id="tokenInput" placeholder="请输入API Token" value="">
+                <button type="button" class="token-save-button" id="tokenSaveButton">请确认</button>
+            </div>
             <form class="chat-input-form" id="chatForm">
                 <div class="input-group">
                     <textarea class="chat-input" id="messageInput" placeholder="输入您的问题... 例如：分析BEEPER的价格趋势"
@@ -479,16 +524,19 @@
     <script>
         class ChatApp {
             constructor() {
-                this.baseUrl = 'http://127.0.0.1:8000'; // API base URL
+                this.bearerToken = ''; // Bearer token will be set by user
                 this.messagesContainer = document.getElementById('chatMessages');
                 this.messageInput = document.getElementById('messageInput');
                 this.sendButton = document.getElementById('sendButton');
                 this.chatForm = document.getElementById('chatForm');
                 this.includePoolsCheckbox = document.getElementById('includePoolsCheckbox');
                 this.statusIndicator = document.getElementById('statusIndicator');
+                this.tokenInput = document.getElementById('tokenInput');
+                this.tokenSaveButton = document.getElementById('tokenSaveButton');
 
                 this.initializeMarkdown();
                 this.initializeEventListeners();
+                this.loadSavedToken();
                 this.checkApiHealth();
             }
 
@@ -549,6 +597,18 @@
                         this.sendMessage();
                     }
                 });
+
+                // Token save button
+                this.tokenSaveButton.addEventListener('click', () => {
+                    this.saveToken();
+                });
+
+                // Token input enter key
+                this.tokenInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        this.saveToken();
+                    }
+                });
             }
 
             autoResizeTextarea() {
@@ -558,9 +618,34 @@
                 this.messageInput.style.height = Math.min(scrollHeight, maxHeight) + 'px';
             }
 
+            loadSavedToken() {
+                const savedToken = localStorage.getItem('aip-dex-token');
+                if (savedToken) {
+                    this.bearerToken = savedToken;
+                    this.tokenInput.value = savedToken;
+                }
+            }
+
+            saveToken() {
+                const token = this.tokenInput.value.trim();
+                if (token) {
+                    this.bearerToken = token;
+                    localStorage.setItem('aip-dex-token', token);
+
+                    // Visual feedback
+                    this.tokenSaveButton.textContent = '已确认';
+                    this.tokenSaveButton.classList.add('token-saved');
+
+                    setTimeout(() => {
+                        this.tokenSaveButton.textContent = '请确认';
+                        this.tokenSaveButton.classList.remove('token-saved');
+                    }, 2000);
+                }
+            }
+
             async checkApiHealth() {
                 try {
-                    const response = await fetch(`${this.baseUrl}/api/v1/health`);
+                    const response = await fetch('/api/v1/health');
                     if (response.ok) {
                         this.setConnectionStatus(true);
                     } else {
@@ -638,6 +723,13 @@
                 const message = this.messageInput.value.trim();
                 if (!message) return;
 
+                // Check if token is set
+                if (!this.bearerToken) {
+                    this.addMessage('请先配置API Token后再发送消息', 'error');
+                    this.tokenInput.focus();
+                    return;
+                }
+
                 const includePools = this.includePoolsCheckbox.checked;
 
                 // Add user message
@@ -655,10 +747,11 @@
                 const loadingMessage = this.addMessage('', 'loading');
 
                 try {
-                    const response = await fetch(`${this.baseUrl}/api/v1/chat`, {
+                    const response = await fetch('/api/v1/chat', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${this.bearerToken}`
                         },
                         body: JSON.stringify({
                             message: message,

@@ -106,6 +106,7 @@ OPENAI_API_KEY=your_openai_api_key_here
 COINGECKO_API_KEY=your_coingecko_api_key_here
 MORALIS_API_KEY=your_moralis_api_key_here
 BIRDEYE_API_KEY=your_birdeye_api_key_here
+API_BEARER_TOKEN=your_secure_bearer_token_here
 ```
 
 ### 3. Setup Database
@@ -157,24 +158,36 @@ uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
 ## 💬 Usage Examples
 
-### Chat Query
+### Bearer Token Authentication
+
+All API endpoints (except health check and root) require Bearer token authentication:
+
+```bash
+# Set your bearer token
+export API_TOKEN="your_secure_bearer_token_here"
+```
+
+### Chat Query (with Authentication)
 
 ```bash
 curl -X POST "http://localhost:8000/api/v1/chat" \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${API_TOKEN}" \
   -d '{"message": "What is the outlook on DOGE?"}'
 ```
 
-### Add Token
+### Get All Tokens (with Authentication)
 
 ```bash
-curl -X POST "http://localhost:8000/api/v1/tokens" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "ticker": "PEPE",
-    "contract_address": "0x6982508145454ce325ddbe47a25d4ec3d2311933",
-    "chain": "eth"
-  }'
+curl -X GET "http://localhost:8000/api/v1/tokens" \
+  -H "Authorization: Bearer ${API_TOKEN}"
+```
+
+### Add Token (with Authentication)
+
+```bash
+curl -X POST "http://localhost:8000/api/v1/add_token?symbol=PEPE&chain=eth" \
+  -H "Authorization: Bearer ${API_TOKEN}"
 ```
 
 ## 🔧 Signal Levels
@@ -248,6 +261,23 @@ Based on the design document, optional enhancements include:
 - Sentiment analysis (Twitter API)
 - Wallet analytics (Moralis + address tracking)
 - Portfolio simulation/backtesting
+
+## Enhanced Web3 Token Signal Aggregator with Three-Tier Architecture
+
+### Key Features
+- 🔐 **Bearer Token Authentication** - Secure API access with configurable token
+- 🏗️ **Three-Tier Architecture** - Token → Pools → Pool Metrics → Aggregated Token Metrics  
+- 📊 **Multi-DEX Analysis** - Compare prices across different DEXs
+- 🏊 **Pool-Level Metrics** - Granular data for each trading pool  
+- 🎯 **Arbitrage Detection** - Identify price differences between DEXs
+- 🤖 **AI-Powered Signals** - Enhanced trading signals with confidence scores
+- 💬 **LLM Chat Interface** - Natural language token analysis
+- 🔄 **Automated Data Collection** - Scheduled updates from multiple sources
+
+### Data Sources
+- **BirdEye** - Top tokens and market data
+- **DEX Screener** - Real-time DEX pool information  
+- **Moralis** - On-chain metrics and analytics
 
 ---
 
