@@ -227,7 +227,7 @@ class TokenDecisionAnalyzer:
             for i, pool in enumerate(top_pools):
                 prompt += f"""
         **Pool ({pool.get('pair_address', 'N/A')})**:
-        - Dex: {pool.get('dex', 'N/A')}
+        - DEX: {pool.get('dex', 'N/A')}
         - Price: ${pool.get('price_usd', 0):.8f}
         - 24h Volume: ${pool.get('volume_24h', 0):,.2f}
         - Liquidity: ${pool.get('liquidity_usd', 0):,.2f}
