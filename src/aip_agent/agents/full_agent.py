@@ -80,6 +80,7 @@ class FullAgentWrapper:
 
     async def _send_heartbeat(self) -> None:
         """Send heartbeat message to self periodically"""
+        retry_interval = 0
         while self._running:
             try:
                 if not self._runtime or not self._initialized:
@@ -100,25 +101,28 @@ class FullAgentWrapper:
                         timeout=10.0  # 10 seconds timeout
                     )
                     self._heartbeat_failures = 0
+                    retry_interval = 60
                 except asyncio.TimeoutError:
                     print("Heartbeat message timed out after 10 seconds")
                     self._heartbeat_failures += 1
+                    retry_interval *= 2
                     if self._heartbeat_failures >= self._max_failures:
                         print(f"Too many heartbeat failures ({self._heartbeat_failures}), stopping agent")
                         await self.stop()
                         break
-                    await asyncio.sleep(30*self._heartbeat_failures)  # wait and retry
+                    await asyncio.sleep(retry_interval)  # wait and retry
                     continue
                 
                 await asyncio.sleep(60)  # wait 60 seconds and send heartbeat again
             except Exception as e:
                 print(f"Heartbeat failed: {e}")
                 self._heartbeat_failures += 1
+                retry_interval *= 2
                 if self._heartbeat_failures >= self._max_failures:
                     print(f"Too many heartbeat failures ({self._heartbeat_failures}), stopping agent")
                     await self.stop()
                     break
-                await asyncio.sleep(30*self._heartbeat_failures)  # wait and retry
+                await asyncio.sleep(retry_interval)  # wait and retry
 
     async def initialize(self) -> None:
         """Initialize all components"""
@@ -399,10 +403,13 @@ class FullAgentWrapper:
                 await self._heartbeat_task
             except asyncio.CancelledError:
                 pass
+            self._heartbeat_task = None
         
         self._running = False
         self._initialized = False
-        await self._runtime.stop()
+        if self._runtime:
+            await self._runtime.stop()
+        self._runtime = None
         
 
 
