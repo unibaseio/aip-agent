@@ -212,6 +212,7 @@ class FullAgentWrapper:
                             use_history: bool = True,
                             system_prompt: Optional[str] = None,
                             recent_n_messages: int = 16,
+                            use_tool_call: bool = True,
                             ) -> str:
         """Process user queries and generate responses"""
         if not self._initialized:
@@ -257,6 +258,7 @@ class FullAgentWrapper:
                 return "Error: Query cannot be empty. Please use '@agent_name, query' or '@agent_name query'."
             
             try:
+                print(query)
                 response = await self.send_message(agent_name, "ask", new_query)
                 if response.startswith("Error:"):
                     return response
@@ -284,7 +286,8 @@ class FullAgentWrapper:
             mps,
             request_params=RequestParams(
                 use_history=False, #ignore history in llm, we added here
-                systemPrompt=system_prompt
+                systemPrompt=system_prompt,
+                allow_tool_call=use_tool_call
             )
         )
         if response.startswith("Error:"):

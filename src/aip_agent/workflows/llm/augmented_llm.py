@@ -115,6 +115,8 @@ class RequestParams(CreateMessageRequestParams):
     Also known as multi-step tool use.
     """
 
+    allow_tool_call: bool = True
+
 
 class AugmentedLLMProtocol(Protocol, Generic[MessageParamT, MessageT]):
     """Protocol defining the interface for augmented LLMs"""

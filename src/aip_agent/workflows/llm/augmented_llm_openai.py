@@ -59,7 +59,7 @@ class OpenAIAugmentedLLM(
             intelligencePriority=0.3,
         )
         self.default_request_params = self.default_request_params or RequestParams(
-            model="gpt-4o",
+            model="gpt-4.1-mini",
             modelPreferences=self.model_preferences,
             maxTokens=2048,
             systemPrompt=self.instruction,
@@ -119,19 +119,24 @@ class OpenAIAugmentedLLM(
         else:
             messages.append(message)
 
-        response = await self.aggregator.list_tools()
-        available_tools: List[ChatCompletionToolParam] = [
-            ChatCompletionToolParam(
-                type="function",
-                function={
-                    "name": tool.name,
-                    "description": tool.description,
-                    "parameters": tool.inputSchema,
-                    # TODO: saqadri - determine if we should specify "strict" to True by default
-                },
-            )
-            for tool in response.tools
-        ]
+        available_tools = None
+        if params.allow_tool_call:
+            response = await self.aggregator.list_tools()
+        
+
+            available_tools: List[ChatCompletionToolParam] = [
+                ChatCompletionToolParam(
+                    type="function",
+                    function={
+                        "name": tool.name,
+                        "description": tool.description,
+                        "parameters": tool.inputSchema,
+                        # TODO: saqadri - determine if we should specify "strict" to True by default
+                    },
+                )
+                for tool in response.tools
+            ]
+        
         if not available_tools:
             available_tools = None
 
@@ -292,7 +297,7 @@ class OpenAIAugmentedLLM(
 
         # Extract structured data from natural language
         structured_response = client.chat.completions.create(
-            model=model or "gpt-4o",
+            model=model or "gpt-4.1-mini",
             response_model=response_model,
             messages=[
                 {"role": "user", "content": response},
