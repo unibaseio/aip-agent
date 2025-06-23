@@ -77,10 +77,17 @@ class TokenDecisionAnalyzer:
 
         prompt += f"""
         Please always remain objective and professional, and do not give overly optimistic or pessimistic advice.
-        
-        IMPORTANT: 
-        - Please respond in {language} for all analysis and recommendations.
         """
+        if language.lower() == "chinese":
+            prompt += """
+            IMPORTANT: 
+            - Please respond in Chinese (中文) for all analysis and recommendations.
+            """
+        else:
+            prompt += """
+            IMPORTANT: 
+            - Please respond in English for all analysis and recommendations.
+            """
         
         return prompt
     
