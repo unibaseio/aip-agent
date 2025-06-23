@@ -312,23 +312,43 @@ class TokenDecisionAnalyzer:
             
             Available tokens in our database: {token_display}
             
+            **IMPORTANT RULES:**
+            1. If the token mentioned in the user message EXACTLY matches any token symbol in the available list, set "token_found" to true, and "token_symbol" to the exact token symbol from the list
+            2. If the token is NOT found in the list, set "token_found" to false and look for similar tokens based on:
+               - Similar spelling (e.g., "PEPE" vs "PEPE2", "BTC" vs "BTCC")
+               - Similar names (e.g., "Bitcoin" vs "Bitcoin Cash", "Ethereum" vs "Ethereum Classic")
+               - Common variations (e.g., "USDT" vs "USDC", "ETH" vs "WETH")
+            3. Only include tokens that are actually in the available list in "similar_tokens"
+            
             Please respond with a JSON object containing:
-            - "token_found": true/false (whether you identified a specific token)
-            - "token_symbol": the token symbol (if found)
-            - "similar_tokens": a list of similar token symbols (if found)
+            - "token_found": true/false (whether you identified a specific token that exists in the available list)
+            - "token_symbol": the exact token symbol from the available list (if found)
+            - "similar_tokens": a list of token symbols from the available list that are similar to what the user mentioned (if not found or for additional suggestions)
             - "user_intent": "price_analysis", "signal_analysis", "general_analysis", or "trading_advice"
             - "confidence": confidence score from 0.0 to 1.0
             
             Examples:
-            - "What's the price of BTC?" -> {{"token_found": true, "token_symbol": "BTC", "token_info": "Bitcoin", "similar_tokens": [], "user_intent": "price_analysis", "confidence": 0.9}}
-            - "Should I buy PEPE?" -> {{"token_found": true, "token_symbol": "PEPE", "token_info": "Pepe token", "similar_tokens": [], "user_intent": "trading_advice", "confidence": 0.8}}
-            - "Hello" -> {{"token_found": false, "token_symbol": null, "similar_tokens": ["HEL"], "token_info": null, "user_intent": "general", "confidence": 0.1}}
+            - User asks "What's the price of BTC?" and BTC is in the list -> {{"token_found": true, "token_symbol": "BTC", "similar_tokens": [], "user_intent": "price_analysis", "confidence": 0.9}}
+            - User asks "Should I buy PEPE?" and PEPE is in the list -> {{"token_found": true, "token_symbol": "PEPE", "similar_tokens": [], "user_intent": "trading_advice", "confidence": 0.8}}
+            - User asks "How is PEPE2 doing?" but only PEPE is in the list -> {{"token_found": false, "token_symbol": null, "similar_tokens": ["PEPE"], "user_intent": "price_analysis", "confidence": 0.7}}
+            - User asks "Hello" -> {{"token_found": false, "token_symbol": null, "similar_tokens": [], "user_intent": "general", "confidence": 0.1}}
         """
 
         return prompt
 
     def get_sys_prompt_for_identify_target_token(self)-> str:
-        return "You are a cryptocurrency analysis assistant. Analyze user messages to identify which token they're asking about."
+        return """You are a cryptocurrency analysis assistant specialized in token identification. 
+
+Your task is to analyze user messages and identify which cryptocurrency token they are asking about by comparing against an available token list.
+
+Key responsibilities:
+1. Check if the mentioned token exists in the available token list
+2. If found, return the exact token symbol from the list
+3. If not found, suggest similar tokens from the available list
+4. Determine user intent (price analysis, trading advice, etc.)
+5. Provide confidence scores based on clarity of the request
+
+Always be precise and only suggest tokens that actually exist in the provided list."""
 
     async def llm_identify_target_token(self, message: str, available_tokens: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Use LLM to identify which token the user is asking about"""
