@@ -266,13 +266,17 @@ class TokenDecisionAnalyzer:
             "fallback_mode": True
         }
     
-    def get_prompt_for_identify_target_token(message: str, available_tokens: List[Dict[str, Any]])-> str:
+    def get_prompt_for_identify_target_token(self, message: str, available_tokens: List[Dict[str, Any]])-> str:
+        # Format available tokens for display
+        token_list = [f"{token['symbol']} ({token['name']})" for token in available_tokens]
+        token_display = ', '.join(token_list)
+        
         prompt = f"""
             Analyze the user's message and determine which cryptocurrency token they are asking about.
             
             User message: "{message}"
             
-            Available tokens in our database: {', '.join(available_tokens)}
+            Available tokens in our database: {token_display}
             
             Please respond with a JSON object containing:
             - "token_found": true/false (whether you identified a specific token)
@@ -289,7 +293,7 @@ class TokenDecisionAnalyzer:
 
         return prompt
 
-    def get_sys_prompt_for_identify_target_token()-> str:
+    def get_sys_prompt_for_identify_target_token(self)-> str:
         return "You are a cryptocurrency analysis assistant. Analyze user messages to identify which token they're asking about."
 
     async def llm_identify_target_token(self, message: str, available_tokens: List[Dict[str, Any]]) -> Dict[str, Any]:
