@@ -49,21 +49,38 @@ from core.utils import convert_to_json
 # Add global shutdown flag
 is_shutting_down = False
 
-def get_daily_report(date_str: str, language: str = "chinese", type: str = "news") -> str:
-    """Get daily report for a specific date and specific type
+def get_daily_report(date_str: str = "today", language: str = "chinese", type: str = "news") -> str:
+    """Get daily report content for a specific date, language, and report type.
+    
+    This function retrieves pre-generated daily reports that summarize KOL (Key Opinion Leader) 
+    posts and activities. The reports are categorized by type and available in multiple languages.
     
     Args:
-        date_str: str, date in format YYYY-MM-DD, e.g. 2025-06-23
-        language: str, language of the report, chinese or english, default is chinese
-        type: str, type of the report, news, trading or trading_short; default is news; news is daily summary of latest KOL posts, trading is daily trading summary from KOL posts, trading_short is trading signal from KOL posts
+        date_str (str): Date for the report. Accepts:
+            - "today" or "latest": Current date (default)
+            - "yesterday": Previous day
+            - "YYYY-MM-DD": Specific date format (e.g., "2025-01-15")
+        language (str): Report language. Options:
+            - "chinese": Chinese language report (default)
+            - "english": English language report
+        type (str): Report category. Options:
+            - "news": Daily web3 and crypto news summary of latest KOL posts and activities (default)
+            - "trading": Comprehensive daily web3 and crypto trading and market analysis from KOL posts
+            - "trading_short": Concise web3 and crypto trading signals from KOL posts
+    
+    Returns:
+        str: The complete report content in the specified language and format
         
-    Returns: str, report content
+    Examples:
+        - get_daily_report() -> Latest Chinese news report
+        - get_daily_report("2025-01-15", "english", "trading") -> English trading report for Jan 15, 2025
+        - get_daily_report("yesterday", "chinese", "trading_short") -> Chinese trading signals for yesterday
     """
     # check if date_str is valid date
     try:
         datetime.strptime(date_str, "%Y-%m-%d")
     except ValueError:
-        if date_str.lower() == "today":
+        if date_str is None or date_str == "" or date_str.lower() == "today" or date_str.lower() == "latest":
             date_str = datetime.now().strftime("%Y-%m-%d")
         elif date_str.lower() == "yesterday":
             date_str = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
@@ -971,10 +988,29 @@ async def initialize(port: int = 5001, bearer_token: str = None) -> None:
     default_system_prompt = """
     You are a digital twin of the user, designed to mimic their personality, knowledge, and communication style. 
     Your responses should be natural and consistent with the user's characteristics.
-    You can use the following functions to get information:
-    - search_similar_posts: search similar posts for a given news
-    - get_daily_report: get daily report for a given date and type (news, trading, trading_short)
-    """ 
+    
+    You have access to the following functions to enhance your capabilities:
+    
+    1. search_similar_posts(query: str) -> str
+       - Purpose: Search for similar posts and content related to given query
+       - Use case: When user asks about specific news or topics, find relevant historical posts
+       - Returns: Relevant posts and content that match the query
+    
+    2. get_daily_report(date_str: str = "today", language: str = "chinese", type: str = "news") -> str
+       - Purpose: Retrieve pre-generated daily reports summarizing KOL activities
+       - Parameters:
+         * date_str: "today", "yesterday", or "YYYY-MM-DD" format
+         * language: "chinese" or "english"
+         * type: "news" (daily summary), "trading" (trading or market analysis), or "trading_short" (concise signals)
+       - Use case: When user asks for daily summaries, market analysis, or trading information
+       - Returns: Complete report content in specified language and format
+    
+    Guidelines for using these functions:
+    - Use search_similar_posts when user asks about specific news, events, or topics
+    - Use get_daily_report when user requests daily summaries, market activities, or trading information
+    - Always provide context and explanation when sharing function results
+    - Maintain the user's personality and communication style in your responses
+    """
     system_prompt = os.getenv("SYSTEM_PROMPT", default_system_prompt)
     
     # Set up signal handlers
