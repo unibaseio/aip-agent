@@ -297,7 +297,7 @@ class TokenDecisionAnalyzer:
         try:
             # Create token list for LLM context
             # only include symbol and name, json format
-            token_symbols = [json.dumps({"symbol": token['symbol'], "name": token['name']}) for token in available_tokens]
+            token_symbols = [{"symbol": token['symbol'], "name": token['name']} for token in available_tokens]
             
             user_prompt =  self.get_prompt_for_identify_target_token(message, token_symbols)
             
