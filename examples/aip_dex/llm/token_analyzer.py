@@ -313,12 +313,19 @@ class TokenDecisionAnalyzer:
             Available tokens in our database: {token_display}
             
             **IMPORTANT RULES:**
-            1. If the token mentioned in the user message EXACTLY matches any token symbol in the available list (case-insensitive), set "token_found" to true, and "token_symbol" to the exact token symbol from the list
-            2. If the token is NOT found in the list, set "token_found" to false and look for similar tokens based on:
-               - Similar spelling (e.g., "PEPE" vs "PEPE2", "BTC" vs "BTCC")
-               - Similar names (e.g., "Bitcoin" vs "Bitcoin Cash", "Ethereum" vs "Ethereum Classic")
-               - Common variations (e.g., "USDT" vs "USDC", "ETH" vs "WETH")
-            3. Only include tokens that are actually in the available list in "similar_tokens"
+            1. Token matching should be flexible and intelligent:
+               - Exact match (case-insensitive): "BTC" matches "BTC", "btc" matches "BTC"
+               - Common abbreviations: "Bitcoin" matches "BTC", "Ethereum" matches "ETH"
+               - Partial matches: "PEPE" matches "PEPE2", "BTC" matches "BTCC" (if no exact match found)
+               - Common variations: "USDT" matches "USDC", "ETH" matches "WETH" (if no exact match found)
+               - Fuzzy matching: "Bitcoin" matches "Bitcoin Cash" (if no exact match found)
+            2. Priority order for matching:
+               - First try exact case-insensitive match
+               - Then try common name abbreviations
+               - Finally try similar tokens for suggestions
+            3. If a token is found (exact or close match), set "token_found" to true and "token_symbol" to the best match from the list
+            4. If no good match is found, set "token_found" to false and provide similar token suggestions
+            5. Only include tokens that are actually in the available list in "similar_tokens"
             
             Please respond with a JSON object containing:
             - "token_found": true/false (whether you identified a specific token that exists in the available list)
@@ -330,9 +337,13 @@ class TokenDecisionAnalyzer:
             Examples:
             - User asks "What's the price of BTC?" and BTC is in the list -> {{"token_found": true, "token_symbol": "BTC", "similar_tokens": [], "user_intent": "price_analysis", "confidence": 0.9}}
             - User asks "What's the price of btc?" and BTC is in the list -> {{"token_found": true, "token_symbol": "BTC", "similar_tokens": [], "user_intent": "price_analysis", "confidence": 0.9}}
+            - User asks "What's the price of Bitcoin?" and BTC is in the list -> {{"token_found": true, "token_symbol": "BTC", "similar_tokens": [], "user_intent": "price_analysis", "confidence": 0.8}}
             - User asks "Should I buy PEPE?" and PEPE is in the list -> {{"token_found": true, "token_symbol": "PEPE", "similar_tokens": [], "user_intent": "trading_advice", "confidence": 0.8}}
             - User asks "Should I buy pepe?" and PEPE is in the list -> {{"token_found": true, "token_symbol": "PEPE", "similar_tokens": [], "user_intent": "trading_advice", "confidence": 0.8}}
-            - User asks "How is PEPE2 doing?" but only PEPE is in the list -> {{"token_found": false, "token_symbol": null, "similar_tokens": ["PEPE"], "user_intent": "price_analysis", "confidence": 0.7}}
+            - User asks "How is PEPE2 doing?" but only PEPE is in the list -> {{"token_found": true, "token_symbol": "PEPE", "similar_tokens": [], "user_intent": "price_analysis", "confidence": 0.7}}
+            - User asks "How is Bitcoin Cash?" but only BTC is in the list -> {{"token_found": true, "token_symbol": "BTC", "similar_tokens": [], "user_intent": "price_analysis", "confidence": 0.6}}
+            - User asks "How is USDC?" but only USDT is in the list -> {{"token_found": true, "token_symbol": "USDT", "similar_tokens": [], "user_intent": "price_analysis", "confidence": 0.5}}
+            - User asks "How is XYZ?" and no similar tokens in the list -> {{"token_found": false, "token_symbol": null, "similar_tokens": [], "user_intent": "price_analysis", "confidence": 0.1}}
             - User asks "Hello" -> {{"token_found": false, "token_symbol": null, "similar_tokens": [], "user_intent": "general", "confidence": 0.1}}
         """
 
