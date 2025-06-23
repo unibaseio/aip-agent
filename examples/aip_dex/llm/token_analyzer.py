@@ -20,14 +20,14 @@ class TokenDecisionAnalyzer:
         """Analyze token based on comprehensive decision data and provide trading recommendations"""
         try:
             # Create analysis prompt
-            prompt = self._create_comprehensive_analysis_prompt(decision_data)
+            prompt = self._create_comprehensive_analysis_prompt(decision_data, include_pools=True)
             
             response = await self.client.chat.completions.create(
                 model="gpt-4.1-mini",
                 messages=[
                     {
                         "role": "system", 
-                        "content": self._get_system_prompt()
+                        "content": self._get_system_prompt(include_pools=True)
                     },
                     {
                         "role": "user", 
@@ -52,9 +52,9 @@ class TokenDecisionAnalyzer:
             print(f"LLM analysis error: {e}")
             return self._fallback_analysis(decision_data)
     
-    def _get_system_prompt(self) -> str:
+    def _get_system_prompt(self, include_pools: bool = False, language: str = "chinese") -> str:
         """Get system prompt for LLM analysis"""
-        return """
+        prompt = """
         You are a professional DeFi and Web3 token trading analyst with extensive experience in technical analysis and fundamental analysis.
 
         Your tasks are:
@@ -62,22 +62,27 @@ class TokenDecisionAnalyzer:
         2. Provide objective trading recommendations based on multi-dimensional data
         3. Assess risk levels and provide risk management advice
         4. Explain your analysis logic and reasoning process
-        5. Always specify that the analysis is based on blockchain-specific data and trading activity
 
         Analysis dimensions include:
         - Technical Analysis: RSI, moving averages, breakout signals, trend direction
         - Fundamental Analysis: trading volume, liquidity, market cap, token distribution
         - Market Sentiment: buy/sell ratios, holder changes, whale behavior
         - Risk Assessment: volatility, concentration risk, liquidity risk
-        - Blockchain Context: All data is specific to the token's native blockchain network
+        """
 
+        if include_pools:
+            prompt += """
+            - Pool Analysis: liquidity, volume, price
+            """
+
+        prompt += f"""
         Please always remain objective and professional, and do not give overly optimistic or pessimistic advice.
         
         IMPORTANT: 
-        - Please respond in Chinese (中文) for all analysis and recommendations.
-        - Always mention the specific blockchain network when discussing trading data and recommendations.
-        - Clarify that all trading volume, holder data, and market metrics are specific to the blockchain network where the token is deployed.
+        - Please respond in {language} for all analysis and recommendations.
         """
+        
+        return prompt
     
     def _create_comprehensive_analysis_prompt(self, decision_data: Dict[str, Any], user_intent: str = None, include_pools: bool = False) -> str:
         """Create comprehensive analysis prompt"""
@@ -252,8 +257,6 @@ class TokenDecisionAnalyzer:
         
         **IMPORTANT: Please format your response using markdown with icons before each section title.**
         
-        **🔗 Blockchain Context:** All analysis and recommendations are specific to the {token_info.get('chain', 'N/A')} blockchain network. Please always mention this when discussing trading data, market metrics, and recommendations.
-        
         1. **🎯 Overall Conclusion**
            - {conclusion}
            - Specify that this analysis is based on {token_info.get('chain', 'N/A')} chain data
@@ -283,13 +286,18 @@ class TokenDecisionAnalyzer:
            - Suggested entry/exit price levels
            - Stop-loss and take-profit recommendations
            - Position size management suggestions
-        
-        7. **🏊 Pool Analysis** (Only available when include_pools is True)
-           - List of pools with detailed information: pair address, dex, liquidity, volume etc.
+        """
+
+        if include_pools:
+            prompt += f"""
+        7. **🏊 Pool Analysis**
+           - List of pools with detailed information: pair/pool address, dex, liquidity, volume etc.
            - Liquidity distribution across different DEXs
            - Pool-specific trading opportunities and risks
            - Recommendations for which pool to use for trading
-
+        """
+            
+        prompt += f"""
         8. **📝 Summary**
            - Overall score (1-10 scale)
            - Investment timeframe recommendations
@@ -474,7 +482,7 @@ Always be precise and only suggest tokens that actually exist in the provided li
     
     
     async def analyze_token_data_for_user_intent(self, decision_data: Dict[str, Any], user_intent: str, include_pools: bool = False) -> Dict[str, Any]:
-        system_prompt = self._get_system_prompt()
+        system_prompt = self._get_system_prompt(include_pools=include_pools)
         user_prompt = self._create_comprehensive_analysis_prompt(decision_data, user_intent, include_pools=include_pools)
 
         response = await self.client.chat.completions.create(

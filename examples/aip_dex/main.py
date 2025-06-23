@@ -219,7 +219,7 @@ async def process_chat_message(db: Session, messsage: str, conversation_id: str,
         if not decision_data:
             return f"I found {target_token_symbol} but couldn't retrieve current analysis data. The token might be new or have limited trading data."
             
-        system_prompt = token_analyzer._get_system_prompt()
+        system_prompt = token_analyzer._get_system_prompt(include_pools=include_pools)
         user_message = token_analyzer._create_comprehensive_analysis_prompt(decision_data, user_intent, include_pools)
 
         # Step 5: Use LLM to analyze the decision data and generate response
