@@ -261,10 +261,12 @@ class TokenDecisionAnalyzer:
         
         **IMPORTANT: Please format your response using markdown with icons before each section title.**
         
-        1. **🎯 Overall Conclusion**
-           - {conclusion}
-           - Specify that this analysis is based on {token_info.get('chain', 'N/A')} chain data
+        # 📈 Token Comprehensive Analysis Report: ${token_info.get('symbol', 'N/A')} ({token_info.get('chain', 'N/A').upper()})
+           - Latest Data Update: {latest_update_time or 'N/A'}
 
+        1. **🎯 Overall Conclusion**
+           - {conclusion}  
+           
         2. **📊 Technical Analysis Summary**
            - Current price, market cap, volume, liquidity, etc.
            - RSI and moving average indicators interpretation
@@ -308,21 +310,8 @@ class TokenDecisionAnalyzer:
            - Investment timeframe recommendations
            - Key monitoring indicators
 
-        ## Data Sources & Last Update Time
-        **📊 Data Sources:** This analysis is based on comprehensive data from multiple sources: {data_sources_str}
-        
-        **🔗 Blockchain:** All trading data and analysis are specific to the {token_info.get('chain', 'N/A')} blockchain network
-        
-        **🕒 Latest Data Update:** {latest_update_time or 'N/A'}
-        
-        **📈 Data Completeness:** 
-        - Token Metrics: {'✅ Available' if data_completeness.get('has_token_metrics') else '❌ Not Available'}
-        - Technical Indicators: {'✅ Available' if data_completeness.get('has_technical_indicators') else '❌ Not Available'}
-        - Moralis Analytics: {'✅ Available' if data_completeness.get('has_moralis_data') else '❌ Not Available'}
-        - Historical Data: {'✅ Available' if data_completeness.get('has_historical_data') else '❌ Not Available'} ({len(historical_data)} records)
-        - Pool Data: {'✅ Available' if data_completeness.get('has_pool_data') else '❌ Not Available'} ({len(pool_data)} pools)
-
-        Please provide detailed and professional analysis using proper markdown formatting with icons, ensuring recommendations are based on data and logic.
+        9. **⚠️ Disclaimer**
+           - This report is for reference only and does not constitute investment advice
         """
         
         return prompt
