@@ -266,18 +266,13 @@ class TokenDecisionAnalyzer:
             "fallback_mode": True
         }
     
-    async def llm_identify_target_token(self, message: str, available_tokens: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """Use LLM to identify which token the user is asking about"""
-        try:
-            # Create token list for LLM context
-            token_symbols = [token['symbol'] for token in available_tokens]
-            
-            prompt = f"""
+    def get_prompt_for_identify_target_token(message: str, available_tokens: List[Dict[str, Any]])-> str:
+        prompt = f"""
             Analyze the user's message and determine which cryptocurrency token they are asking about.
             
             User message: "{message}"
             
-            Available tokens in our database: {', '.join(token_symbols)}
+            Available tokens in our database: {', '.join(available_tokens)}
             
             Please respond with a JSON object containing:
             - "token_found": true/false (whether you identified a specific token)
@@ -289,13 +284,26 @@ class TokenDecisionAnalyzer:
             - "What's the price of BTC?" -> {{"token_found": true, "token_symbol": "BTC", "token_info": "Bitcoin", "user_intent": "price_analysis", "confidence": 0.9}}
             - "Should I buy PEPE?" -> {{"token_found": true, "token_symbol": "PEPE", "token_info": "Pepe token", "user_intent": "trading_advice", "confidence": 0.8}}
             - "Hello" -> {{"token_found": false, "token_symbol": null, "token_info": null, "user_intent": "general", "confidence": 0.1}}
-            """
+        """
+
+        return prompt
+
+    def get_sys_prompt_for_identify_target_token()-> str:
+        return "You are a cryptocurrency analysis assistant. Analyze user messages to identify which token they're asking about."
+
+    async def llm_identify_target_token(self, message: str, available_tokens: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Use LLM to identify which token the user is asking about"""
+        try:
+            # Create token list for LLM context
+            token_symbols = [token['symbol'] for token in available_tokens]
+            
+            user_prompt =  self.get_prompt_for_identify_target_token(message, available_tokens)
             
             response = await self.client.chat.completions.create(
                 model="gpt-4.1-mini",
                 messages=[
-                    {"role": "system", "content": "You are a cryptocurrency analysis assistant. Analyze user messages to identify which token they're asking about."},
-                    {"role": "user", "content": prompt}
+                    {"role": "system", "content": self.get_sys_prompt_for_identify_target_token() },
+                    {"role": "user", "content": user_prompt}
                 ],
                 temperature=0.1,
                 max_tokens=300

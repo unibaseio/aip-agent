@@ -1778,7 +1778,7 @@ class TokenService:
             if not token_exists:
                 similar_tokens = [t['symbol'] for t in available_tokens if target_token_symbol.lower() in t['symbol'].lower() or t['symbol'].lower() in target_token_symbol.lower()]
                 suggestion = f" Did you mean: {', '.join(similar_tokens[:3])}?" if similar_tokens else ""
-                return f"Token {target_token_symbol} is not available in our database.{suggestion}"
+                return f"Token {target_token_symbol} is not available in our database. {suggestion}"
             
             # Step 4: Get or create token and retrieve decision data
             token = await self.get_or_create_token(db, symbol=target_token_symbol, chain="bsc")
@@ -1814,7 +1814,12 @@ class TokenService:
     def _get_available_tokens_list(self, db: Session, limit: int = 100) -> List[Dict[str, Any]]:
         """Get list of available tokens from database"""
         try:
-            tokens = db.query(Token).limit(limit).all()
+            # limit = 0; no limit
+            query = db.query(Token)
+            if limit > 0:
+                query = query.limit(limit)
+                
+            tokens = query.all()
             
             token_list = []
             for token in tokens:
