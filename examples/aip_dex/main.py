@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-from models.database import create_tables, create_indexes, get_db, Token
+from models.database import create_tables, create_indexes, get_db, Token, SessionLocal
 from services.token_service import TokenService
 from llm.token_analyzer import TokenDecisionAnalyzer
 from api.schemas import (
@@ -26,6 +26,27 @@ from membase.chain.chain import membase_id
 # Global token service instance
 token_service = TokenService()
 token_analyzer = TokenDecisionAnalyzer()
+
+async def analyze_token(message: str, include_pools: bool = False):
+    """Analyze a token in a message with enhanced multi-DEX analysis
+    
+    Examples:
+        - "BTC price trends" - Analyze Bitcoin price movements and trends
+        - "ETH liquidity analysis" - Check Ethereum liquidity across DEXs
+        - "PEPE market cap" - Get PEPE token market capitalization
+        - "ADA holder distribution" - Analyze ADA token holder statistics
+        - "MATIC technical indicators" - Get technical analysis for MATIC
+        - "What is the opportunity of DOGE?" - Analyze DOGE token
+        - "BEEPER trading signal" - Analyze the trading signal of BEEPER token
+    """
+    db = SessionLocal()
+    try:
+        response_data = await token_service.process_chat_message(
+                db, message, include_pools
+        )  
+        return response_data
+    finally:
+        db.close()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -59,7 +80,7 @@ async def lifespan(app: FastAPI):
             name=membase_id,
             description=system_prompt,
             host_address=grpc_server_url,
-            functions=[]  # Add any specific functions if needed
+            functions=[analyze_token]  # Add any specific functions if needed
         )
         
         await app.agent.initialize()
@@ -119,8 +140,26 @@ app.add_middleware(
 )
 
 
-async def process_chat_message(db: Session, messsage: str) -> str:
-    """Process chat message with enhanced multi-DEX analysis"""
+async def process_chat_message(db: Session, messsage: str, conversation_id: str, include_pools: bool = False) -> str:
+    """Process chat message with enhanced multi-DEX analysis
+    
+    This function provides comprehensive token analysis including:
+    - Multi-DEX price comparison and arbitrage detection
+    - Technical indicators and trend analysis
+    - Holder distribution and on-chain metrics
+    - Volume and liquidity analysis across timeframes
+    - Trading signals with confidence scores
+    
+    Examples:
+        - "What's the current price of BTC?" - Get real-time Bitcoin price
+        - "Analyze ETH liquidity across all DEXs" - Multi-DEX liquidity comparison
+        - "Show me PEPE trading signals" - Get AI-powered trading recommendations
+        - "DOGE volume analysis last 24h" - Detailed volume breakdown
+        - "BNB price differences between exchanges" - Arbitrage opportunity detection
+        - "SHIB holder statistics" - On-chain holder distribution analysis
+        - "ADA technical indicators" - RSI, moving averages, volatility analysis
+        - "MATIC market sentiment" - Overall market sentiment assessment
+    """
     try: 
         # Step 1: Get available token list from database
         available_tokens = token_service._get_available_tokens_list(db, limit=0)
@@ -135,38 +174,45 @@ async def process_chat_message(db: Session, messsage: str) -> str:
             user_message,
             use_history=False,
             system_prompt=system_prompt,
+            conversation_id=conversation_id
         )
 
-        llm_token_analysis = {"token_found": False, "token_symbol": None, "token_info": None, "user_intent": "general", "confidence": 0.0}
+        llm_token_analysis = {"token_found": False, "token_symbol": None, "chain": None, "token_info": None, "similar_tokens": [], "user_intent": "general", "confidence": 0.0}
 
         import json
         import re
         json_match = re.search(r'\{.*\}', response, re.DOTALL)
         if json_match:
             llm_token_analysis = json.loads(json_match.group())
-            
-                 
-        print(f"LLM token analysis: {llm_token_analysis}")
+        
+        print(f"AIP DEX token analysis: {llm_token_analysis}")
+        
+        if not llm_token_analysis.get("token_found") or not llm_token_analysis.get("token_symbol") or llm_token_analysis.get("token_symbol") == "":
+            similar_tokens = llm_token_analysis.get("similar_tokens", [])
+            if similar_tokens and len(similar_tokens) > 0:
+                return f"I couldn't identify a specific token from your message. Did you mean: {', '.join(similar_tokens)}?"
+            else:
+                available_symbols = [t['symbol'] for t in available_tokens if t.get('symbol')]
+                return f"I couldn't identify a specific token from your message. Available tokens: {', '.join(available_symbols)}"
 
-        if not llm_token_analysis.get("token_found"):
-            return f"I couldn't identify a specific token from your message. Available tokens: {', '.join([t['symbol'] for t in available_tokens])}"
-            
+        user_intent = llm_token_analysis.get("user_intent", "general")
+        target_chain = llm_token_analysis.get("intended_chain", "bsc")
         target_token_symbol = llm_token_analysis.get("token_symbol")
             
         # Step 3: Check if the identified token exists in our list
         token_exists = any(token['symbol'].upper() == target_token_symbol.upper() for token in available_tokens)
-            
+                 
         if not token_exists:
             similar_tokens = [t['symbol'] for t in available_tokens if target_token_symbol.lower() in t['symbol'].lower() or t['symbol'].lower() in target_token_symbol.lower()]
             suggestion = f" Did you mean: {', '.join(similar_tokens[:3])}?" if similar_tokens else ""
             return f"Token {target_token_symbol} is not available in our database. {suggestion}"
             
         # Step 4: Get or create token and retrieve decision data
-        token = await token_service.get_or_create_token(db, symbol=target_token_symbol, chain="bsc")
+        token = await token_service.get_or_create_token(db, symbol=target_token_symbol, chain=target_chain)
         if not token:
-            return f"Sorry, I couldn't retrieve data for token {target_token_symbol}."
+            return f"Sorry, I couldn't retrieve data for token {target_token_symbol} on {target_chain}."
 
-        print(f"Analysing token: {token.symbol}")                
+        print(f"AIP DEX token analysis: {token.symbol} on {token.chain} {include_pools}")                
         # Get comprehensive token analysis
         decision_data = await token_service.get_token_decision_data(db, str(token.id))
             
@@ -174,18 +220,19 @@ async def process_chat_message(db: Session, messsage: str) -> str:
             return f"I found {target_token_symbol} but couldn't retrieve current analysis data. The token might be new or have limited trading data."
             
         system_prompt = token_analyzer._get_system_prompt()
-        user_message = token_analyzer._create_comprehensive_analysis_prompt(decision_data)
+        user_message = token_analyzer._create_comprehensive_analysis_prompt(decision_data, user_intent, include_pools)
 
         # Step 5: Use LLM to analyze the decision data and generate response
         llm_analysis = await app.agent.process_query(
             user_message,
             use_history=False,
             system_prompt=system_prompt,
+            conversation_id=conversation_id
         )
 
         llm_analysis = llm_analysis.replace("```markdown", "").replace("```", "")
 
-        print(f"LLM analysis: {llm_analysis}")
+        print(f"AIP DEX analysis: \n\n {llm_analysis}")
             
         return llm_analysis
             
@@ -300,8 +347,8 @@ async def add_token_api(
 async def chat_api(request: ChatRequest, db: Session = Depends(get_db)):
     """Process chat message with enhanced multi-DEX analysis"""
     try:
-        response_data = await token_service.process_chat_message(
-            db, request.message, request.include_pools
+        response_data = await process_chat_message(
+            db, request.message, request.conversation_id, request.include_pools
         )
         
         return ChatResponse(

@@ -79,7 +79,7 @@ class TokenDecisionAnalyzer:
         - Clarify that all trading volume, holder data, and market metrics are specific to the blockchain network where the token is deployed.
         """
     
-    def _create_comprehensive_analysis_prompt(self, decision_data: Dict[str, Any], user_intent: str = None) -> str:
+    def _create_comprehensive_analysis_prompt(self, decision_data: Dict[str, Any], user_intent: str = None, include_pools: bool = False) -> str:
         """Create comprehensive analysis prompt"""
         token_info = decision_data.get("token_info", {})
         current_metrics = decision_data.get("current_metrics", {})
@@ -189,12 +189,52 @@ class TokenDecisionAnalyzer:
 
         ## Trading Pool Information
         Active Pool Count: {len(pool_data)}
+        Include Pools: {include_pools}
         """
         
-        if pool_data:
-            prompt += "\n### Pool Details:\n"
-            for i, pool in enumerate(pool_data[:3]):  # Show only first 3 pools
-                prompt += f"Pool {i+1} ({pool.get('dex', 'N/A')}): Price ${pool.get('price_usd', 0):.8f}, 24h Volume ${pool.get('volume_24h', 0):,.2f}, Liquidity ${pool.get('liquidity_usd', 0):,.2f}\n"
+        # Get top 5 most active pools by volume and liquidity
+        if include_pools and pool_data and len(pool_data) > 0:
+            # Sort pools by 24h volume (descending)
+            sorted_pools_by_volume = sorted(pool_data, key=lambda x: x.get('volume_24h', 0), reverse=True)
+            top_pools_by_volume = sorted_pools_by_volume[:5]
+            
+            # Sort pools by liquidity (descending) as alternative metric
+            sorted_pools_by_liquidity = sorted(pool_data, key=lambda x: x.get('liquidity_usd', 0), reverse=True)
+            top_pools_by_liquidity = sorted_pools_by_liquidity[:5]
+
+            # combine top pools by volume and liquidity, remove duplicates based on pair_address
+            seen_addresses = set()
+            top_pools = []
+            
+            # Add pools from volume list first
+            for pool in top_pools_by_volume:
+                pair_address = pool.get('pair_address')
+                if pair_address and pair_address not in seen_addresses:
+                    top_pools.append(pool)
+                    seen_addresses.add(pair_address)
+            
+            # Add pools from liquidity list if not already added
+            for pool in top_pools_by_liquidity:
+                pair_address = pool.get('pair_address')
+                if pair_address and pair_address not in seen_addresses:
+                    top_pools.append(pool)
+                    seen_addresses.add(pair_address)
+
+            prompt += f"""
+        ### Top Pools (by Volume and Liquidity):
+        """
+            
+            for i, pool in enumerate(top_pools):
+                prompt += f"""
+        **Pool ({pool.get('pair_address', 'N/A')})**:
+        - Dex: {pool.get('dex', 'N/A')}
+        - Price: ${pool.get('price_usd', 0):.8f}
+        - 24h Volume: ${pool.get('volume_24h', 0):,.2f}
+        - Liquidity: ${pool.get('liquidity_usd', 0):,.2f}
+        - 24h Price Change: {pool.get('price_change_24h', 0):.2f}%
+        - Market Cap: ${pool.get('market_cap', 0):,.2f}
+        - Fee Tier: {pool.get('fee_tier', 'N/A')}
+        """
         
         if historical_data:
             prompt += f"\n## Historical Data\nTotal of {len(historical_data)} historical data points covering the past 30 days performance.\n"
@@ -243,8 +283,14 @@ class TokenDecisionAnalyzer:
            - Suggested entry/exit price levels
            - Stop-loss and take-profit recommendations
            - Position size management suggestions
+        
+        7. **🏊 Pool Analysis** (Only available when include_pools is True)
+           - List of pools with detailed information: pair address, dex, liquidity, volume etc.
+           - Liquidity distribution across different DEXs
+           - Pool-specific trading opportunities and risks
+           - Recommendations for which pool to use for trading
 
-        7. **📝 Summary**
+        8. **📝 Summary**
            - Overall score (1-10 scale)
            - Investment timeframe recommendations
            - Key monitoring indicators
@@ -312,17 +358,26 @@ class TokenDecisionAnalyzer:
     
     def get_prompt_for_identify_target_token(self, message: str, available_tokens: List[Dict[str, Any]])-> str:
         # Format available tokens for display
-        token_list = [f"{token['symbol']} ({token['name']})" for token in available_tokens]
+        token_list = [f"{token['symbol']} ({token['name']} {token['chain']})" for token in available_tokens]
         token_display = ', '.join(token_list)
         
         prompt = f"""
-            Analyze the user's message and determine which cryptocurrency token they are asking about.
+            Analyze the user's message and determine which cryptocurrency token they are asking about, including the blockchain chain they intend.
             
             User message: "{message}"
             
             Available tokens in our database: {token_display}
             
-            **IMPORTANT RULES:**
+            **CHAIN ANALYSIS RULES:**
+            1. Analyze the user's message to identify their intended blockchain chain
+            2. Default chain is "bsc" if no specific chain is mentioned
+            3. Supported chains: "bsc", "solana"
+            4. Chain indicators in user message:
+               - "BSC", "Binance", "BNB Chain", "bsc" -> "bsc"
+               - "Solana", "SOL", "solana" -> "solana"
+               - No chain mentioned -> default to "bsc"
+            
+            **TOKEN MATCHING RULES:**
             1. Token matching should be flexible and intelligent:
                - Exact match (case-insensitive): "BTC" matches "BTC", "btc" matches "BTC"
                - Common abbreviations: "Bitcoin" matches "BTC", "Ethereum" matches "ETH"
@@ -333,43 +388,52 @@ class TokenDecisionAnalyzer:
                - First try exact case-insensitive match
                - Then try common name abbreviations
                - Finally try similar tokens for suggestions
-            3. If a token is found (exact or close match), set "token_found" to true and "token_symbol" to the best match from the list
+            3. **CRITICAL CHAIN MATCHING**: If a token is found but its chain doesn't match the intended chain, set "token_found" to false
             4. If no good match is found, set "token_found" to false and provide similar token suggestions
             5. Only include tokens that are actually in the available list in "similar_tokens"
             
             Please respond with a JSON object containing:
-            - "token_found": true/false (whether you identified a specific token that exists in the available list)
-            - "token_symbol": the exact token symbol from the available list (if found)
+            - "token_found": true/false (whether you identified a specific token that exists in the available list AND matches the intended chain)
+            - "token_symbol": the exact token symbol from the available list (if found and chain matches)
+            - "intended_chain": the blockchain chain the user intends (bsc/solana, default bsc)
             - "similar_tokens": a list of token symbols from the available list that are similar to what the user mentioned (if not found or for additional suggestions)
             - "user_intent": "price_analysis", "signal_analysis", "general_analysis", or "trading_advice"
             - "confidence": confidence score from 0.0 to 1.0
             
             Examples:
-            - User asks "What's the price of BTC?" and BTC is in the list -> {{"token_found": true, "token_symbol": "BTC", "similar_tokens": [], "user_intent": "price_analysis", "confidence": 0.9}}
-            - User asks "What's the price of btc?" and BTC is in the list -> {{"token_found": true, "token_symbol": "BTC", "similar_tokens": [], "user_intent": "price_analysis", "confidence": 0.9}}
-            - User asks "What's the price of Bitcoin?" and BTC is in the list -> {{"token_found": true, "token_symbol": "BTC", "similar_tokens": [], "user_intent": "price_analysis", "confidence": 0.8}}
-            - User asks "Should I buy PEPE?" and PEPE is in the list -> {{"token_found": true, "token_symbol": "PEPE", "similar_tokens": [], "user_intent": "trading_advice", "confidence": 0.8}}
-            - User asks "Should I buy pepe?" and PEPE is in the list -> {{"token_found": true, "token_symbol": "PEPE", "similar_tokens": [], "user_intent": "trading_advice", "confidence": 0.8}}
-            - User asks "How is PEPE2 doing?" but only PEPE is in the list -> {{"token_found": true, "token_symbol": "PEPE", "similar_tokens": [], "user_intent": "price_analysis", "confidence": 0.7}}
-            - User asks "How is Bitcoin Cash?" but only BTC is in the list -> {{"token_found": true, "token_symbol": "BTC", "similar_tokens": [], "user_intent": "price_analysis", "confidence": 0.6}}
-            - User asks "How is USDC?" but only USDT is in the list -> {{"token_found": true, "token_symbol": "USDT", "similar_tokens": [], "user_intent": "price_analysis", "confidence": 0.5}}
-            - User asks "How is XYZ?" and no similar tokens in the list -> {{"token_found": false, "token_symbol": null, "similar_tokens": [], "user_intent": "price_analysis", "confidence": 0.1}}
-            - User asks "Hello" -> {{"token_found": false, "token_symbol": null, "similar_tokens": [], "user_intent": "general", "confidence": 0.1}}
+            - User asks "What's the price of BTC on BSC?" and BTC exists on BSC -> {{"token_found": true, "token_symbol": "BTC", "intended_chain": "bsc", "similar_tokens": [], "user_intent": "price_analysis", "confidence": 0.9}}
+            - User asks "What's the price of BTC on Solana?" and BTC exists on BSC but not Solana -> {{"token_found": false, "token_symbol": null, "intended_chain": "solana", "similar_tokens": ["BTC"], "user_intent": "price_analysis", "confidence": 0.7}}
+            - User asks "What's the price of BTC?" (no chain mentioned) and BTC exists on BSC -> {{"token_found": true, "token_symbol": "BTC", "intended_chain": "bsc", "similar_tokens": [], "user_intent": "price_analysis", "confidence": 0.8}}
+            - User asks "Should I buy PEPE on Solana?" and PEPE exists on Solana -> {{"token_found": true, "token_symbol": "PEPE", "intended_chain": "solana", "similar_tokens": [], "user_intent": "trading_advice", "confidence": 0.8}}
+            - User asks "Should I buy PEPE on BSC?" and PEPE exists on Solana but not BSC -> {{"token_found": false, "token_symbol": null, "intended_chain": "bsc", "similar_tokens": ["PEPE"], "user_intent": "trading_advice", "confidence": 0.6}}
+            - User asks "How is PEPE2 doing on BSC?" but only PEPE exists on BSC -> {{"token_found": true, "token_symbol": "PEPE", "intended_chain": "bsc", "similar_tokens": [], "user_intent": "price_analysis", "confidence": 0.7}}
+            - User asks "How is Bitcoin Cash on Solana?" but only BTC exists on BSC -> {{"token_found": false, "token_symbol": null, "intended_chain": "solana", "similar_tokens": ["BTC"], "user_intent": "price_analysis", "confidence": 0.5}}
+            - User asks "How is USDC on BSC?" but only USDT exists on BSC -> {{"token_found": true, "token_symbol": "USDT", "intended_chain": "bsc", "similar_tokens": [], "user_intent": "price_analysis", "confidence": 0.5}}
+            - User asks "How is XYZ on BSC?" and no similar tokens in the list -> {{"token_found": false, "token_symbol": null, "intended_chain": "bsc", "similar_tokens": [], "user_intent": "price_analysis", "confidence": 0.1}}
+            - User asks "Hello" -> {{"token_found": false, "token_symbol": null, "intended_chain": "bsc", "similar_tokens": [], "user_intent": "general", "confidence": 0.1}}
         """
 
         return prompt
 
     def get_sys_prompt_for_identify_target_token(self)-> str:
-        return """You are a cryptocurrency analysis assistant specialized in token identification. 
+        return """You are a cryptocurrency analysis assistant specialized in token identification and blockchain chain analysis. 
 
-Your task is to analyze user messages and identify which cryptocurrency token they are asking about by comparing against an available token list.
+Your task is to analyze user messages and identify which cryptocurrency token they are asking about by comparing against an available token list, while also determining their intended blockchain chain.
 
 Key responsibilities:
-1. Check if the mentioned token exists in the available token list
-2. If found, return the exact token symbol from the list
-3. If not found, suggest similar tokens from the available list
-4. Determine user intent (price analysis, trading advice, etc.)
-5. Provide confidence scores based on clarity of the request
+1. Analyze user message to identify intended blockchain chain (bsc/solana, default bsc)
+2. Check if the mentioned token exists in the available token list
+3. Verify that the found token matches the intended chain
+4. If found and chain matches, return the exact token symbol from the list
+5. If not found or chain doesn't match, suggest similar tokens from the available list
+6. Determine user intent (price analysis, trading advice, etc.)
+7. Provide confidence scores based on clarity of the request
+
+Chain identification rules:
+- Look for chain indicators: "BSC", "Binance", "BNB Chain", "bsc" -> "bsc"
+- Look for chain indicators: "Solana", "SOL", "solana" -> "solana"  
+- Default to "bsc" if no chain is mentioned
+- Only return token_found=true if both token exists AND chain matches
 
 Always be precise and only suggest tokens that actually exist in the provided list."""
 
@@ -377,10 +441,7 @@ Always be precise and only suggest tokens that actually exist in the provided li
         """Use LLM to identify which token the user is asking about"""
         try:
             # Create token list for LLM context
-            # only include symbol and name, json format
-            token_symbols = [{"symbol": token['symbol'], "name": token['name']} for token in available_tokens]
-            
-            user_prompt =  self.get_prompt_for_identify_target_token(message, token_symbols)
+            user_prompt =  self.get_prompt_for_identify_target_token(message, available_tokens)
             
             response = await self.client.chat.completions.create(
                 model="gpt-4.1-mini",
@@ -399,18 +460,22 @@ Always be precise and only suggest tokens that actually exist in the provided li
             import re
             json_match = re.search(r'\{.*\}', content, re.DOTALL)
             if json_match:
-                return json.loads(json_match.group())
+                result = json.loads(json_match.group())
+                # Ensure intended_chain is always present, default to "bsc"
+                if "intended_chain" not in result:
+                    result["intended_chain"] = "bsc"
+                return result
             else:
-                return {"token_found": False, "token_symbol": None, "token_info": None, "user_intent": "general", "confidence": 0.0}
+                return {"token_found": False, "token_symbol": None, "intended_chain": "bsc", "similar_tokens": [], "user_intent": "general", "confidence": 0.0}
                 
         except Exception as e:
             print(f"Error in LLM token identification: {e}")
-            return {"token_found": False, "token_symbol": None, "token_info": None, "user_intent": "general", "confidence": 0.0}
+            return {"token_found": False, "token_symbol": None, "intended_chain": "bsc", "similar_tokens": [], "user_intent": "general", "confidence": 0.0}
     
     
-    async def analyze_token_data_for_user_intent(self, decision_data: Dict[str, Any], user_intent: str) -> Dict[str, Any]:
+    async def analyze_token_data_for_user_intent(self, decision_data: Dict[str, Any], user_intent: str, include_pools: bool = False) -> Dict[str, Any]:
         system_prompt = self._get_system_prompt()
-        user_prompt = self._create_comprehensive_analysis_prompt(decision_data)
+        user_prompt = self._create_comprehensive_analysis_prompt(decision_data, user_intent, include_pools=include_pools)
 
         response = await self.client.chat.completions.create(
             model="gpt-4.1-mini",

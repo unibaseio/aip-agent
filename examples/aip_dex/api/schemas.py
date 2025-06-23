@@ -16,6 +16,7 @@ class TokenResponse(BaseModel):
 class ChatRequest(BaseModel):
     message: str
     include_pools: Optional[bool] = False
+    conversation_id: Optional[str] = None
 
 class ChatResponse(BaseModel):
     response: str

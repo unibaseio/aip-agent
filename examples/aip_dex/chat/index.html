@@ -500,7 +500,7 @@
 
         <div class="chat-input-container">
             <div class="token-input-container">
-                <input type="text" class="token-input" id="tokenInput" placeholder="请输入API Token" value="">
+                <input type="text" class="token-input" id="tokenInput" placeholder="请输入API Key" value="">
                 <button type="button" class="token-save-button" id="tokenSaveButton">请确认</button>
             </div>
             <form class="chat-input-form" id="chatForm">
@@ -725,7 +725,7 @@
 
                 // Check if token is set
                 if (!this.bearerToken) {
-                    this.addMessage('请先配置API Token后再发送消息', 'error');
+                    this.addMessage('请先配置API Key后再发送消息', 'error');
                     this.tokenInput.focus();
                     return;
                 }

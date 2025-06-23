@@ -107,6 +107,7 @@ class DexScreenerProvider:
         result = await self.search_token(chain_id, identifier, limit)
         return result
     
+    # TODO: add fee tier
     def _extract_pair_data(self, pair: Dict[str, Any]) -> Dict[str, Any]:
         """Extract standardized data from a DEX pair"""
         base_token = pair.get("baseToken", {})

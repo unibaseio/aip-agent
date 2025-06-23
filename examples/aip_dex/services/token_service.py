@@ -645,6 +645,15 @@ class TokenService:
                 return None
             
             print(f"Creating pool for {token.symbol} on {token.chain} with quote token {quote_token.symbol}")
+
+            # query pool from db
+            existing_pool = db.query(TokenPool).filter(
+                TokenPool.chain == token.chain,
+                TokenPool.pair_address == pool_data.get("pair_address", ""),
+            ).first()
+
+            if existing_pool:
+                return existing_pool
                 
             pool = TokenPool(
                 base_token_id=str(token.id),
@@ -1622,6 +1631,8 @@ class TokenService:
                     pool_metrics.append({
                         "pool_id": str(pool.id),
                         "dex": pool.dex,
+                        "pair_address": pool.pair_address,
+                        "fee_tier": pool.fee_tier,
                         "price_usd": float(latest_metric.price_usd or 0),
                         "volume_24h": float(latest_metric.volume_24h or 0),
                         "liquidity_usd": float(latest_metric.liquidity_usd or 0),
@@ -1775,13 +1786,14 @@ class TokenService:
                     available_symbols = [t['symbol'] for t in available_tokens if t.get('symbol')]
                     return f"I couldn't identify a specific token from your message. Available tokens: {', '.join(available_symbols)}"
             
+            target_chain = llm_token_analysis.get("intended_chain", "bsc")
             target_token_symbol = llm_token_analysis.get("token_symbol")
             # Step 4: Get or create token and retrieve decision data
-            token = await self.get_or_create_token(db, symbol=target_token_symbol, chain="bsc")
+            token = await self.get_or_create_token(db, symbol=target_token_symbol, chain=target_chain)
             if not token:
-                return f"Sorry, I couldn't retrieve data for token {target_token_symbol}."
+                return f"Sorry, I couldn't retrieve data for token {target_token_symbol} on {target_chain}."
 
-            print(f"Analysing token: {token.symbol}")                
+            print(f"Analysing token: {token.symbol} on {token.chain}")                
             # Get comprehensive token analysis
             decision_data = await self.get_token_decision_data(db, str(token.id))
             
@@ -1799,15 +1811,9 @@ class TokenService:
             
         except Exception as e:
             print(f"Error processing chat message: {e}")
-            return {
-                "response": f"Sorry, I encountered an error while analyzing your request: {str(e)}",
-                "signal_data": None,
-                "intent": None,
-                "pool_analysis": None,
-                "available_tokens": None
-            }
+            return f"Sorry, I encountered an error while analyzing your request: {str(e)}"
 
-    def _get_available_tokens_list(self, db: Session, limit: int = 100) -> List[Dict[str, Any]]:
+    def _get_available_tokens_list(self, db: Session, limit: int = 0) -> List[Dict[str, Any]]:
         """Get list of available tokens from database"""
         try:
             # limit = 0; no limit
