@@ -313,7 +313,7 @@ class TokenDecisionAnalyzer:
             Available tokens in our database: {token_display}
             
             **IMPORTANT RULES:**
-            1. If the token mentioned in the user message EXACTLY matches any token symbol in the available list, set "token_found" to true, and "token_symbol" to the exact token symbol from the list
+            1. If the token mentioned in the user message EXACTLY matches any token symbol in the available list (case-insensitive), set "token_found" to true, and "token_symbol" to the exact token symbol from the list
             2. If the token is NOT found in the list, set "token_found" to false and look for similar tokens based on:
                - Similar spelling (e.g., "PEPE" vs "PEPE2", "BTC" vs "BTCC")
                - Similar names (e.g., "Bitcoin" vs "Bitcoin Cash", "Ethereum" vs "Ethereum Classic")
@@ -329,7 +329,9 @@ class TokenDecisionAnalyzer:
             
             Examples:
             - User asks "What's the price of BTC?" and BTC is in the list -> {{"token_found": true, "token_symbol": "BTC", "similar_tokens": [], "user_intent": "price_analysis", "confidence": 0.9}}
+            - User asks "What's the price of btc?" and BTC is in the list -> {{"token_found": true, "token_symbol": "BTC", "similar_tokens": [], "user_intent": "price_analysis", "confidence": 0.9}}
             - User asks "Should I buy PEPE?" and PEPE is in the list -> {{"token_found": true, "token_symbol": "PEPE", "similar_tokens": [], "user_intent": "trading_advice", "confidence": 0.8}}
+            - User asks "Should I buy pepe?" and PEPE is in the list -> {{"token_found": true, "token_symbol": "PEPE", "similar_tokens": [], "user_intent": "trading_advice", "confidence": 0.8}}
             - User asks "How is PEPE2 doing?" but only PEPE is in the list -> {{"token_found": false, "token_symbol": null, "similar_tokens": ["PEPE"], "user_intent": "price_analysis", "confidence": 0.7}}
             - User asks "Hello" -> {{"token_found": false, "token_symbol": null, "similar_tokens": [], "user_intent": "general", "confidence": 0.1}}
         """
