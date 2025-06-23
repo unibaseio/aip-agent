@@ -220,6 +220,51 @@ class FullAgentWrapper:
         memory = self._memory.get_memory(conversation_id)
         self._memory.load_from_hub(conversation_id) 
 
+        # query starts with @xxx, it is a command to the xxx agent
+        # "@agent_text, query" or "@agent_text query"
+        if query.startswith("@"):
+            memory.add(Message(content=query, name=self._name, role="user"))
+
+            # Remove @ symbol first
+            query_without_at = query[1:]
+
+            # check if query_without_at is start with " "
+            if query_without_at.startswith(" "):
+                return "Error: Agent name cannot start with space. Please remove the space after @."
+
+            if query_without_at.startswith(","):
+                return "Error: Agent name cannot start with comma. Please remove the comma after @."
+
+            # Split by first space to separate agent name and message
+            parts = query_without_at.split(" ", 1)
+            agent_name = parts[0].strip()
+            if agent_name == "":
+                return "Error: Agent name cannot be empty. Please specify an agent name after @"
+            
+            # check if agent name contains comma
+            if "," in agent_name:
+                parts = agent_name.split(",", 1)
+                agent_name = parts[0].strip()
+                if agent_name == "":
+                    return "Error: Agent name cannot be empty. Please specify an agent name after @"
+          
+            new_query = query_without_at[len(agent_name)+1:]
+
+            # remove space at beginning of new_query
+            new_query = new_query.strip()
+
+            if new_query == "":
+                return "Error: Query cannot be empty. Please use '@agent_name, query' or '@agent_name query'."
+            
+            try:
+                response = await self.send_message(agent_name, "ask", new_query)
+                if response.startswith("Error:"):
+                    return response
+                memory.add(Message(content=response, name=agent_name, role="assistant"))
+                return response
+            except Exception as e:
+                return f"Error: {e}"
+
         if use_history:
             msgs = memory.get(recent_n=recent_n_messages)
         else:
@@ -242,6 +287,8 @@ class FullAgentWrapper:
                 systemPrompt=system_prompt
             )
         )
+        if response.startswith("Error:"):
+            return response
         memory.add(Message(content=response, name=self._name, role="assistant"))
         return response
 
@@ -266,11 +313,11 @@ class FullAgentWrapper:
             print(f"Response from {target_id}: {response.content}")
             return response
         except asyncio.TimeoutError:
-            print(f"Message to {target_id} timed out after 120 seconds")
-            return f"Message to {target_id} timed out after 120 seconds"
+            print(f"Error: Message to {target_id} timed out after 120 seconds")
+            return f"Error: Message to {target_id} timed out after 120 seconds"
         except Exception as e:
-            print(f"Error sending message to {target_id}: {e}")
-            return f"Error sending message to {target_id}: {e}"
+            print(f"Error: sending message to {target_id}: {e}")
+            return f"Error: sending message to {target_id}: {e}"
 
     async def update_in_hub(self, state: str = "running") -> None:
         """Register the agent in the hub"""

@@ -444,11 +444,11 @@ class MCPAggregator(ContextDependent):
             )
             return res
         except asyncio.TimeoutError:
-            print(f"Message to {agent_name} timed out after 60 seconds")
-            return f"Message sending timed out, {agent_name} is offline"
+            print(f"Error: Message to {agent_name} timed out after 60 seconds")
+            return f"Error: Message sending timed out, {agent_name} is offline"
         except Exception as e:
-            print(f"Error sending message to {agent_name}: {e}")
-            return f"Error sending message to {agent_name}: {e}"
+            print(f"Error: sending message to {agent_name}: {e}")
+            return f"Error: sending message to {agent_name}: {e}"
 
     async def call_grpc_tool(
         self, server_name: str, tool_name: str, arguments: dict | None = None
