@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime
+from datetime import datetime, timedelta
 from fastapi import FastAPI, Request, HTTPException, Depends, Header, Security
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -48,6 +48,30 @@ from core.utils import convert_to_json
 
 # Add global shutdown flag
 is_shutting_down = False
+
+def get_daily_report(date_str: str, language: str = "chinese", type: str = "news") -> str:
+    """Get daily report for a specific date and specific type
+    
+    Args:
+        date_str: str, date in format YYYY-MM-DD, e.g. 2025-06-23
+        language: str, language of the report, chinese or english, default is chinese
+        type: str, type of the report, news, trading or trading_short; default is news; news is daily summary of latest KOL posts, trading is daily trading summary from KOL posts, trading_short is trading signal from KOL posts
+        
+    Returns: str, report content
+    """
+    # check if date_str is valid date
+    try:
+        datetime.strptime(date_str, "%Y-%m-%d")
+    except ValueError:
+        if date_str.lower() == "today":
+            date_str = datetime.now().strftime("%Y-%m-%d")
+        elif date_str.lower() == "yesterday":
+            date_str = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+        else:
+            return f"Invalid date format: {date_str}"
+    
+    report = load_report(date_str, language, type)
+    return report
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -969,7 +993,7 @@ async def initialize(port: int = 5001, bearer_token: str = None) -> None:
         name=membase_id,
         description=system_prompt,
         host_address=app.grpc_server_url,
-        functions=[search_similar_posts]
+        functions=[search_similar_posts, get_daily_report]
     )
     
     try:
