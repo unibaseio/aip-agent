@@ -76,6 +76,9 @@ def get_daily_report(date_str: str = "today", language: str = "chinese", type: s
         - get_daily_report("2025-01-15", "english", "trading") -> English trading report for Jan 15, 2025
         - get_daily_report("yesterday", "chinese", "trading_short") -> Chinese trading signals for yesterday
     """
+    
+    print(f"Getting daily report for {date_str}, {language}, {type}")
+    
     # check if date_str is valid date
     try:
         datetime.strptime(date_str, "%Y-%m-%d")
@@ -189,7 +192,7 @@ async def load_user_agents():
             name=app.agent_prefix + username,
             description=get_description(username, profile),
             host_address=app.grpc_server_url,
-            functions=[search_similar_posts]
+            functions=[search_similar_posts, get_daily_report]
         )
     
         try:
