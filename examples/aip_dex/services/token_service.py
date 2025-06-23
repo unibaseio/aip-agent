@@ -1760,26 +1760,22 @@ class TokenService:
             available_tokens = self._get_available_tokens_list(db)
             
             if not available_tokens:
-                return f"No tokens found in the database. Please add some tokens first. Available tokens: {', '.join([t['symbol'] for t in available_tokens])}"
+                return "No tokens found in the database. Please add some tokens first."
             
             # Step 2: Use LLM to determine which token the user is asking about
             llm_token_analysis = await token_analyzer.llm_identify_target_token(message, available_tokens)
             
             print(f"LLM token analysis: {llm_token_analysis}")
 
-            if not llm_token_analysis.get("token_found"):
-                return f"I couldn't identify a specific token from your message. Available tokens: {', '.join([t['symbol'] for t in available_tokens])}"
+            if not llm_token_analysis.get("token_found") or not llm_token_analysis.get("token_symbol") or llm_token_analysis.get("token_symbol") == "":
+                similar_tokens = llm_token_analysis.get("similar_tokens", [])
+                if similar_tokens and len(similar_tokens) > 0:
+                    return f"I couldn't identify a specific token from your message. Did you mean: {', '.join(similar_tokens)}?"
+                else:
+                    available_symbols = [t['symbol'] for t in available_tokens if t.get('symbol')]
+                    return f"I couldn't identify a specific token from your message. Available tokens: {', '.join(available_symbols)}"
             
             target_token_symbol = llm_token_analysis.get("token_symbol")
-            
-            # Step 3: Check if the identified token exists in our list
-            token_exists = any(token['symbol'].upper() == target_token_symbol.upper() for token in available_tokens)
-            
-            if not token_exists:
-                similar_tokens = [t['symbol'] for t in available_tokens if target_token_symbol.lower() in t['symbol'].lower() or t['symbol'].lower() in target_token_symbol.lower()]
-                suggestion = f" Did you mean: {', '.join(similar_tokens[:3])}?" if similar_tokens else ""
-                return f"Token {target_token_symbol} is not available in our database. {suggestion}"
-            
             # Step 4: Get or create token and retrieve decision data
             token = await self.get_or_create_token(db, symbol=target_token_symbol, chain="bsc")
             if not token:
@@ -1823,14 +1819,16 @@ class TokenService:
             
             token_list = []
             for token in tokens:
-                token_info = {
-                    "id": str(token.id),
-                    "symbol": token.symbol,
-                    "name": token.name,
-                    "chain": token.chain,
-                    "contract_address": token.contract_address
-                }
-                token_list.append(token_info)
+                # Add null checks for token fields
+                if token and token.symbol:  # Only include tokens with valid symbols
+                    token_info = {
+                        "id": str(token.id) if token.id else "",
+                        "symbol": token.symbol.strip() if token.symbol else "",
+                        "name": token.name.strip() if token.name else "",
+                        "chain": token.chain.strip() if token.chain else "",
+                        "contract_address": token.contract_address.strip() if token.contract_address else ""
+                    }
+                    token_list.append(token_info)
             
             return token_list
         except Exception as e:

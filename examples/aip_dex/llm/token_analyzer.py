@@ -277,13 +277,14 @@ class TokenDecisionAnalyzer:
             Please respond with a JSON object containing:
             - "token_found": true/false (whether you identified a specific token)
             - "token_symbol": the token symbol (if found)
+            - "similar_tokens": a list of similar token symbols (if found)
             - "user_intent": "price_analysis", "signal_analysis", "general_analysis", or "trading_advice"
             - "confidence": confidence score from 0.0 to 1.0
             
             Examples:
-            - "What's the price of BTC?" -> {{"token_found": true, "token_symbol": "BTC", "token_info": "Bitcoin", "user_intent": "price_analysis", "confidence": 0.9}}
-            - "Should I buy PEPE?" -> {{"token_found": true, "token_symbol": "PEPE", "token_info": "Pepe token", "user_intent": "trading_advice", "confidence": 0.8}}
-            - "Hello" -> {{"token_found": false, "token_symbol": null, "token_info": null, "user_intent": "general", "confidence": 0.1}}
+            - "What's the price of BTC?" -> {{"token_found": true, "token_symbol": "BTC", "token_info": "Bitcoin", "similar_tokens": [], "user_intent": "price_analysis", "confidence": 0.9}}
+            - "Should I buy PEPE?" -> {{"token_found": true, "token_symbol": "PEPE", "token_info": "Pepe token", "similar_tokens": [], "user_intent": "trading_advice", "confidence": 0.8}}
+            - "Hello" -> {{"token_found": false, "token_symbol": null, "similar_tokens": ["HEL"], "token_info": null, "user_intent": "general", "confidence": 0.1}}
         """
 
         return prompt
