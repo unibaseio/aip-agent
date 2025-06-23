@@ -83,11 +83,33 @@ class TokenDecisionAnalyzer:
         risk_factors = decision_data.get("risk_factors", {})
         pool_data = decision_data.get("pool_data", [])
         historical_data = decision_data.get("historical_data", [])
+        data_completeness = decision_data.get("data_completeness", {})
         
         # Calculate key ratios and trends
         buy_sell_ratio = moralis_data.get("volume_analysis", {}).get("buy_sell_ratio", 1)
         trader_ratio = moralis_data.get("trader_activity", {}).get("trader_ratio", 1)
         concentration_risk = moralis_data.get("distribution", {}).get("concentration_risk", "UNKNOWN")
+        
+        # Extract data sources and latest update time
+        data_sources = []
+        latest_update_time = None
+        
+        # Check data completeness to determine available sources
+        if data_completeness.get("has_moralis_data"):
+            data_sources.append("Moralis (Trading Analytics & Holder Stats)")
+        if data_completeness.get("has_pool_data"):
+            data_sources.append("DexScreener (Pool Data & Market Metrics)")
+        if data_completeness.get("has_technical_indicators"):
+            data_sources.append("Technical Indicators (RSI, MA, Volatility)")
+        if data_completeness.get("has_historical_data"):
+            data_sources.append("Historical Data (30-day Trends)")
+        
+        # Get latest update time from current metrics
+        if current_metrics.get("last_updated"):
+            latest_update_time = current_metrics.get("last_updated")
+        
+        # Format data sources string
+        data_sources_str = ", ".join(data_sources) if data_sources else "Database Records"
         
         if user_intent:
             prompt = f"""
@@ -218,6 +240,18 @@ class TokenDecisionAnalyzer:
            - Overall score (1-10 scale)
            - Investment timeframe recommendations
            - Key monitoring indicators
+
+        ## Data Sources & Last Update Time
+        **📊 Data Sources:** This analysis is based on comprehensive data from multiple sources: {data_sources_str}
+        
+        **🕒 Latest Data Update:** {latest_update_time or 'N/A'}
+        
+        **📈 Data Completeness:** 
+        - Token Metrics: {'✅ Available' if data_completeness.get('has_token_metrics') else '❌ Not Available'}
+        - Technical Indicators: {'✅ Available' if data_completeness.get('has_technical_indicators') else '❌ Not Available'}
+        - Moralis Analytics: {'✅ Available' if data_completeness.get('has_moralis_data') else '❌ Not Available'}
+        - Historical Data: {'✅ Available' if data_completeness.get('has_historical_data') else '❌ Not Available'} ({len(historical_data)} records)
+        - Pool Data: {'✅ Available' if data_completeness.get('has_pool_data') else '❌ Not Available'} ({len(pool_data)} pools)
 
         Please provide detailed and professional analysis using proper markdown formatting with icons, ensuring recommendations are based on data and logic.
         """
