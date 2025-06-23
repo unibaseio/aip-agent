@@ -14,12 +14,18 @@ load_dotenv()
 
 from models.database import create_tables, create_indexes, get_db, Token
 from services.token_service import TokenService
+from llm.token_analyzer import TokenDecisionAnalyzer
 from api.schemas import (
     TokenResponse, ChatRequest, ChatResponse
 )
 
+from aip_agent.agents.custom_agent import CallbackAgent
+from aip_agent.agents.full_agent import FullAgentWrapper
+from membase.chain.chain import membase_id  
+
 # Global token service instance
 token_service = TokenService()
+token_analyzer = TokenDecisionAnalyzer()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -42,10 +48,40 @@ async def lifespan(app: FastAPI):
     print("🏗️ Architecture: Token → Pools → Pool Metrics → Aggregated Token Metrics")
     print("🔥 Features: Multi-DEX Analysis | Pool Comparison | Arbitrage Detection")
     
+    # Initialize agent
+    print("🤖 Initializing AIP Agent...")
+    try:
+        system_prompt = os.getenv("SYSTEM_PROMPT", "You are an AI assistant specialized in DEX token analysis and trading signals.")
+        grpc_server_url = os.getenv("GRPC_SERVER_URL", "54.169.29.193:8081")
+        
+        app.agent = FullAgentWrapper(
+            agent_cls=CallbackAgent,
+            name=membase_id,
+            description=system_prompt,
+            host_address=grpc_server_url,
+            functions=[]  # Add any specific functions if needed
+        )
+        
+        await app.agent.initialize()
+        print("✅ Agent initialized successfully")
+    except Exception as e:
+        print(f"❌ Error initializing agent: {str(e)}")
+        raise e
+    
     yield
     
     # Shutdown
     print("🛑 Shutting down...")
+    
+    # Close agent resources
+    if hasattr(app, 'agent') and app.agent is not None:
+        print("🤖 Shutting down agent...")
+        try:
+            await app.agent.stop()
+            print("✅ Agent stopped successfully")
+        except Exception as e:
+            print(f"⚠️ Error shutting down agent: {str(e)}")
+    
     await token_service.close()
     print("✅ All connections closed.")
 
@@ -81,6 +117,87 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+async def process_chat_message(db: Session, messsage: str) -> str:
+    """Process chat message with enhanced multi-DEX analysis"""
+    try: 
+        # Step 1: Get available token list from database
+        available_tokens = token_service._get_available_tokens_list(db, limit=0)
+            
+        if not available_tokens:
+            return f"No tokens found in the database. Please add some tokens first. Available tokens: {', '.join([t['symbol'] for t in available_tokens])}"
+            
+        # Step 2: Use LLM to determine which token the user is asking about
+        user_message = token_analyzer.get_prompt_for_identify_target_token(messsage, available_tokens)
+        system_prompt = token_analyzer.get_sys_prompt_for_identify_target_token()
+        response = await app.agent.process_query(
+            user_message,
+            use_history=False,
+            system_prompt=system_prompt,
+        )
+
+        llm_token_analysis = {"token_found": False, "token_symbol": None, "token_info": None, "user_intent": "general", "confidence": 0.0}
+
+        import json
+        import re
+        json_match = re.search(r'\{.*\}', response, re.DOTALL)
+        if json_match:
+            llm_token_analysis = json.loads(json_match.group())
+            
+                 
+        print(f"LLM token analysis: {llm_token_analysis}")
+
+        if not llm_token_analysis.get("token_found"):
+            return f"I couldn't identify a specific token from your message. Available tokens: {', '.join([t['symbol'] for t in available_tokens])}"
+            
+        target_token_symbol = llm_token_analysis.get("token_symbol")
+            
+        # Step 3: Check if the identified token exists in our list
+        token_exists = any(token['symbol'].upper() == target_token_symbol.upper() for token in available_tokens)
+            
+        if not token_exists:
+            similar_tokens = [t['symbol'] for t in available_tokens if target_token_symbol.lower() in t['symbol'].lower() or t['symbol'].lower() in target_token_symbol.lower()]
+            suggestion = f" Did you mean: {', '.join(similar_tokens[:3])}?" if similar_tokens else ""
+            return f"Token {target_token_symbol} is not available in our database. {suggestion}"
+            
+        # Step 4: Get or create token and retrieve decision data
+        token = await token_service.get_or_create_token(db, symbol=target_token_symbol, chain="bsc")
+        if not token:
+            return f"Sorry, I couldn't retrieve data for token {target_token_symbol}."
+
+        print(f"Analysing token: {token.symbol}")                
+        # Get comprehensive token analysis
+        decision_data = await token_service.get_token_decision_data(db, str(token.id))
+            
+        if not decision_data:
+            return f"I found {target_token_symbol} but couldn't retrieve current analysis data. The token might be new or have limited trading data."
+            
+        system_prompt = token_analyzer._get_system_prompt()
+        user_message = token_analyzer._create_comprehensive_analysis_prompt(decision_data)
+
+        # Step 5: Use LLM to analyze the decision data and generate response
+        llm_analysis = await app.agent.process_query(
+            user_message,
+            use_history=False,
+            system_prompt=system_prompt,
+        )
+
+        llm_analysis = llm_analysis.replace("```markdown", "").replace("```", "")
+
+        print(f"LLM analysis: {llm_analysis}")
+            
+        return llm_analysis
+            
+    except Exception as e:
+            print(f"Error processing chat message: {e}")
+            return {
+                "response": f"Sorry, I encountered an error while analyzing your request: {str(e)}",
+                "signal_data": None,
+                "intent": None,
+                "pool_analysis": None,
+                "available_tokens": None
+            }
 
 # Mount static files directory for CSS, JS, and other static assets
 chat_static_path = os.path.join(os.path.dirname(__file__), "chat")

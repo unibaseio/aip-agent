@@ -88,6 +88,8 @@ aip_dex/
 ### 1. Install Dependencies
 
 ```bash
+sudo apt update
+sudo apt install -y libpq-dev python3-dev
 cd examples/aip_dex
 pip install -r requirements.txt
 ```
