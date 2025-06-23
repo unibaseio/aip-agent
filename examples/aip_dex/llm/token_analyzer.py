@@ -62,16 +62,21 @@ class TokenDecisionAnalyzer:
         2. Provide objective trading recommendations based on multi-dimensional data
         3. Assess risk levels and provide risk management advice
         4. Explain your analysis logic and reasoning process
+        5. Always specify that the analysis is based on blockchain-specific data and trading activity
 
         Analysis dimensions include:
         - Technical Analysis: RSI, moving averages, breakout signals, trend direction
         - Fundamental Analysis: trading volume, liquidity, market cap, token distribution
         - Market Sentiment: buy/sell ratios, holder changes, whale behavior
         - Risk Assessment: volatility, concentration risk, liquidity risk
+        - Blockchain Context: All data is specific to the token's native blockchain network
 
         Please always remain objective and professional, and do not give overly optimistic or pessimistic advice.
         
-        IMPORTANT: Please respond in Chinese (中文) for all analysis and recommendations.
+        IMPORTANT: 
+        - Please respond in Chinese (中文) for all analysis and recommendations.
+        - Always mention the specific blockchain network when discussing trading data and recommendations.
+        - Clarify that all trading volume, holder data, and market metrics are specific to the blockchain network where the token is deployed.
         """
     
     def _create_comprehensive_analysis_prompt(self, decision_data: Dict[str, Any], user_intent: str = None) -> str:
@@ -207,14 +212,17 @@ class TokenDecisionAnalyzer:
         
         **IMPORTANT: Please format your response using markdown with icons before each section title.**
         
+        **🔗 Blockchain Context:** All analysis and recommendations are specific to the {token_info.get('chain', 'N/A')} blockchain network. Please always mention this when discussing trading data, market metrics, and recommendations.
+        
         1. **🎯 Overall Conclusion**
            - {conclusion}
+           - Specify that this analysis is based on {token_info.get('chain', 'N/A')} chain data
 
         2. **📊 Technical Analysis Summary**
            - RSI and moving average indicators interpretation
            - Price trend and breakout signal analysis
            - Volatility and technical pattern assessment
-
+           
         3. **🏛️ Fundamental Analysis**
            - Trading volume and liquidity health
            - Market participation and activity level
@@ -224,7 +232,7 @@ class TokenDecisionAnalyzer:
            - Buy/sell pressure comparison
            - Trader behavior patterns
            - Short-term and medium-term sentiment changes
-
+        
         5. **⚠️ Risk Assessment**
            - Major risk factors identification
            - Risk level rating
@@ -243,6 +251,8 @@ class TokenDecisionAnalyzer:
 
         ## Data Sources & Last Update Time
         **📊 Data Sources:** This analysis is based on comprehensive data from multiple sources: {data_sources_str}
+        
+        **🔗 Blockchain:** All trading data and analysis are specific to the {token_info.get('chain', 'N/A')} blockchain network
         
         **🕒 Latest Data Update:** {latest_update_time or 'N/A'}
         
