@@ -240,11 +240,8 @@ class TokenDecisionAnalyzer:
                 prompt += f"""
         **Pool ({pool.get('pair_address', 'N/A')})**:
         - DEX: {pool.get('dex', 'N/A')}
-        - Price: ${pool.get('price_usd', 0):.8f}
         - 24h Volume: ${pool.get('volume_24h', 0):,.2f}
         - Liquidity: ${pool.get('liquidity_usd', 0):,.2f}
-        - 24h Price Change: {pool.get('price_change_24h', 0):.2f}%
-        - Market Cap: ${pool.get('market_cap', 0):,.2f}
         - Fee Tier: {pool.get('fee_tier', 'N/A')}
         """
         
@@ -269,6 +266,7 @@ class TokenDecisionAnalyzer:
            - Specify that this analysis is based on {token_info.get('chain', 'N/A')} chain data
 
         2. **📊 Technical Analysis Summary**
+           - Current price, market cap, volume, liquidity, etc.
            - RSI and moving average indicators interpretation
            - Price trend and breakout signal analysis
            - Volatility and technical pattern assessment

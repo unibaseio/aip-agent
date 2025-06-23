@@ -41,6 +41,7 @@ async def analyze_token(message: str, include_pools: bool = False):
     """
     db = SessionLocal()
     try:
+        print(f"========== Analyzing token: {message}")
         response_data = await token_service.process_chat_message(
                 db, message, include_pools
         )  
@@ -174,7 +175,8 @@ async def process_chat_message(db: Session, messsage: str, conversation_id: str,
             user_message,
             use_history=False,
             system_prompt=system_prompt,
-            conversation_id=conversation_id
+            conversation_id=conversation_id,
+            use_tool_call=False
         )
 
         llm_token_analysis = {"token_found": False, "token_symbol": None, "chain": None, "token_info": None, "similar_tokens": [], "user_intent": "general", "confidence": 0.0}
@@ -227,7 +229,8 @@ async def process_chat_message(db: Session, messsage: str, conversation_id: str,
             user_message,
             use_history=False,
             system_prompt=system_prompt,
-            conversation_id=conversation_id
+            conversation_id=conversation_id,
+            use_tool_call=False
         )
 
         llm_analysis = llm_analysis.replace("```markdown", "").replace("```", "")
@@ -347,6 +350,7 @@ async def add_token_api(
 async def chat_api(request: ChatRequest, db: Session = Depends(get_db)):
     """Process chat message with enhanced multi-DEX analysis"""
     try:
+        
         response_data = await process_chat_message(
             db, request.message, request.conversation_id, request.include_pools
         )
