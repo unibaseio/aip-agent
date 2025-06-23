@@ -1757,7 +1757,7 @@ class TokenService:
             token_analyzer = TokenDecisionAnalyzer()
             
             # Step 1: Get available token list from database
-            available_tokens = self._get_available_tokens_list(db)
+            available_tokens = self._get_available_tokens_list(db, limit=0)
             
             if not available_tokens:
                 return "No tokens found in the database. Please add some tokens first."
