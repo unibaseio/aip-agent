@@ -194,8 +194,8 @@ async def process_chat_message(db: Session, messsage: str, conversation_id: str,
             if similar_tokens and len(similar_tokens) > 0:
                 return f"I couldn't identify a specific token from your message. Did you mean: {', '.join(similar_tokens)}?"
             else:
-                available_symbols = [t['symbol'] for t in available_tokens if t.get('symbol')]
-                return f"I couldn't identify a specific token from your message. Available tokens: {', '.join(available_symbols)}"
+                available_symbols = [f"{t['symbol']}({t['name']})" if t['name'].upper() != t['symbol'].upper() else t['symbol'] for t in available_tokens if t.get('symbol')]
+                return f"I couldn't identify a specific token from your message. \n\nAvailable tokens: {', '.join(available_symbols)}"
 
         user_intent = llm_token_analysis.get("user_intent", "general")
         target_chain = llm_token_analysis.get("intended_chain", "bsc")
@@ -206,7 +206,7 @@ async def process_chat_message(db: Session, messsage: str, conversation_id: str,
                  
         if not token_exists:
             similar_tokens = [t['symbol'] for t in available_tokens if target_token_symbol.lower() in t['symbol'].lower() or t['symbol'].lower() in target_token_symbol.lower()]
-            suggestion = f" Did you mean: {', '.join(similar_tokens[:3])}?" if similar_tokens else ""
+            suggestion = f" Did you mean: {', '.join(similar_tokens)}?" if similar_tokens else ""
             return f"Token {target_token_symbol} is not available in our database. {suggestion}"
             
         # Step 4: Get or create token and retrieve decision data

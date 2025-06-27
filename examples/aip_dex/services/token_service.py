@@ -1783,8 +1783,9 @@ class TokenService:
                 if similar_tokens and len(similar_tokens) > 0:
                     return f"I couldn't identify a specific token from your message. Did you mean: {', '.join(similar_tokens)}?"
                 else:
-                    available_symbols = [t['symbol'] for t in available_tokens if t.get('symbol')]
-                    return f"I couldn't identify a specific token from your message. Available tokens: {', '.join(available_symbols)}"
+                    # if name.upper != symbol.upper, use symbol(name) else use symbol
+                    available_symbols = [f"{t['symbol']}({t['name']})" if t['name'].upper() != t['symbol'].upper() else t['symbol'] for t in available_tokens if t.get('symbol')]
+                    return f"I couldn't identify a specific token from your message. \n\nAvailable tokens: {', '.join(available_symbols)}"
             
             target_chain = llm_token_analysis.get("intended_chain", "bsc")
             target_token_symbol = llm_token_analysis.get("token_symbol")
@@ -1827,6 +1828,7 @@ class TokenService:
             for token in tokens:
                 # Add null checks for token fields
                 if token and token.symbol:  # Only include tokens with valid symbols
+                    
                     token_info = {
                         "id": str(token.id) if token.id else "",
                         "symbol": token.symbol.strip() if token.symbol else "",
@@ -1834,8 +1836,21 @@ class TokenService:
                         "chain": token.chain.strip() if token.chain else "",
                         "contract_address": token.contract_address.strip() if token.contract_address else ""
                     }
+
+                    token_metric = db.query(TokenMetric).filter(TokenMetric.token_id == token.id).first()
+                    if token_metric:
+                        token_info["total_liquidity_usd"] = float(token_metric.total_liquidity_usd or 0)
+                        token_info["total_volume_24h"] = float(token_metric.total_volume_24h or 0)
+                    else:
+                        token_info["total_liquidity_usd"] = 0.0
+                        token_info["total_volume_24h"] = 0.0
+
+                    
                     token_list.append(token_info)
             
+            # sort by total_liquidity_usd
+            token_list.sort(key=lambda x: x["total_liquidity_usd"], reverse=True)
+                    
             return token_list
         except Exception as e:
             print(f"Error getting available tokens: {e}")
