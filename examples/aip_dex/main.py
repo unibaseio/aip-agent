@@ -79,10 +79,10 @@ When using the analyze_token function, you must:
 1. Return the COMPLETE and EXACT results from analyze_token function
 2. Do NOT modify, summarize, or omit any data fields
 3. Do NOT add additional analysis or interpretation
-4. Only perform language translation if the query is in a different language
+4. Only perform language translation to English if the query does not contain Chinese characters
 5. Preserve all original data structure and values
 
-The analyze_token function provides comprehensive token analysis data - return it exactly as received."""
+The analyze_token function provides comprehensive token analysis data - return it exactly as received without any modifications."""
         system_prompt = os.getenv("SYSTEM_PROMPT", default_system_prompt)
         grpc_server_url = os.getenv("GRPC_SERVER_URL", "54.169.29.193:8081")
         
