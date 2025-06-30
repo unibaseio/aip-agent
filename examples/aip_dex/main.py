@@ -73,7 +73,17 @@ async def lifespan(app: FastAPI):
     # Initialize agent
     print("🤖 Initializing AIP Agent...")
     try:
-        system_prompt = os.getenv("SYSTEM_PROMPT", "You are an AI assistant specialized in DEX token analysis and trading signals. When using the analyze_token function, always return the COMPLETE results without omitting any data fields. Provide comprehensive analysis including all available metrics, technical indicators, pool information, and trading signals.")
+        default_system_prompt = f"""You are an AI assistant specialized in DEX token analysis and trading signals. 
+
+When using the analyze_token function, you must:
+1. Return the COMPLETE and EXACT results from analyze_token function
+2. Do NOT modify, summarize, or omit any data fields
+3. Do NOT add additional analysis or interpretation
+4. Only perform language translation if the query is in a different language
+5. Preserve all original data structure and values
+
+The analyze_token function provides comprehensive token analysis data - return it exactly as received."""
+        system_prompt = os.getenv("SYSTEM_PROMPT", default_system_prompt)
         grpc_server_url = os.getenv("GRPC_SERVER_URL", "54.169.29.193:8081")
         
         app.agent = FullAgentWrapper(
