@@ -99,14 +99,14 @@ async def main(address: str, moderator_id: str) -> None:
     )
     print(f"=== register message receive from {moderator_id} {role_msg}")
 
-    if role_msg.content == "":
+    if role_msg == "":
         print("=== role is not accepted, exit")
         fa.stop()
         return
 
 
     global role_type
-    role_type = role_msg.content
+    role_type = role_msg
     print(f"=== register as role: {role_type}")
 
     await fa.stop_when_signal()

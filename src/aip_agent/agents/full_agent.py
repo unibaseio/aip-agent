@@ -318,7 +318,7 @@ class FullAgentWrapper:
                 timeout=120.0  # 120 seconds timeout
             )
             print(f"Response from {target_id}: {response.content}")
-            return response
+            return response.content
         except asyncio.TimeoutError:
             print(f"Error: Message to {target_id} timed out after 120 seconds")
             return f"Error: Message to {target_id} timed out after 120 seconds"
