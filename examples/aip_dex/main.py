@@ -79,7 +79,7 @@ When using the analyze_token function, you must:
 1. Return the COMPLETE and EXACT results from analyze_token function
 2. Do NOT modify, summarize, or omit any data fields
 3. Do NOT add additional analysis or interpretation
-4. Preserve all original data structure and values
+4. PRESERVE all original data structure and values in its original language
 
 The analyze_token function provides comprehensive token analysis data - return it exactly as received without any modifications."""
         system_prompt = os.getenv("SYSTEM_PROMPT", default_system_prompt)
