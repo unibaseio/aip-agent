@@ -1,10 +1,12 @@
 {
-    "bot_name": "High Frequency Trading Bot",
+    "bot_name": "AIP DEX Trading Bot",
     "account_address": "0x1234567890abcdef1234567890abcdef12345678",
     "chain": "bsc",
     "initial_balance_usd": 1000.0,
     "strategy_type": "aggressive",
-    "polling_interval_hours": 0.25,
+    "polling_interval_hours": 0.6,
     "min_trade_amount_usd": 10.0,
-    "is_active": true
+    "is_active": true,
+    "description": "Configuration for AIP DEX Trading Bot",
+    "version": "1.0.0"
 }

@@ -7,6 +7,8 @@ import asyncio
 import sys
 import os
 import logging
+import json
+import argparse
 
 # Add current directory to path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -23,12 +25,50 @@ logging.basicConfig(
     ]
 )
 
-async def main():
-    print("🤖 AIP DEX Trading Bot")
-    print("=" * 50)
+def load_config_from_file(config_path):
+    """
+    Load configuration from JSON file
     
-    # Create a simple configuration
-    config = {
+    Args:
+        config_path (str): Path to the configuration file
+        
+    Returns:
+        dict: Configuration dictionary
+        
+    Raises:
+        FileNotFoundError: If config file doesn't exist
+        json.JSONDecodeError: If config file is invalid JSON
+        ValueError: If required config fields are missing
+    """
+    if not os.path.exists(config_path):
+        raise FileNotFoundError(f"Configuration file not found: {config_path}")
+    
+    try:
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config = json.load(f)
+    except json.JSONDecodeError as e:
+        raise json.JSONDecodeError(f"Invalid JSON in config file: {e}")
+    
+    # Validate required fields
+    required_fields = [
+        "bot_name", "account_address", "chain", "initial_balance_usd",
+        "strategy_type", "polling_interval_hours", "min_trade_amount_usd", "is_active"
+    ]
+    
+    missing_fields = [field for field in required_fields if field not in config]
+    if missing_fields:
+        raise ValueError(f"Missing required configuration fields: {missing_fields}")
+    
+    return config
+
+def get_default_config():
+    """
+    Get default configuration
+    
+    Returns:
+        dict: Default configuration dictionary
+    """
+    return {
         "bot_name": "Test Trading Bot4",
         "account_address": "0x4234567890abcdef1234567890abcdef12345678",
         "chain": "bsc",
@@ -38,6 +78,60 @@ async def main():
         "min_trade_amount_usd": 10.0,
         "is_active": True
     }
+
+async def main():
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='AIP DEX Trading Bot')
+    parser.add_argument(
+        '--config', '-c',
+        type=str,
+        help='Path to configuration file (JSON format)'
+    )
+    parser.add_argument(
+        '--default',
+        action='store_true',
+        help='Use default configuration'
+    )
+    
+    args = parser.parse_args()
+    
+    print("🤖 AIP DEX Trading Bot")
+    print("=" * 50)
+    
+    # Load configuration
+    if args.config:
+        try:
+            config = load_config_from_file(args.config)
+            print(f"📁 Loaded configuration from: {args.config}")
+        except (FileNotFoundError, json.JSONDecodeError, ValueError) as e:
+            print(f"❌ Error loading config file: {e}")
+            return
+    elif args.default:
+        config = get_default_config()
+        print("📋 Using default configuration")
+    else:
+        # Interactive mode - ask user for config file
+        print("Choose configuration source:")
+        print("1. Load from config file")
+        print("2. Use default configuration")
+        
+        while True:
+            choice = input("Enter your choice (1 or 2): ").strip()
+            if choice == "1":
+                config_path = input("Enter config file path: ").strip()
+                try:
+                    config = load_config_from_file(config_path)
+                    print(f"📁 Loaded configuration from: {config_path}")
+                    break
+                except (FileNotFoundError, json.JSONDecodeError, ValueError) as e:
+                    print(f"❌ Error loading config file: {e}")
+                    continue
+            elif choice == "2":
+                config = get_default_config()
+                print("📋 Using default configuration")
+                break
+            else:
+                print("Invalid choice. Please enter 1 or 2.")
     
     print("📋 Configuration:")
     for key, value in config.items():
