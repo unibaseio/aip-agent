@@ -227,6 +227,7 @@ class FullAgentWrapper:
 
         # query starts with @xxx, it is a command to the xxx agent
         # "@agent_text, query" or "@agent_text query"
+        query = query.strip()
         if query.startswith("@"):
             memory.add(Message(content=query, name=self._name, role="user"))
 
@@ -269,6 +270,7 @@ class FullAgentWrapper:
                 memory.add(Message(content=response, name=self._name, role="assistant"))
                 return response
             except Exception as e:
+                print(f"Error in process_query: {e}")
                 return f"Error: {e}"
 
         if use_history:
