@@ -194,7 +194,7 @@ class AIPTradingBot:
             gas_cost_usd = None
             native_price = await self.trading_service.get_native_token_price(bot_config["chain"])
             if native_price:
-                gas_cost_usd = await self.trading_service.calculate_gas_cost_usd(bot_config["chain"], bot_config["gas_fee_native"])
+                gas_cost_usd = await self.trading_service.calculate_gas_cost_usd(bot_config["chain"])
                 print(f"   💰 {bot_config['chain'].upper()} native token price: ${float(native_price):.4f}")
                 print(f"   ⛽ Gas cost: ${float(gas_cost_usd):.4f}")
             else:
@@ -240,9 +240,10 @@ class AIPTradingBot:
         """Phase 1: Analyze current positions for selling"""
         try:
             # Get current positions
-            positions = await self.trading_service.get_bot_positions(db, self.bot_id, gas_cost_usd, bot_config)
+            positions = await self.trading_service.get_bot_positions(db, self.bot_id)
             
             if not positions:
+                print("   No active positions")
                 return {"decisions": [], "message": "No active positions"}
             
             print(f"   Found {len(positions)} active positions")
@@ -259,7 +260,14 @@ class AIPTradingBot:
                 # Calculate expected returns for different sell percentages
                 expected_returns = {}
                 for percentage in [10, 20, 30, 50, 75, 100]:
-                    current_price = float(position["current_price_usd"])
+                    # Use price from token_decision_data instead of position (which might be 0)
+                    current_price = token_decision_data["current_metrics"].get("weighted_price_usd", 0)
+                    position_price = float(position["current_price_usd"])
+                    
+                    # Debug: Print price sources
+                    if current_price != position_price:
+                        print(f"   📊 Price mismatch for {token_decision_data['token_info'].get('symbol', 'Unknown')}: token_data=${current_price:.8f}, position=${position_price:.8f}")
+                    
                     if current_price > 0:
                         from models.database import Position
                         from decimal import Decimal
@@ -272,9 +280,15 @@ class AIPTradingBot:
                             token_id=uuid.UUID(position["token_id"])
                         )
                         expected_return = await self.trading_service.calculate_position_expected_return(
-                            db, pos_obj, percentage, current_price, gas_cost_usd, bot_config
+                            db, pos_obj, percentage, current_price
                         )
                         expected_returns[str(percentage)] = expected_return
+                        
+                        # Debug: Print expected return calculation
+                        if percentage == 100:  # Only print for 100% to avoid spam
+                            print(f"   💰 Expected return for 100% sell: net_profit=${expected_return.get('financial_impact', {}).get('net_profit_usd', 0):.2f}, net_rate={expected_return.get('financial_impact', {}).get('net_return_rate', 0):.2f}%")
+                    else:
+                        print(f"   ❌ No valid price found for {token_decision_data['token_info'].get('symbol', 'Unknown')}: token_data=${current_price:.8f}, position=${position_price:.8f}")
                 position_data = {
                     "position_id": position["id"],
                     "token_info": token_decision_data["token_info"],
@@ -296,6 +310,8 @@ class AIPTradingBot:
             analysis_result = await self.trading_analyzer.analyze_sell_decisions(
                 positions_data, bot_config
             )
+
+            print("sell analysis: ", analysis_result)
             
             # Save LLM decision to database
             await self._save_llm_decision(db, analysis_result, "sell_analysis", "phase_1_sell")
@@ -342,6 +358,15 @@ class AIPTradingBot:
             if not available_tokens:
                 return {"decision": "no_buy", "reasoning": "No tokens with valid liquidity data found for analysis"}
             print(f"   📋 Found {len(available_tokens)} tokens with valid liquidity data for analysis")
+            
+            # Debug: Print key parameters being passed to LLM
+            print(f"   🔧 Key parameters for LLM analysis:")
+            print(f"      Strategy: {bot_config.get('strategy_type', 'unknown')}")
+            print(f"      Max Position Size: {bot_config.get('max_position_size', 10)}%")
+            print(f"      Min Trade Amount: ${bot_config.get('min_trade_amount_usd', 10)}")
+            print(f"      Confidence Threshold: {bot_config.get('llm_confidence_threshold', 0.7)}")
+            print(f"      Available Balance: ${available_balance:,.2f}")
+            
             # 直接用bot_config
             analysis_result = await self.trading_analyzer.analyze_buy_decisions(
                 available_tokens, bot_status, bot_config
@@ -366,7 +391,7 @@ class AIPTradingBot:
                 confidence_score = decision.get("confidence_score", 0)
                 print(f"   🔴 Executing SELL: {sell_percentage}% of {token_symbol} (confidence: {confidence_score:.2f})")
                 # Find position
-                positions = await self.trading_service.get_bot_positions(db, self.bot_id, gas_cost_usd, bot_config)
+                positions = await self.trading_service.get_bot_positions(db, self.bot_id)
                 target_position = None
                 for pos in positions:
                     if pos["token_symbol"] == token_symbol:
@@ -397,6 +422,13 @@ class AIPTradingBot:
             selected_token = decision.get("selected_token", {})
             buy_amount = decision.get("buy_amount_usd", 0)
             confidence_score = decision.get("confidence_score", 0)
+            
+            # Check confidence threshold
+            llm_confidence_threshold = float(bot_config.get("llm_confidence_threshold", 0.7))
+            if confidence_score < llm_confidence_threshold:
+                print(f"   ❌ Confidence score {confidence_score:.2f} below threshold {llm_confidence_threshold:.2f}")
+                return
+            
             try:
                 buy_amount = float(buy_amount)
             except (ValueError, TypeError):
@@ -430,9 +462,19 @@ class AIPTradingBot:
             if current_price <= 0:
                 print(f"   ❌ Invalid price for {token_symbol}")
                 return
+            
+            # Check position size limit
+            max_position_size = float(bot_config.get("max_position_size", 10))
+            bot_status = await self.trading_service.get_bot_status(db, self.bot_id)
+            if bot_status:
+                total_assets = float(bot_status["financial_status"]["total_assets_usd"])
+                max_position_value = total_assets * (max_position_size / 100)
+                if buy_amount > max_position_value:
+                    print(f"   ❌ Buy amount ${buy_amount:.2f} exceeds max position size ${max_position_value:.2f} ({max_position_size}%)")
+                    return
+            
             transaction = await self.trading_service.execute_buy_order(
-                db, self.bot_id, str(token.id), buy_amount, current_price, None, bot_config, gas_cost_usd
-            )
+                db, self.bot_id, str(token.id), buy_amount, current_price, None)
             if transaction:
                 quantity = float(transaction.token_amount)
                 print(f"   ✅ Buy executed: {quantity:,.2f} {token_symbol}")

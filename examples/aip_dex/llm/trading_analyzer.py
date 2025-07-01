@@ -36,7 +36,9 @@ class TradingDecisionAnalyzer:
             
             # Create comprehensive sell analysis prompt
             prompt = self._create_sell_analysis_prompt(positions_data, bot_config)
-            
+
+            print("sell analysis prompt: ", prompt)        
+
             response = await self.client.chat.completions.create(
                 model="gpt-4.1-mini",
                 messages=[
@@ -60,7 +62,8 @@ class TradingDecisionAnalyzer:
                 "decisions": analysis_result.get("decisions", []),
                 "reasoning": analysis_result.get("reasoning", ""),
                 "market_sentiment": analysis_result.get("market_sentiment", "neutral"),
-                "risk_assessment": analysis_result.get("risk_assessment", "medium")
+                "risk_assessment": analysis_result.get("risk_assessment", "medium"),
+                "summary": f"Analyzed {len(positions_data)} positions, found {len(analysis_result.get('decisions', []))} decisions"
             }
             
         except Exception as e:
@@ -95,6 +98,8 @@ class TradingDecisionAnalyzer:
             
             # Stage 2: Detailed analysis of top 5 tokens to make final decision
             prompt = self._create_buy_analysis_prompt(top_tokens, bot_status, bot_config)
+            
+            print("buy analysis prompt: ", prompt)        
             
             response = await self.client.chat.completions.create(
                 model="gpt-4.1-mini",
@@ -231,6 +236,8 @@ Always provide detailed reasoning and confidence scores (0.0-1.0).
         for i, position in enumerate(positions_data, 1):
             token_info = position.get('token_info', {})
             current_metrics = position.get('current_metrics', {})
+            technical_indicators = position.get('technical_indicators', {})
+            moralis_data = position.get('moralis_data', {})
             expected_returns = position.get('expected_returns', {})
             
             prompt += f"""
@@ -243,16 +250,16 @@ Always provide detailed reasoning and confidence scores (0.0-1.0).
 - 总成本: ${position.get('total_cost_usd', 0):,.2f}
 
 **当前市场状况:**
-- 当前价格: ${current_metrics.get('current_price', 0):.6f}
+- 当前价格: ${current_metrics.get('weighted_price_usd', 0):.6f}
 - 当前市值: ${position.get('current_value_usd', 0):,.2f}
 - 未实现盈亏: ${position.get('unrealized_pnl_usd', 0):,.2f} ({position.get('unrealized_pnl_percentage', 0):.2f}%)
 
 **市场数据:**
-- 24h交易量: ${current_metrics.get('volume_24h', 0):,.2f}
-- 流动性: ${current_metrics.get('liquidity_usd', 0):,.2f}
-- 24h价格变化: {current_metrics.get('price_change_24h', 0):.2f}%
-- RSI: {current_metrics.get('rsi', 50):.1f}
-- 趋势方向: {current_metrics.get('trend_direction', 'unknown')}
+- 24h交易量: ${current_metrics.get('total_volume_24h', 0):,.2f}
+- 流动性: ${current_metrics.get('total_liquidity_usd', 0):,.2f}
+- 24h价格变化: {moralis_data.get('price_changes', {}).get('24h', 0):.2f}%
+- RSI: {technical_indicators.get('rsi_14d', 50):.1f}
+- 趋势方向: {technical_indicators.get('trend_direction', 'unknown')}
 
 **不同卖出比例的预期收益率:**
 """
@@ -261,7 +268,8 @@ Always provide detailed reasoning and confidence scores (0.0-1.0).
             for percentage in [10, 20, 30, 50, 75, 100]:
                 if str(percentage) in expected_returns:
                     ret_data = expected_returns[str(percentage)]
-                    prompt += f"- 卖出{percentage}%: 净收益率 {ret_data.get('net_return_rate', 0):.2f}%, 净收益 ${ret_data.get('net_profit_usd', 0):,.2f}\n"
+                    fin_ret =  ret_data.get('financial_impact', {})
+                    prompt += f"- 卖出{percentage}%: 净收益率 {fin_ret.get('net_return_rate', 0):.2f}%, 净收益 ${fin_ret.get('net_profit_usd', 0):,.2f}\n"
         
         prompt += f"""
 
@@ -294,7 +302,11 @@ Always provide detailed reasoning and confidence scores (0.0-1.0).
 3. 考虑风险管理和止盈止损策略
 4. 分析是否达到预设的收益率阈值
 5. 评估继续持有 vs 部分/全部卖出的风险收益比
+
 """
+#**注意:**
+#- 无论何种情况，至少选择一个代币卖出, 如果所有持仓都亏损，则选择亏损最小的代币卖出
+#"""
         
         return prompt
     
@@ -308,7 +320,7 @@ Always provide detailed reasoning and confidence scores (0.0-1.0).
         available_balance = financial_status.get('current_balance_usd', 0)
         strategy_type = bot_config.get('strategy_type', 'unknown')
         
-        prompt = f"""请从以下代币列表中筛选出最有潜力的5个代币：
+        prompt = f"""请从以下代币列表中筛选出最有潜力的10个代币：
 
 ## 账户信息
 可用余额: ${available_balance:,.2f}
@@ -336,6 +348,13 @@ Always provide detailed reasoning and confidence scores (0.0-1.0).
         
         prompt += f"""
 
+## 策略配置参数
+- 策略类型: {strategy_type}
+- 最大仓位比例: {bot_config.get('max_position_size', 10)}%
+- 止损百分比: {bot_config.get('stop_loss_percentage', 5)}%
+- 止盈百分比: {bot_config.get('take_profit_percentage', 15)}%
+- 最低收益率阈值: {bot_config.get('min_profit_threshold', 3)}%
+
 ## 筛选要求
 
 请根据以下标准筛选出最有潜力的10个代币：
@@ -349,6 +368,8 @@ Always provide detailed reasoning and confidence scores (0.0-1.0).
 
 **策略考虑**:
 - {strategy_type}策略偏好: {'保守型 - 注重稳定性和低风险' if strategy_type == 'conservative' else '激进型 - 追求高收益' if strategy_type == 'aggressive' else '平衡型 - 风险收益兼顾'}
+- 考虑策略的风险承受能力和收益目标
+- 根据策略类型调整筛选标准
 
 请返回JSON格式的5个代币符号，按潜力排序：
 
@@ -482,6 +503,15 @@ Always provide detailed reasoning and confidence scores (0.0-1.0).
         
         prompt += f"""
 
+## 策略配置参数
+- 策略类型: {bot_config.get('strategy_type', 'unknown')}
+- 最大仓位比例: {bot_config.get('max_position_size', 10)}%
+- 止损百分比: {bot_config.get('stop_loss_percentage', 5)}%
+- 止盈百分比: {bot_config.get('take_profit_percentage', 15)}%
+- 最低收益率阈值: {bot_config.get('min_profit_threshold', 3)}%
+- 交易手续费率: {bot_config.get('trading_fee_percentage', 0.5)}%
+- LLM置信度阈值: {bot_config.get('llm_confidence_threshold', 0.7)}
+
 ## 分析要求
 
 请基于账户状态、当前持仓和候选代币分析，选择最佳买入机会，格式如下：
@@ -494,7 +524,7 @@ Always provide detailed reasoning and confidence scores (0.0-1.0).
     "name": "Token Name"
   }},
   "buy_amount_usd": 0,  // 建议买入金额，仅在decision为BUY时有效
-  "confidence_score": 0.8,  // 0.0-1.0
+  "confidence_score": 0.8,  // 0.0-1.0，必须达到配置的置信度阈值
   "reasoning": "详细的分析理由和选择逻辑",
   "risk_factors": ["具体的风险因素"],
   "expected_return": 15.5,  // 预期收益率百分比
@@ -571,7 +601,7 @@ Always provide detailed reasoning and confidence scores (0.0-1.0).
             
             if not selected_symbols:
                 print("   ⚠️  LLM screening failed, using fallback method")
-                return self._fallback_screen_tokens(tokens, limit=5)
+                return self._fallback_screen_tokens(tokens, limit=10)
             
             # Get the actual token objects for selected symbols
             selected_tokens = []
@@ -628,12 +658,12 @@ Always provide detailed reasoning and confidence scores (0.0-1.0).
             json_match = re.search(r'```json\s*(.*?)\s*```', response, re.DOTALL)
             if json_match:
                 selected_symbols = json.loads(json_match.group(1))
-                if isinstance(selected_symbols, list) and len(selected_symbols) <= 5:
-                    return selected_symbols[:5]  # Ensure max 5 tokens
+                if isinstance(selected_symbols, list) and len(selected_symbols) <= 10:
+                    return selected_symbols[:10]  # Ensure max 10 tokens
             
             # Fallback: try to extract symbols from text
             symbols = re.findall(r'["\']([A-Z]{2,10})["\']', response)
-            return symbols[:5] if symbols else []
+            return symbols[:10] if symbols else []
             
         except Exception as e:
             print(f"Error parsing token screening response: {e}")
@@ -641,7 +671,59 @@ Always provide detailed reasoning and confidence scores (0.0-1.0).
     
     def _parse_sell_analysis_response(self, response: str) -> Dict[str, Any]:
         """Parse LLM sell analysis response"""
-        return {"decisions": [], "reasoning": response}
+        try:
+            # Extract JSON from response
+            import re
+            json_match = re.search(r'```json\s*(.*?)\s*```', response, re.DOTALL)
+            if json_match:
+                parsed_data = json.loads(json_match.group(1))
+                
+                # Validate and clean decisions
+                decisions = parsed_data.get("decisions", [])
+                if isinstance(decisions, list):
+                    # Clean and validate each decision
+                    cleaned_decisions = []
+                    for decision in decisions:
+                        if isinstance(decision, dict):
+                            # Ensure required fields exist
+                            cleaned_decision = {
+                                "token_symbol": decision.get("token_symbol", ""),
+                                "action": decision.get("action", "HOLD"),
+                                "sell_percentage": max(0, min(100, decision.get("sell_percentage", 0))),
+                                "confidence_score": max(0.0, min(1.0, decision.get("confidence_score", 0.5))),
+                                "reasoning": decision.get("reasoning", ""),
+                                "risk_factors": decision.get("risk_factors", []),
+                                "expected_outcome": decision.get("expected_outcome", "")
+                            }
+                            cleaned_decisions.append(cleaned_decision)
+                    
+                    parsed_data["decisions"] = cleaned_decisions
+                else:
+                    parsed_data["decisions"] = []
+                
+                # Ensure other required fields exist
+                parsed_data["market_sentiment"] = parsed_data.get("market_sentiment", "neutral")
+                parsed_data["risk_assessment"] = parsed_data.get("risk_assessment", "medium")
+                parsed_data["reasoning"] = parsed_data.get("reasoning", response)
+                
+                return parsed_data
+            else:
+                # Fallback parsing - try to extract basic information
+                return {
+                    "decisions": [],
+                    "reasoning": response,
+                    "market_sentiment": "neutral",
+                    "risk_assessment": "medium"
+                }
+                
+        except Exception as e:
+            print(f"Error parsing sell analysis response: {e}")
+            return {
+                "decisions": [],
+                "reasoning": response,
+                "market_sentiment": "neutral", 
+                "risk_assessment": "medium"
+            }
     
     def _parse_buy_analysis_response(self, response: str) -> Dict[str, Any]:
         """Parse LLM buy analysis response"""
@@ -693,8 +775,14 @@ Always provide detailed reasoning and confidence scores (0.0-1.0).
         """Fallback sell analysis when LLM fails"""
         return {
             "phase": "sell_analysis",
+            "timestamp": datetime.now().isoformat(),
+            "analyzed_positions": len(positions_data),
+            "llm_response": "",
             "decisions": [],
-            "reasoning": "LLM service unavailable"
+            "reasoning": "LLM service unavailable, using fallback analysis",
+            "market_sentiment": "neutral",
+            "risk_assessment": "medium",
+            "summary": f"Fallback analysis for {len(positions_data)} positions"
         }
     
     def _fallback_buy_analysis(self, tokens: List[Dict[str, Any]], 

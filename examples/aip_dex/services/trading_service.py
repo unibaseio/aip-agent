@@ -29,6 +29,9 @@ class TradingService:
         self.dex_screener = DexScreenerProvider()
         self._native_token_prices = {}  # Cache for native token prices
         self._price_cache_time = {}     # Cache timestamp for price freshness
+        self._gas_fee_native = 0.001
+        self._gas_cost_usd = 0.5
+        self._trading_fee_percentage = 0.001
     
     async def get_native_token_price(self, chain: str) -> Optional[Decimal]:
         """
@@ -145,7 +148,7 @@ class TradingService:
             print(f"Error in get_native_token_price for {chain}: {e}")
             return None
     
-    async def calculate_gas_cost_usd(self, chain: str, gas_fee_native: float) -> float:
+    async def calculate_gas_cost_usd(self, chain: str) -> float:
         """
         Calculate gas cost in USD using current native token price
         
@@ -160,7 +163,8 @@ class TradingService:
             from decimal import Decimal
             native_price = await self.get_native_token_price(chain)
             if native_price:
-                gas_cost_usd = float(gas_fee_native) * float(native_price)
+                gas_cost_usd = float(self._gas_fee_native) * float(native_price)
+                self._gas_cost_usd = gas_cost_usd
                 return gas_cost_usd
             else:
                 # Fallback calculation with estimated price
@@ -169,7 +173,7 @@ class TradingService:
                     "solana": 100.0
                 }
                 estimated_price = estimated_prices.get(chain, 100.0)
-                return float(gas_fee_native) * estimated_price
+                return float(self._gas_fee_native) * estimated_price
                 
         except Exception as e:
             print(f"Error calculating gas cost: {e}")
@@ -187,17 +191,23 @@ class TradingService:
             
             # Check if bot with same account already exists (account_address is unique)
             existing_bot = db.query(TradingBot).filter(
-                TradingBot.account_address == config["account_address"]
+                TradingBot.account_address == config["account_address"],
+                TradingBot.chain == config["chain"],
             ).first()
             
             if existing_bot:
                 print(f"✅ Found existing bot with account {config['account_address']}: {existing_bot.bot_name}")
                 print(f"   Chain: {existing_bot.chain}, Strategy: {existing_bot.strategy_type}")
                 print(f"   Current Balance: ${float(existing_bot.current_balance_usd):,.2f}")
+                self._gas_fee_native = float(existing_bot.gas_fee_native)
+                self._trading_fee_percentage = float(existing_bot.trading_fee_percentage)
                 return existing_bot
             
             # Create bot with strategy defaults
             strategy_params = self._get_strategy_defaults(config.get("strategy_type", "conservative"))
+            
+            self._gas_fee_native = float(config.get("gas_fee_native", 0.001))
+            self._trading_fee_percentage = float(config.get("trading_fee_percentage", 0.001))
             
             bot = TradingBot(
                 bot_name=config["bot_name"],
@@ -342,7 +352,7 @@ class TradingService:
             
             # Update current values for all positions
             for pos in positions:
-                await self._update_position_current_value(db, pos, None, None)
+                await self._update_position_current_value(db, pos)
             
             # Recalculate and update total_assets_usd
             total_position_value = self._calculate_total_position_value(db, bot_id)
@@ -444,7 +454,7 @@ class TradingService:
     
     # ===== POSITION MANAGEMENT =====
     
-    async def get_bot_positions(self, db: Session, bot_id: str, gas_cost_usd: Optional[float] = None, bot_config: Optional[dict] = None) -> List[Dict[str, Any]]:
+    async def get_bot_positions(self, db: Session, bot_id: str) -> List[Dict[str, Any]]:
         """Get all active positions for a trading bot"""
         try:
             positions = db.query(Position).filter(
@@ -453,7 +463,7 @@ class TradingService:
             ).all()
             position_data = []
             for pos in positions:
-                await self._update_position_current_value(db, pos, gas_cost_usd, bot_config)
+                await self._update_position_current_value(db, pos)
                 position_data.append({
                     "id": str(pos.id),
                     "token_id": str(pos.token_id),
@@ -476,7 +486,7 @@ class TradingService:
             print(f"Error getting bot positions: {e}")
             return []
     
-    async def _update_position_current_value(self, db: Session, position: Position, gas_cost_usd: Optional[float] = None, bot_config: Optional[dict] = None) -> bool:
+    async def _update_position_current_value(self, db: Session, position: Position) -> bool:
         """Update position current value based on latest token price"""
         try:
             from models.database import TokenMetric
@@ -488,33 +498,34 @@ class TradingService:
             current_price = token_metric.weighted_price_usd
             current_value = position.quantity * current_price
             cost_basis = position.quantity * position.average_cost_usd
-            # 优先用bot_config
-            if bot_config:
-                trading_fee_percentage = float(bot_config.get("trading_fee_percentage", 0))
-                chain = bot_config.get("chain")
-                gas_fee_native = float(bot_config.get("gas_fee_native", 0))
-            else:
-                bot = db.query(TradingBot).filter(TradingBot.id == position.bot_id).first()
-                trading_fee_percentage = float(bot.trading_fee_percentage) if bot else 0
-                chain = bot.chain if bot else None
-                gas_fee_native = float(getattr(bot, "gas_fee_native", 0)) if bot else 0
-            # gas_cost_usd优先用传入
-            if gas_cost_usd is None and chain:
-                gas_cost_usd = await self.calculate_gas_cost_usd(chain, gas_fee_native)
-            trading_fee_usd = current_value * (Decimal(str(trading_fee_percentage)) / 100)
-            total_sell_cost_usd = Decimal(str(gas_cost_usd or 0)) + trading_fee_usd
+
+            trading_fee_usd = current_value * (Decimal(str(self._trading_fee_percentage)) / Decimal('100'))
+            total_sell_cost_usd = Decimal(str(self._gas_cost_usd)) + trading_fee_usd
             unrealized_pnl = current_value - cost_basis - total_sell_cost_usd
-            unrealized_pnl_percentage = (unrealized_pnl / cost_basis) * 100 if cost_basis > 0 else 0
+            
+            # Handle precision issues with very small values
+            if abs(unrealized_pnl) < Decimal("0.000000000000001"):
+                unrealized_pnl = Decimal("0")
+            
+            # Calculate percentage, handling very small cost basis
+            if cost_basis > Decimal("0.000000000000001"):
+                unrealized_pnl_percentage = (unrealized_pnl / cost_basis) * 100
+            else:
+                unrealized_pnl_percentage = Decimal("0")
+            
+            # Handle unrealistic P&L percentages
             if abs(unrealized_pnl_percentage) > 10000:
                 print(f"⚠️  Warning: Unrealistic P&L percentage detected: {unrealized_pnl_percentage:.2f}%")
                 print(f"   Position: {position.token.symbol if position.token else 'Unknown'}")
                 print(f"   Cost basis: ${cost_basis:.2f}")
                 print(f"   Current value: ${current_value:.2f}")
-                print(f"   Sell costs: ${total_sell_cost_usd:.2f} (gas: ${gas_cost_usd or 0:.2f}, fee: ${trading_fee_usd:.2f})")
+                print(f"   Sell costs: ${total_sell_cost_usd:.2f} (gas: ${self._gas_cost_usd or 0:.2f}, fee: ${self._trading_fee_percentage:.2f}%)")
                 print(f"   Unrealized P&L: ${unrealized_pnl:.2f}")
-                if position.total_cost_usd > 0:
+                if position.total_cost_usd > Decimal("0.000000000000001"):
                     unrealized_pnl_percentage = (unrealized_pnl / position.total_cost_usd) * 100
                     print(f"   Recalculated using total_cost_usd: {unrealized_pnl_percentage:.2f}%")
+                else:
+                    unrealized_pnl_percentage = Decimal("0")
             position.current_price_usd = current_price
             position.current_value_usd = current_value
             position.unrealized_pnl_usd = unrealized_pnl
@@ -527,45 +538,55 @@ class TradingService:
             db.rollback()
             return False
     
-    async def calculate_position_expected_return(self, db: Session, position: Position, sell_percentage: float, current_price: float, gas_cost_usd: Optional[float] = None, bot_config: Optional[dict] = None) -> Dict[str, Any]:
+    async def calculate_position_expected_return(self, db: Session, position: Position, sell_percentage: float, current_price: float) -> Dict[str, Any]:
         """Calculate expected return for selling a percentage of position"""
         try:
             from decimal import Decimal
             current_price_decimal = Decimal(str(current_price))
             sell_quantity = position.quantity * Decimal(str(sell_percentage / 100))
             sell_amount_usd = sell_quantity * current_price_decimal
-            # 优先用bot_config
-            if bot_config:
-                trading_fee_percentage = float(bot_config.get("trading_fee_percentage", 0))
-                chain = bot_config.get("chain")
-                gas_fee_native = float(bot_config.get("gas_fee_native", 0))
-            else:
-                bot = db.query(TradingBot).filter(TradingBot.id == position.bot_id).first()
-                trading_fee_percentage = float(bot.trading_fee_percentage) if bot else 0
-                chain = bot.chain if bot else None
-                gas_fee_native = float(getattr(bot, "gas_fee_native", 0)) if bot else 0
-            if gas_cost_usd is None and chain:
-                gas_cost_usd = await self.calculate_gas_cost_usd(chain, gas_fee_native)
-            # 类型安全
-            trading_fee_usd = sell_amount_usd * (Decimal(str(trading_fee_percentage)) / Decimal('100'))
-            total_cost_usd = Decimal(str(gas_cost_usd or 0)) + trading_fee_usd
+            
+            trading_fee_usd = sell_amount_usd * (Decimal(str(self._trading_fee_percentage)) / Decimal('100'))
+            total_cost_usd = Decimal(str(self._gas_cost_usd)) + trading_fee_usd
             net_proceeds_usd = sell_amount_usd - total_cost_usd
             cost_basis = sell_quantity * position.average_cost_usd
+
+            #print(f"current_price: {current_price}")  
+            #print(f"quantity: {position.quantity}")  
+            #print(f"sell_percentage: {sell_percentage}")  
+            #print(f"sell_quantity: {sell_quantity}")  
+            #print(f"average_cost_usd: {position.average_cost_usd}")  
+            #print(f"cost_basis: {cost_basis}")  
+            #print(f"net_proceeds_usd: {net_proceeds_usd}")  
+
             gross_profit_usd = sell_amount_usd - cost_basis
             net_profit_usd = net_proceeds_usd - cost_basis
-            gross_return_rate = (gross_profit_usd / cost_basis) * 100 if cost_basis > 0 else 0
-            net_return_rate = (net_profit_usd / cost_basis) * 100 if cost_basis > 0 else 0
-            remaining_quantity = position.quantity - sell_quantity
-            if remaining_quantity > 0:
-                new_average_cost = (position.total_cost_usd - cost_basis + total_cost_usd) / remaining_quantity
+            
+            # Handle precision issues with very small values
+            if abs(gross_profit_usd) < Decimal("0.000000000000001"):
+                gross_profit_usd = Decimal("0")
+            if abs(net_profit_usd) < Decimal("0.000000000000001"):
+                net_profit_usd = Decimal("0")
+            
+            # Calculate return rates, handling very small cost basis
+            if cost_basis > Decimal("0.000000000000001"):
+                gross_return_rate = (gross_profit_usd / cost_basis) * 100
+                net_return_rate = (net_profit_usd / cost_basis) * 100
             else:
-                new_average_cost = Decimal("0")
+                gross_return_rate = Decimal("0")
+                net_return_rate = Decimal("0")
+            remaining_quantity = position.quantity - sell_quantity
+            
+            # Handle precision issues - if remaining quantity is very small, treat as zero
+            if remaining_quantity <= Decimal("0.000000000000001"):
+                remaining_quantity = Decimal("0")
+            
             return {
                 "sell_percentage": sell_percentage,
                 "sell_quantity": float(sell_quantity),
                 "sell_amount_usd": float(sell_amount_usd),
                 "trading_costs": {
-                    "gas_cost_usd": float(gas_cost_usd or 0),
+                    "gas_cost_usd": float(self._gas_cost_usd),
                     "trading_fee_usd": float(trading_fee_usd),
                     "total_cost_usd": float(total_cost_usd)
                 },
@@ -579,7 +600,6 @@ class TradingService:
                 },
                 "remaining_position": {
                     "quantity": float(remaining_quantity),
-                    "new_average_cost": float(new_average_cost),
                     "total_cost_impact": float(total_cost_usd)
                 }
             }
@@ -589,27 +609,14 @@ class TradingService:
     
     # ===== VIRTUAL TRADING EXECUTION =====
     
-    async def execute_buy_order(self, db: Session, bot_id: str, token_id: str, amount_usd: float, current_price: float, llm_decision_id: Optional[str] = None, bot_config: Optional[dict] = None, gas_cost_usd: Optional[float] = None) -> Optional[Transaction]:
+    async def execute_buy_order(self, db: Session, bot_id: str, token_id: str, amount_usd: float, current_price: float, llm_decision_id: Optional[str] = None) -> Optional[Transaction]:
         """Execute virtual buy order"""
         try:
-            # 优先用bot_config
-            if bot_config:
-                trading_fee_percentage = float(bot_config.get("trading_fee_percentage", 0))
-                chain = bot_config.get("chain")
-                gas_fee_native = float(bot_config.get("gas_fee_native", 0))
-                min_trade_amount_usd = float(bot_config.get("min_trade_amount_usd", 0))
-            else:
-                bot = db.query(TradingBot).filter(TradingBot.id == bot_id).first()
-                trading_fee_percentage = float(bot.trading_fee_percentage) if bot else 0
-                chain = bot.chain if bot else None
-                gas_fee_native = float(getattr(bot, "gas_fee_native", 0)) if bot else 0
-                min_trade_amount_usd = float(getattr(bot, "min_trade_amount_usd", 0)) if bot else 0
-            if gas_cost_usd is None and chain:
-                gas_cost_usd = await self.calculate_gas_cost_usd(chain, gas_fee_native)
+    
             amount_usd_decimal = Decimal(str(amount_usd))
             price_decimal = Decimal(str(current_price))
-            trading_fee_usd = amount_usd_decimal * (Decimal(str(trading_fee_percentage)) / Decimal('100'))
-            total_cost_usd = Decimal(str(gas_cost_usd or 0)) + trading_fee_usd
+            trading_fee_usd = amount_usd_decimal * (Decimal(str(self._trading_fee_percentage)) / Decimal('100'))
+            total_cost_usd = Decimal(str(self._gas_cost_usd)) + trading_fee_usd
             token_quantity = amount_usd_decimal / price_decimal
             total_required = amount_usd_decimal + total_cost_usd
             bot = db.query(TradingBot).filter(TradingBot.id == bot_id).first()
@@ -625,7 +632,7 @@ class TradingService:
                 amount_usd=amount_usd_decimal,
                 token_amount=token_quantity,
                 price_usd=price_decimal,
-                gas_cost_usd=gas_cost_usd or 0,
+                gas_cost_usd=Decimal(str(self._gas_cost_usd or 0)),
                 trading_fee_usd=trading_fee_usd,
                 total_cost_usd=total_cost_usd,
                 balance_before_usd=bot.current_balance_usd,
@@ -657,7 +664,7 @@ class TradingService:
             db.rollback()
             return None
     
-    async def execute_sell_order(self, db: Session, bot_id: str, position_id: str, sell_percentage: float, current_price: float, llm_decision_id: Optional[str] = None, bot_config: Optional[dict] = None, gas_cost_usd: Optional[float] = None) -> Optional[Transaction]:
+    async def execute_sell_order(self, db: Session, bot_id: str, position_id: str, sell_percentage: float, current_price: float, llm_decision_id: Optional[str] = None) -> Optional[Transaction]:
         """Execute virtual sell order"""
         try:
             position = db.query(Position).filter(
@@ -667,52 +674,71 @@ class TradingService:
             ).first()
             if not position:
                 return None
-            # 优先用bot_config
-            if bot_config:
-                trading_fee_percentage = float(bot_config.get("trading_fee_percentage", 0))
-                chain = bot_config.get("chain")
-                gas_fee_native = float(bot_config.get("gas_fee_native", 0))
-            else:
-                bot = db.query(TradingBot).filter(TradingBot.id == bot_id).first()
-                trading_fee_percentage = float(bot.trading_fee_percentage) if bot else 0
-                chain = bot.chain if bot else None
-                gas_fee_native = float(getattr(bot, "gas_fee_native", 0)) if bot else 0
-            if gas_cost_usd is None and chain:
-                gas_cost_usd = await self.calculate_gas_cost_usd(chain, gas_fee_native)
-            sell_quantity = position.quantity * (sell_percentage / 100)
+            
+            sell_quantity = float(position.quantity) * (sell_percentage / 100)
             sell_amount_usd = sell_quantity * current_price
-            trading_fee_usd = sell_amount_usd * (trading_fee_percentage / 100)
-            total_cost_usd = (gas_cost_usd or 0) + trading_fee_usd
+            trading_fee_usd = sell_amount_usd * (Decimal(str(self._trading_fee_percentage)) / Decimal('100'))
+            total_cost_usd = Decimal(str(self._gas_cost_usd)) + trading_fee_usd
             net_proceeds_usd = sell_amount_usd - total_cost_usd
-            cost_basis = sell_quantity * position.average_cost_usd
-            gross_profit_usd = sell_amount_usd - cost_basis
+            cost_basis = sell_quantity * float(position.average_cost_usd)
             net_profit_usd = net_proceeds_usd - cost_basis
             bot = db.query(TradingBot).filter(TradingBot.id == bot_id).first()
             if not bot:
                 return None
-            bot.current_balance_usd += net_proceeds_usd
+            bot.current_balance_usd += Decimal(str(net_proceeds_usd))
             bot.total_trades += 1
             bot.last_activity_at = datetime.now(timezone.utc)
-            position.quantity -= sell_quantity
-            position.total_cost_usd -= cost_basis
-            if position.quantity <= 0:
+            # Calculate remaining quantity and handle precision issues
+            remaining_quantity = position.quantity - Decimal(str(sell_quantity))
+            
+            # Handle floating point precision issues - if remaining quantity is very small, treat as zero
+            if remaining_quantity <= Decimal("0.000000000000001"):  # Very small threshold
+                print(f"⚠️  Warning: Remaining quantity is very small ({remaining_quantity}), treating as zero")
+                position.quantity = Decimal("0")
+                position.average_cost_usd = Decimal("0")
+                position.total_cost_usd = Decimal("0")
                 position.is_active = False
             else:
-                position.average_cost_usd = position.total_cost_usd / position.quantity
+                position.quantity = remaining_quantity
+                position.total_cost_usd -= Decimal(str(cost_basis))
+                
+                # Ensure average cost is positive and reasonable
+                if position.quantity > 0:
+                    new_average_cost = position.total_cost_usd / position.quantity
+                    if new_average_cost <= 0:
+                        print(f"⚠️  Warning: Calculated negative average cost: {new_average_cost}, setting to 0")
+                        position.average_cost_usd = Decimal("0")
+                        position.total_cost_usd = Decimal("0")
+                        position.quantity = Decimal("0")
+                        position.is_active = False
+                    else:
+                        position.average_cost_usd = new_average_cost
+                else:
+                    # This shouldn't happen given the above check, but just in case
+                    position.average_cost_usd = Decimal("0")
+                    position.total_cost_usd = Decimal("0")
+                    position.is_active = False
+            
+
+            # save to database
+            db.add(position)
+            db.commit()
+            db.refresh(position)
+
             transaction = Transaction(
                 bot_id=bot_id,
                 token_id=position.token_id,
                 llm_decision_id=llm_decision_id,
                 transaction_type="sell",
                 status="executed",
-                amount_usd=sell_amount_usd,
-                token_amount=sell_quantity,
-                price_usd=current_price,
-                gas_cost_usd=gas_cost_usd or 0,
-                trading_fee_usd=trading_fee_usd,
-                total_cost_usd=total_cost_usd,
-                realized_pnl_usd=net_profit_usd,
-                balance_before_usd=bot.current_balance_usd - net_proceeds_usd,
+                amount_usd=Decimal(str(sell_amount_usd)),
+                token_amount=Decimal(str(sell_quantity)),
+                price_usd=Decimal(str(current_price)),
+                gas_cost_usd=Decimal(str(self._gas_cost_usd or 0)),
+                trading_fee_usd=Decimal(str(trading_fee_usd)),
+                total_cost_usd=Decimal(str(total_cost_usd)),
+                realized_pnl_usd=Decimal(str(net_profit_usd)),
+                balance_before_usd=bot.current_balance_usd - Decimal(str(net_proceeds_usd)),
                 balance_after_usd=bot.current_balance_usd,
                 executed_at=datetime.now(timezone.utc)
             )
@@ -774,6 +800,16 @@ class TradingService:
                 # Calculate new average cost using weighted average
                 # Formula: (old_quantity * old_avg_cost + new_quantity * effective_price_per_token) / total_quantity
                 new_average_cost = (old_quantity * old_avg_cost + quantity * effective_price_per_token) / new_quantity
+                
+                # Ensure average cost is positive and handle precision issues
+                if new_average_cost <= 0:
+                    print(f"⚠️  Warning: Calculated negative average cost in buy: {new_average_cost}, using token price")
+                    new_average_cost = effective_price_per_token
+                
+                # Handle very small average costs that might cause precision issues
+                if new_average_cost < Decimal("0.0000000001"):  # Very small threshold
+                    print(f"⚠️  Warning: Average cost is very small ({new_average_cost}), using token price")
+                    new_average_cost = effective_price_per_token
                 
                 # Update total cost (this includes all trading costs)
                 new_total_cost = old_total_cost + total_cost

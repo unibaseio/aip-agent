@@ -1,12 +1,17 @@
 {
-    "bot_name": "AIP DEX Trading Bot",
-    "account_address": "0x1234567890abcdef1234567890abcdef12345678",
+    "bot_name": "AIP DEX Trading Bot6",
+    "account_address": "0x6234567890abcdef1234567890abcdef12345678",
     "chain": "bsc",
     "initial_balance_usd": 1000.0,
     "strategy_type": "aggressive",
-    "polling_interval_hours": 0.6,
+    "polling_interval_hours": 0.1,
     "min_trade_amount_usd": 10.0,
     "is_active": true,
+    "stop_loss_percentage": 10.0,
+    "take_profit_percentage": 20.0,
+    "min_profit_threshold": 5.0,
+    "trading_fee_percentage": 0.5,
+    "max_position_size": 10.0,
     "description": "Configuration for AIP DEX Trading Bot",
     "version": "1.0.0"
 }
