@@ -1571,7 +1571,7 @@ class TokenService:
                 for record in history_records:
                     record_date = record.recorded_at.date()
                     if daily_sample and record_date in seen_dates:
-                        print(f"Skipping duplicate record at date: {record.recorded_at}")
+                        #print(f"Skipping duplicate record at date: {record.recorded_at}")
                         continue
                     seen_dates.add(record_date)
                     historical_data.append({

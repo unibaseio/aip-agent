@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, String, Integer, Float, Boolean, DateTime, ForeignKey, Text, DECIMAL, CheckConstraint, UniqueConstraint
+from sqlalchemy import create_engine, Column, String, Integer, Float, Boolean, DateTime, ForeignKey, Text, DECIMAL, CheckConstraint, UniqueConstraint, JSON
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.dialects.postgresql import UUID
@@ -34,13 +34,53 @@ def create_tables():
 def create_indexes():
     """Create performance indexes"""
     indexes = [
+        # Token and market data indexes
         "CREATE INDEX IF NOT EXISTS idx_tokens_symbol ON tokens(symbol)",
         "CREATE INDEX IF NOT EXISTS idx_tokens_contract_chain ON tokens(contract_address, chain)",
         "CREATE INDEX IF NOT EXISTS idx_tokens_metrics_updated_at ON tokens(metrics_updated_at)",
         "CREATE INDEX IF NOT EXISTS idx_pool_metrics_pool_updated ON pool_metrics(pool_id, updated_at)",
         "CREATE INDEX IF NOT EXISTS idx_pool_metrics_history_recorded ON pool_metrics_history(pool_id, recorded_at)",
         "CREATE INDEX IF NOT EXISTS idx_token_metrics_updated ON token_metrics(token_id, updated_at)",
-        "CREATE INDEX IF NOT EXISTS idx_token_metrics_history_recorded ON token_metrics_history(token_id, recorded_at)"
+        "CREATE INDEX IF NOT EXISTS idx_token_metrics_history_recorded ON token_metrics_history(token_id, recorded_at)",
+        
+        # Trading Bot indexes
+        "CREATE INDEX IF NOT EXISTS idx_trading_bots_account_chain ON trading_bots(account_address, chain)",
+        "CREATE INDEX IF NOT EXISTS idx_trading_bots_active ON trading_bots(is_active)",
+        "CREATE INDEX IF NOT EXISTS idx_trading_bots_strategy ON trading_bots(strategy_type)",
+        
+        # Position indexes
+        "CREATE INDEX IF NOT EXISTS idx_positions_bot_active ON positions(bot_id, is_active)",
+        "CREATE INDEX IF NOT EXISTS idx_positions_token ON positions(token_id)",
+        "CREATE INDEX IF NOT EXISTS idx_positions_bot_token ON positions(bot_id, token_id)",
+        
+        # Position History indexes
+        "CREATE INDEX IF NOT EXISTS idx_position_history_position_recorded ON position_history(position_id, recorded_at)",
+        "CREATE INDEX IF NOT EXISTS idx_position_history_bot_recorded ON position_history(bot_id, recorded_at)",
+        "CREATE INDEX IF NOT EXISTS idx_position_history_token_recorded ON position_history(token_id, recorded_at)",
+        "CREATE INDEX IF NOT EXISTS idx_position_history_trigger ON position_history(trigger_event)",
+        "CREATE INDEX IF NOT EXISTS idx_position_history_transaction ON position_history(transaction_id)",
+        
+        # Transaction indexes
+        "CREATE INDEX IF NOT EXISTS idx_transactions_bot_created ON transactions(bot_id, created_at)",
+        "CREATE INDEX IF NOT EXISTS idx_transactions_status ON transactions(status)",
+        "CREATE INDEX IF NOT EXISTS idx_transactions_type_date ON transactions(transaction_type, created_at)",
+        "CREATE INDEX IF NOT EXISTS idx_transactions_token ON transactions(token_id)",
+        
+        # LLM Decision indexes
+        "CREATE INDEX IF NOT EXISTS idx_llm_decisions_bot_created ON llm_decisions(bot_id, created_at)",
+        "CREATE INDEX IF NOT EXISTS idx_llm_decisions_executed ON llm_decisions(was_executed)",
+        "CREATE INDEX IF NOT EXISTS idx_llm_decisions_type_phase ON llm_decisions(decision_type, decision_phase)",
+        
+        # Revenue Snapshot indexes
+        "CREATE INDEX IF NOT EXISTS idx_revenue_bot_created ON revenue_snapshots(bot_id, created_at)",
+        "CREATE INDEX IF NOT EXISTS idx_revenue_bot_snapshot_time ON revenue_snapshots(bot_id, snapshot_time)",
+        "CREATE INDEX IF NOT EXISTS idx_revenue_type ON revenue_snapshots(snapshot_type)",
+        "CREATE INDEX IF NOT EXISTS idx_revenue_snapshot_time ON revenue_snapshots(snapshot_time)",
+        "CREATE INDEX IF NOT EXISTS idx_revenue_calculation_method ON revenue_snapshots(calculation_method)",
+        
+        # Trading Config indexes
+        "CREATE INDEX IF NOT EXISTS idx_trading_configs_strategy ON trading_configs(strategy_name)",
+        "CREATE INDEX IF NOT EXISTS idx_trading_configs_active ON trading_configs(is_active)"
     ]
     
     success_count = 0
@@ -103,6 +143,12 @@ class Token(Base):
     quote_pools = relationship("TokenPool", foreign_keys="TokenPool.quote_token_id", back_populates="quote_token")
     metrics = relationship("TokenMetric", back_populates="token")
     metrics_history = relationship("TokenMetricsHistory", back_populates="token")
+    
+    # Trading Bot relationships
+    positions = relationship("Position", back_populates="token")
+    position_history = relationship("PositionHistory", back_populates="token")
+    transactions = relationship("Transaction", back_populates="token") 
+    llm_decisions_recommended = relationship("LLMDecision", foreign_keys="LLMDecision.recommended_token_id", back_populates="recommended_token")
 
 # Tier 2: Token Pools (Token Pairs on Different DEXs)
 class TokenPool(Base):
@@ -400,3 +446,372 @@ def get_db():
         yield db
     finally:
         db.close()
+
+# Trading Bot Core Models
+class TradingBot(Base):
+    """交易机器人配置表"""
+    __tablename__ = "trading_bots"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    
+    # 基础配置
+    bot_name = Column(String(100), nullable=False)
+    account_address = Column(String(100), nullable=False, unique=True)
+    chain = Column(String(20), nullable=False)  # 'bsc' or 'solana'
+    
+    # 资金配置 (USD计价，内部精度10^18)
+    initial_balance_usd = Column(DECIMAL(30, 18), nullable=False)  # 初始余额
+    current_balance_usd = Column(DECIMAL(30, 18), nullable=False)  # 当前可用余额
+    total_assets_usd = Column(DECIMAL(30, 18), nullable=False)     # 总资产(余额+持仓)
+    
+    # 交易费用配置
+    gas_fee_native = Column(DECIMAL(10, 6), default=0.001)        # Gas费用(原生代币)
+    trading_fee_percentage = Column(DECIMAL(5, 3), default=0.5)   # 交易手续费率(%)
+    slippage_tolerance = Column(DECIMAL(5, 3), default=1.0)       # 滑点容忍度(%)
+    
+    # 策略配置
+    strategy_type = Column(String(30), nullable=False)            # conservative/moderate/aggressive等
+    max_position_size = Column(DECIMAL(5, 2), default=10.0)       # 单币最大仓位比例(%)
+    stop_loss_percentage = Column(DECIMAL(5, 2), default=5.0)     # 止损百分比(%)
+    take_profit_percentage = Column(DECIMAL(5, 2), default=15.0)  # 止盈百分比(%)
+    min_profit_threshold = Column(DECIMAL(5, 2), default=3.0)     # 最低收益率阈值(%)
+    
+    # 运行控制
+    min_trade_amount_usd = Column(DECIMAL(20, 2), default=10.0)   # 最小交易金额
+    max_daily_trades = Column(Integer, default=10)               # 每日最大交易次数
+    polling_interval_hours = Column(Integer, default=1)          # 轮询间隔(小时)
+    llm_confidence_threshold = Column(DECIMAL(3, 2), default=0.7) # LLM决策置信度阈值
+    
+    # 功能开关
+    enable_stop_loss = Column(Boolean, default=True)
+    enable_take_profit = Column(Boolean, default=True)
+    is_active = Column(Boolean, default=True)                    # 机器人开关
+    
+    # 统计数据
+    total_trades = Column(Integer, default=0)                    # 总交易次数
+    profitable_trades = Column(Integer, default=0)               # 盈利交易次数
+    total_profit_usd = Column(DECIMAL(30, 18), default=0)        # 总盈利(USD)
+    max_drawdown_percentage = Column(DECIMAL(8, 4), default=0)   # 最大回撤(%)
+    
+    # 时间戳
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    last_activity_at = Column(DateTime)
+    
+    __table_args__ = (
+        CheckConstraint("chain IN ('bsc', 'solana')", name='check_chain'),
+        CheckConstraint("strategy_type IN ('conservative', 'moderate', 'aggressive', 'momentum', 'mean_reversion')", name='check_strategy_type'),
+        CheckConstraint("max_position_size > 0 AND max_position_size <= 100", name='check_max_position_size'),
+        CheckConstraint("llm_confidence_threshold >= 0 AND llm_confidence_threshold <= 1", name='check_confidence_threshold'),
+    )
+    
+    # 关系
+    positions = relationship("Position", back_populates="bot", cascade="all, delete-orphan")
+    position_history = relationship("PositionHistory", back_populates="bot", cascade="all, delete-orphan")
+    transactions = relationship("Transaction", back_populates="bot", cascade="all, delete-orphan")
+    llm_decisions = relationship("LLMDecision", back_populates="bot", cascade="all, delete-orphan")
+    revenue_snapshots = relationship("RevenueSnapshot", back_populates="bot", cascade="all, delete-orphan")
+
+class Position(Base):
+    """持仓记录表"""
+    __tablename__ = "positions"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    bot_id = Column(UUID(as_uuid=True), ForeignKey("trading_bots.id"), nullable=False)
+    token_id = Column(UUID(as_uuid=True), ForeignKey("tokens.id"), nullable=False)
+    
+    # 持仓信息 (数量使用内部精度10^18)
+    quantity = Column(DECIMAL(40, 18), nullable=False)           # 持有数量
+    average_cost_usd = Column(DECIMAL(20, 10), nullable=False)   # 平均成本(USD)
+    total_cost_usd = Column(DECIMAL(30, 18), nullable=False)     # 总成本(USD)
+    
+    # 当前价值
+    current_price_usd = Column(DECIMAL(20, 10))                  # 当前价格
+    current_value_usd = Column(DECIMAL(30, 18))                  # 当前市值
+    unrealized_pnl_usd = Column(DECIMAL(30, 18))                 # 未实现盈亏
+    unrealized_pnl_percentage = Column(DECIMAL(10, 4))           # 未实现盈亏百分比
+    
+    # 风险控制
+    stop_loss_price = Column(DECIMAL(20, 10))                    # 止损价格
+    take_profit_price = Column(DECIMAL(20, 10))                  # 止盈价格
+    
+    # 状态
+    is_active = Column(Boolean, default=True)                    # 是否活跃持仓
+    
+    # 时间戳
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    closed_at = Column(DateTime)                                 # 平仓时间
+    
+    __table_args__ = (
+        UniqueConstraint('bot_id', 'token_id', name='uq_bot_token_position'),
+        CheckConstraint("quantity >= 0", name='check_quantity_positive'),
+        CheckConstraint("(quantity = 0 AND average_cost_usd = 0) OR (quantity > 0 AND average_cost_usd > 0)", name='check_cost_quantity_consistency'),
+    )
+    
+    # 关系
+    bot = relationship("TradingBot", back_populates="positions")
+    token = relationship("Token", back_populates="positions")
+    transactions = relationship("Transaction", back_populates="position")
+    history = relationship("PositionHistory", back_populates="position", cascade="all, delete-orphan")
+
+class PositionHistory(Base):
+    """持仓历史记录表 - 记录持仓状态的时间序列变化"""
+    __tablename__ = "position_history"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    position_id = Column(UUID(as_uuid=True), ForeignKey("positions.id"), nullable=False)
+    bot_id = Column(UUID(as_uuid=True), ForeignKey("trading_bots.id"), nullable=False)
+    token_id = Column(UUID(as_uuid=True), ForeignKey("tokens.id"), nullable=False)
+    
+    # 持仓状态快照 (数量使用内部精度10^18)
+    quantity = Column(DECIMAL(40, 18), nullable=False)           # 当时持有数量
+    average_cost_usd = Column(DECIMAL(20, 10), nullable=False)   # 当时平均成本(USD)
+    total_cost_usd = Column(DECIMAL(30, 18), nullable=False)     # 当时总成本(USD)
+    
+    # 价格和价值快照
+    token_price_usd = Column(DECIMAL(20, 10), nullable=False)    # 当时代币价格
+    position_value_usd = Column(DECIMAL(30, 18), nullable=False) # 当时持仓市值
+    unrealized_pnl_usd = Column(DECIMAL(30, 18), nullable=False) # 当时未实现盈亏
+    unrealized_pnl_percentage = Column(DECIMAL(10, 4), nullable=False) # 当时未实现盈亏百分比
+    
+    # 风险控制价格 (可能为空)
+    stop_loss_price = Column(DECIMAL(20, 10))                    # 当时止损价格
+    take_profit_price = Column(DECIMAL(20, 10))                  # 当时止盈价格
+    
+    # 市场状态快照
+    market_cap_at_snapshot = Column(DECIMAL(20, 2))              # 当时市值
+    volume_24h_at_snapshot = Column(DECIMAL(20, 2))              # 当时24h交易量
+    
+    # 触发原因和元数据
+    trigger_event = Column(String(30), nullable=False)           # 触发记录的事件
+    transaction_id = Column(UUID(as_uuid=True), ForeignKey("transactions.id"))  # 关联交易(如果由交易触发)
+    
+    # 账户状态快照
+    bot_balance_usd = Column(DECIMAL(30, 18))                    # 当时机器人可用余额
+    bot_total_assets_usd = Column(DECIMAL(30, 18))               # 当时机器人总资产
+    
+    # 时间戳
+    recorded_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    
+    __table_args__ = (
+        CheckConstraint("trigger_event IN ('trade_buy', 'trade_sell', 'price_update', 'stop_loss', 'take_profit', 'manual', 'periodic')", name='check_trigger_event'),
+        CheckConstraint("quantity >= 0", name='check_history_quantity_positive'),
+        CheckConstraint("(quantity = 0 AND average_cost_usd = 0) OR (quantity > 0 AND average_cost_usd > 0)", name='check_history_cost_quantity_consistency'),
+        CheckConstraint("token_price_usd > 0", name='check_history_price_positive'),
+    )
+    
+    # 关系
+    position = relationship("Position", back_populates="history")
+    bot = relationship("TradingBot", back_populates="position_history")
+    token = relationship("Token", back_populates="position_history")
+    trigger_transaction = relationship("Transaction", foreign_keys=[transaction_id])
+
+class Transaction(Base):
+    """交易记录表"""
+    __tablename__ = "transactions"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    bot_id = Column(UUID(as_uuid=True), ForeignKey("trading_bots.id"), nullable=False)
+    position_id = Column(UUID(as_uuid=True), ForeignKey("positions.id"))
+    token_id = Column(UUID(as_uuid=True), ForeignKey("tokens.id"), nullable=False)
+    llm_decision_id = Column(UUID(as_uuid=True), ForeignKey("llm_decisions.id"))
+    
+    # 交易基本信息
+    transaction_type = Column(String(10), nullable=False)        # 'buy' or 'sell'
+    status = Column(String(20), default='pending')               # pending/executed/failed/cancelled
+    
+    # 交易数量和价格 (使用内部精度10^18)
+    amount_usd = Column(DECIMAL(30, 18))                         # 交易金额(USD)，买入时使用
+    token_amount = Column(DECIMAL(40, 18))                       # 代币数量，卖出时使用
+    price_usd = Column(DECIMAL(20, 10), nullable=False)          # 执行价格
+    
+    # 交易成本
+    gas_cost_usd = Column(DECIMAL(20, 10), nullable=False)       # Gas费用
+    trading_fee_usd = Column(DECIMAL(20, 10), nullable=False)    # 交易手续费
+    total_cost_usd = Column(DECIMAL(20, 10), nullable=False)     # 总交易成本
+    
+    # 收益计算 (仅卖出交易)
+    realized_pnl_usd = Column(DECIMAL(30, 18))                   # 已实现盈亏
+    realized_pnl_percentage = Column(DECIMAL(10, 4))             # 已实现盈亏百分比
+    
+    # 执行前后状态
+    balance_before_usd = Column(DECIMAL(30, 18))                 # 交易前余额
+    balance_after_usd = Column(DECIMAL(30, 18))                  # 交易后余额
+    position_before = Column(DECIMAL(40, 18))                    # 交易前持仓数量
+    position_after = Column(DECIMAL(40, 18))                     # 交易后持仓数量
+    avg_cost_before = Column(DECIMAL(20, 10))                    # 交易前平均成本
+    avg_cost_after = Column(DECIMAL(20, 10))                     # 交易后平均成本
+    
+    # 市场条件
+    market_cap_at_trade = Column(DECIMAL(20, 2))                 # 交易时市值
+    volume_24h_at_trade = Column(DECIMAL(20, 2))                 # 交易时24h交易量
+    
+    # 时间戳
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    executed_at = Column(DateTime)
+    
+    __table_args__ = (
+        CheckConstraint("transaction_type IN ('buy', 'sell')", name='check_transaction_type'),
+        CheckConstraint("status IN ('pending', 'executed', 'failed', 'cancelled')", name='check_status'),
+        CheckConstraint("price_usd > 0", name='check_price_positive'),
+        CheckConstraint("total_cost_usd >= 0", name='check_cost_positive'),
+    )
+    
+    # 关系
+    bot = relationship("TradingBot", back_populates="transactions")
+    position = relationship("Position", back_populates="transactions")
+    token = relationship("Token", back_populates="transactions")
+    llm_decision = relationship("LLMDecision", back_populates="transaction")
+
+class LLMDecision(Base):
+    """LLM决策记录表"""
+    __tablename__ = "llm_decisions"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    bot_id = Column(UUID(as_uuid=True), ForeignKey("trading_bots.id"), nullable=False)
+    
+    # 决策类型
+    decision_type = Column(String(20), nullable=False)           # 'sell_analysis', 'buy_analysis'
+    decision_phase = Column(String(20), nullable=False)          # 'phase_1_sell', 'phase_2_buy'
+    
+    # 决策输入数据
+    input_data = Column(JSON)                                    # 输入给LLM的数据
+    prompt_template = Column(Text)                               # 使用的提示模板
+    
+    # LLM响应
+    llm_response = Column(Text)                                  # LLM原始响应
+    reasoning = Column(Text)                                     # 决策推理过程
+    confidence_score = Column(DECIMAL(3, 2))                     # 置信度分数
+    
+    # 决策结果
+    recommended_action = Column(String(50))                      # 推荐动作
+    recommended_token_id = Column(UUID(as_uuid=True), ForeignKey("tokens.id"))  # 推荐代币(买入时)
+    recommended_amount = Column(DECIMAL(30, 18))                 # 推荐金额/数量
+    recommended_percentage = Column(DECIMAL(5, 2))               # 推荐卖出百分比
+    
+    # 预期收益分析
+    expected_return_percentage = Column(DECIMAL(10, 4))          # 预期收益率
+    risk_assessment = Column(String(20))                         # 'low', 'medium', 'high'
+    
+    # 市场分析结果
+    market_sentiment = Column(String(20))                        # 'bullish', 'bearish', 'neutral'
+    technical_indicators = Column(JSON)                          # 技术指标分析结果
+    fundamental_analysis = Column(JSON)                          # 基本面分析结果
+    
+    # 执行结果
+    was_executed = Column(Boolean, default=False)                # 是否被执行
+    execution_reason = Column(Text)                              # 执行/不执行原因
+    
+    # 时间戳
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    execution_time = Column(DateTime)                            # 决策执行时间
+    
+    __table_args__ = (
+        CheckConstraint("decision_type IN ('sell_analysis', 'buy_analysis')", name='check_decision_type'),
+        CheckConstraint("decision_phase IN ('phase_1_sell', 'phase_2_buy')", name='check_decision_phase'),
+        CheckConstraint("confidence_score >= 0 AND confidence_score <= 1", name='check_confidence_score'),
+        CheckConstraint("risk_assessment IN ('low', 'medium', 'high')", name='check_risk_assessment'),
+        CheckConstraint("market_sentiment IN ('bullish', 'bearish', 'neutral')", name='check_market_sentiment'),
+    )
+    
+    # 关系
+    bot = relationship("TradingBot", back_populates="llm_decisions")
+    recommended_token = relationship("Token", back_populates="llm_decisions_recommended")
+    transaction = relationship("Transaction", back_populates="llm_decision", uselist=False)
+
+class RevenueSnapshot(Base):
+    """收益快照表 - 用于生成收益曲线"""
+    __tablename__ = "revenue_snapshots"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    bot_id = Column(UUID(as_uuid=True), ForeignKey("trading_bots.id"), nullable=False)
+    
+    # 资产快照
+    total_assets_usd = Column(DECIMAL(30, 18), nullable=False)   # 总资产
+    available_balance_usd = Column(DECIMAL(30, 18), nullable=False)  # 可用余额
+    total_positions_value_usd = Column(DECIMAL(30, 18), nullable=False)  # 持仓总价值
+    
+    # 收益数据 (基于PositionHistory + Transaction计算)
+    total_unrealized_pnl_usd = Column(DECIMAL(30, 18), nullable=False)  # 未实现盈亏总额 (汇总所有unrealized_pnl_usd)
+    total_realized_pnl_usd = Column(DECIMAL(30, 18), nullable=False)    # 已实现盈亏总额 (来自Transaction)
+    total_profit_usd = Column(DECIMAL(30, 18), nullable=False)   # 累计盈利 (unrealized + realized)
+    total_profit_percentage = Column(DECIMAL(10, 4), nullable=False)  # 累计收益率
+    daily_profit_usd = Column(DECIMAL(30, 18))                   # 当日盈利
+    daily_profit_percentage = Column(DECIMAL(10, 4))             # 当日收益率
+    
+    # 交易统计
+    total_trades = Column(Integer, default=0)                    # 总交易次数
+    profitable_trades = Column(Integer, default=0)               # 盈利交易次数
+    win_rate = Column(DECIMAL(5, 2))                            # 胜率
+    average_profit_per_trade = Column(DECIMAL(20, 10))           # 平均每笔交易盈利
+    
+    # 风险指标
+    max_drawdown_percentage = Column(DECIMAL(8, 4))              # 最大回撤
+    current_drawdown_percentage = Column(DECIMAL(8, 4))          # 当前回撤
+    volatility = Column(DECIMAL(8, 4))                          # 波动率
+    sharpe_ratio = Column(DECIMAL(8, 4))                        # 夏普比率
+    
+    # 持仓统计 (基于PositionHistory汇总计算)
+    active_positions_count = Column(Integer, default=0)          # 活跃持仓数量
+    total_position_cost_usd = Column(DECIMAL(30, 18))            # 持仓总成本 (汇总所有total_cost_usd)
+    largest_position_value_usd = Column(DECIMAL(30, 18))         # 最大单个持仓价值
+    largest_position_percentage = Column(DECIMAL(5, 2))          # 最大持仓比例
+    position_concentration_risk = Column(DECIMAL(5, 2))          # 持仓集中度风险
+    
+    # 数据来源追踪
+    position_history_count = Column(Integer, default=0)          # 基础持仓历史记录数量
+    calculation_method = Column(String(10), default='v1.0')      # 计算方法版本
+    data_completeness = Column(DECIMAL(5, 2), default=100.0)     # 数据完整性百分比
+    
+    # 快照类型和时间
+    snapshot_type = Column(String(20), default='hourly')         # hourly/daily/manual/triggered
+    snapshot_time = Column(DateTime, nullable=False)             # 快照时间点 (与PositionHistory的recorded_at对应)
+    
+    # 时间戳
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    
+    __table_args__ = (
+        CheckConstraint("snapshot_type IN ('hourly', 'daily', 'manual', 'triggered')", name='check_snapshot_type'),
+        CheckConstraint("calculation_method IN ('v1.0', 'v1.1', 'v2.0')", name='check_calculation_method'),
+        CheckConstraint("data_completeness >= 0 AND data_completeness <= 100", name='check_data_completeness'),
+        CheckConstraint("win_rate >= 0 AND win_rate <= 100", name='check_win_rate'),
+        CheckConstraint("position_concentration_risk >= 0 AND position_concentration_risk <= 100", name='check_concentration_risk'),
+    )
+    
+    # 关系
+    bot = relationship("TradingBot", back_populates="revenue_snapshots")
+
+class TradingConfig(Base):
+    """交易配置模板表 - 预定义策略参数"""
+    __tablename__ = "trading_configs"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    
+    # 策略信息
+    strategy_name = Column(String(50), nullable=False, unique=True)
+    strategy_description = Column(Text)
+    risk_level = Column(String(20), nullable=False)              # low/medium/high
+    
+    # 默认参数
+    default_max_position_size = Column(DECIMAL(5, 2), nullable=False)
+    default_stop_loss_percentage = Column(DECIMAL(5, 2), nullable=False)
+    default_take_profit_percentage = Column(DECIMAL(5, 2), nullable=False)
+    default_min_profit_threshold = Column(DECIMAL(5, 2), nullable=False)
+    default_max_daily_trades = Column(Integer, nullable=False)
+    default_confidence_threshold = Column(DECIMAL(3, 2), nullable=False)
+    
+    # 提示模板
+    sell_prompt_template = Column(Text)                          # 卖出决策提示模板
+    buy_prompt_template = Column(Text)                           # 买入决策提示模板
+    
+    # 状态
+    is_active = Column(Boolean, default=True)
+    
+    # 时间戳
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    
+    __table_args__ = (
+        CheckConstraint("risk_level IN ('low', 'medium', 'high')", name='check_risk_level'),
+    )
