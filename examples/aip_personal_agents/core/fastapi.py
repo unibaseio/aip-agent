@@ -614,15 +614,28 @@ def build_user_sync(username: str):
 
 @app.post("/api/chat")
 async def chat_api(
+    request: Request,
     token: str = Depends(validate_token),
     data: Dict[str, Any] = Depends(validate_required_fields(['username', 'message']))
 ):
     """Chat with a specific profile using username"""
     try:
+        # Log request details for debugging
+        print(f"=== Chat API Request Debug ===")
+        print(f"Request URL: {request.url}")
+        print(f"Request method: {request.method}")
+        print(f"Request headers: {dict(request.headers)}")
+        print(f"Request body: {data}")
+        print(f"Bearer token: {token}")
+        
         username = data['username']
         prompt = data.get('prompt', "")
         message = data['message']
         prompt_mode = data.get('prompt_mode', "append")
+        
+        print(f"Username: {username}")
+        print(f"Message: {message}")
+        print(f"Message starts with @: {message.startswith('@')}")
         
         conversation_id = data.get('conversation_id', None)
         if conversation_id is None or conversation_id == "":
@@ -653,17 +666,22 @@ async def chat_api(
                 system_prompt=description,
                 conversation_id=conversation_id
             )
+            print(f"User agent response: {response[:100]}...")
             return {"success": True, "data": response}
         
         # Run the async operation synchronously
+        print(f"Using main agent")
         response = await app.agent.process_query(
             message,
             use_history=False,
             system_prompt=description,
             conversation_id=conversation_id
         )
+        print(f"Main agent response: {response[:100]}...")
         return {"success": True, "data": response}
     except Exception as e:
+        print(f"Error in chat_api: {str(e)}")
+        print(f"Exception type: {type(e).__name__}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/generate_tweet")
@@ -872,6 +890,39 @@ async def get_report_api(
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/health")
+async def health_check_api(token: str = Depends(validate_token)):
+    """Health check endpoint to diagnose system status"""
+    try:
+        health_status = {
+            "timestamp": datetime.now().isoformat(),
+            "main_agent": {
+                "initialized": app.agent._initialized if app.agent else False,
+                "runtime_exists": app.agent._runtime is not None if app.agent else False,
+                "runtime_running": getattr(app.agent._runtime, '_running', False) if app.agent and app.agent._runtime else False,
+                "host_connection": getattr(app.agent._runtime, '_host_connection', None) is not None if app.agent and app.agent._runtime else False,
+            },
+            "user_agents": {},
+            "grpc_server_url": app.grpc_server_url,
+            "total_users": len(app.users),
+            "total_agents": len(app.agents),
+            "candidates": len(app.candidates)
+        }
+        
+        # Check user agents status
+        for username, agent in app.agents.items():
+            health_status["user_agents"][username] = {
+                "initialized": agent._initialized,
+                "runtime_exists": agent._runtime is not None,
+                "runtime_running": getattr(agent._runtime, '_running', False) if agent._runtime else False,
+                "host_connection": getattr(agent._runtime, '_host_connection', None) is not None if agent._runtime else False,
+            }
+        
+        return {"success": True, "data": health_status}
+    except Exception as e:
+        print(f"Error in health check: {str(e)}")
+        return {"success": False, "error": str(e)}
 
 async def shutdown_app_async():
     """Async cleanup of resources and shutdown of the application"""
