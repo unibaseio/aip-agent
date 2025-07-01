@@ -266,7 +266,7 @@ class FullAgentWrapper:
                 response = await self.send_message(agent_name, "ask", new_query)
                 if response.startswith("Error:"):
                     return response
-                memory.add(Message(content=response, name=agent_name, role="assistant"))
+                memory.add(Message(content=response, name=self._name, role="assistant"))
                 return response
             except Exception as e:
                 return f"Error: {e}"
