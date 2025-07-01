@@ -276,7 +276,7 @@ class TradingService:
             return False
         
         # Validate strategy type
-        valid_strategies = ["conservative", "moderate", "aggressive", "momentum", "mean_reversion"]
+        valid_strategies = ["conservative", "moderate", "aggressive", "momentum", "mean_reversion", "user_defined"]
         if config["strategy_type"] not in valid_strategies:
             print(f"Invalid strategy type: {config['strategy_type']}")
             return False
