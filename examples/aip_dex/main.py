@@ -18,6 +18,7 @@ from llm.token_analyzer import TokenDecisionAnalyzer
 from api.schemas import (
     TokenResponse, ChatRequest, ChatResponse
 )
+from api.trading_bot_routes import router as trading_bot_router
 
 from aip_agent.agents.custom_agent import CallbackAgent
 from aip_agent.agents.full_agent import FullAgentWrapper
@@ -149,6 +150,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Include trading bot routes
+app.include_router(trading_bot_router)
+
 
 async def process_chat_message(db: Session, messsage: str, conversation_id: str, include_pools: bool = False) -> str:
     """Process chat message with enhanced multi-DEX analysis
@@ -259,9 +263,14 @@ async def process_chat_message(db: Session, messsage: str, conversation_id: str,
             }
 
 # Mount static files directory for CSS, JS, and other static assets
+static_path = os.path.join(os.path.dirname(__file__), "static")
+if os.path.exists(static_path):
+    app.mount("/static", StaticFiles(directory=static_path), name="static")
+
+# Mount chat static files if they exist
 chat_static_path = os.path.join(os.path.dirname(__file__), "chat")
 if os.path.exists(chat_static_path):
-    app.mount("/static", StaticFiles(directory=chat_static_path), name="static")
+    app.mount("/chat-static", StaticFiles(directory=chat_static_path), name="chat-static")
 
 # Set bearer token from environment variable
 app.bearer_token = os.getenv("DEX_BEARER_TOKEN", "aip-dex-default-token-2025")
@@ -385,6 +394,17 @@ async def health_check():
 # ===== WEB INTERFACE ROUTES =====
 
 @app.get("/", response_class=HTMLResponse)
+async def dashboard():
+    """Serve the trading bot dashboard HTML page"""
+    try:
+        dashboard_html_path = os.path.join(os.path.dirname(__file__), "static", "index.html")
+        with open(dashboard_html_path, "r", encoding="utf-8") as f:
+            html_content = f.read()
+        return HTMLResponse(content=html_content)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Dashboard not found")
+
+@app.get("/chat", response_class=HTMLResponse)
 async def chat_interface():
     """Serve the chat interface HTML page"""
     try:
@@ -402,7 +422,7 @@ async def chat_interface():
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail="Chat interface not found")
 
-@app.get("/chat", response_class=HTMLResponse)
+@app.get("/chat-page", response_class=HTMLResponse)
 async def chat_page():
     """Alternative route for the chat interface"""
     return await chat_interface()

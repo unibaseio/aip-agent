@@ -79,7 +79,7 @@ class TradingDecisionAnalyzer:
                     "reasoning": "No tokens available for analysis"
                 }
             
-            print(f"   🔍 Stage 1: Screening {len(available_tokens)} tokens for top 5 candidates...")
+            print(f"   🔍 Stage 1: Screening {len(available_tokens)} tokens for top 10 candidates...")
             
             # Stage 1: LLM screening to select top 5 tokens from all available tokens
             top_tokens = await self._llm_screen_tokens(available_tokens, bot_status, bot_config)

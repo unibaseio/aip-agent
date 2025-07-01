@@ -255,7 +255,7 @@ python trading_bot.py --config config_minutes_example.json
 ```json
 {
   "bot_name": "Conservative BSC Bot",
-  "account_address": "0x12ea567890abcdef1234567890abcdef12345678",
+  "accountaddress": "0x12ea567890abcdef1234567890abcdef12345678",
   "chain": "bsc",
   "initial_balance_usd": 10000.0,
   "strategy_type": "conservative",

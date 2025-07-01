@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIP DEX Trading Bot Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script type="module" src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            /* Light theme (default) */
+            --primary-color: #3b82f6;
+            --secondary-color: #8b5cf6;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+
+            /* Light theme colors */
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --card-bg: #ffffff;
+            --card-bg-hover: #f1f5f9;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+
+            /* Dark theme colors */
+            --dark-bg-primary: #0f172a;
+            --dark-bg-secondary: #1e293b;
+            --dark-card-bg: #1e293b;
+            --dark-card-bg-hover: #334155;
+            --dark-text-primary: #f8fafc;
+            --dark-text-secondary: #cbd5e1;
+            --dark-border-color: #334155;
+            --dark-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+            --dark-shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Dark theme class */
+        [data-theme="dark"] {
+            --bg-primary: var(--dark-bg-primary);
+            --bg-secondary: var(--dark-bg-secondary);
+            --card-bg: var(--dark-card-bg);
+            --card-bg-hover: var(--dark-card-bg-hover);
+            --text-primary: var(--dark-text-primary);
+            --text-secondary: var(--dark-text-secondary);
+            --border-color: var(--dark-border-color);
+            --shadow: var(--dark-shadow);
+            --shadow-lg: var(--dark-shadow-lg);
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 50%, var(--bg-secondary) 100%);
+            min-height: 100vh;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: all 0.3s ease;
+        }
+
+        [data-theme="dark"] body {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e1b4b 100%);
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+        }
+
+        [data-theme="dark"] .navbar {
+            background: rgba(15, 23, 42, 0.95) !important;
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--text-primary) !important;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-color);
+        }
+
+        .card-header {
+            background: rgba(248, 250, 252, 0.8);
+            border-bottom: 1px solid var(--border-color);
+            border-radius: 16px 16px 0 0 !important;
+            padding: 1.25rem 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        [data-theme="dark"] .card-header {
+            background: rgba(30, 41, 59, 0.8);
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .text-primary {
+            color: var(--primary-color) !important;
+        }
+
+        .text-success {
+            color: var(--success-color) !important;
+        }
+
+        .text-warning {
+            color: var(--warning-color) !important;
+        }
+
+        .text-danger {
+            color: var(--danger-color) !important;
+        }
+
+        .text-secondary {
+            color: var(--text-secondary) !important;
+        }
+
+        .btn {
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #1d4ed8 100%);
+            border: none;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-outline-primary {
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            background: transparent;
+        }
+
+        .btn-outline-primary:hover {
+            background: var(--primary-color);
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        .table {
+            color: var(--text-primary);
+            background: transparent;
+        }
+
+        .table th {
+            background: rgba(248, 250, 252, 0.8);
+            border-color: var(--border-color);
+            color: var(--text-primary);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.875rem;
+            letter-spacing: 0.05em;
+            transition: all 0.3s ease;
+        }
+
+        [data-theme="dark"] .table th {
+            background: rgba(30, 41, 59, 0.8);
+        }
+
+        .table td {
+            border-color: var(--border-color);
+            vertical-align: middle;
+        }
+
+        .table-hover tbody tr:hover {
+            background: rgba(241, 245, 249, 0.5);
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .table-hover tbody tr:hover {
+            background: rgba(51, 65, 85, 0.3);
+        }
+
+        .status-badge {
+            padding: 0.375rem 1rem;
+            border-radius: 25px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border: 2px solid;
+            transition: all 0.3s ease;
+        }
+
+        .status-active {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+            border-color: #10b981;
+            box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.2);
+        }
+
+        .status-inactive {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            border-color: #ef4444;
+            box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.2);
+        }
+
+        .profit-positive {
+            color: #10b981;
+            font-weight: 600;
+        }
+
+        .profit-negative {
+            color: #ef4444;
+            font-weight: 600;
+        }
+
+        .stats-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(248, 250, 252, 0.4) 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        [data-theme="dark"] .stats-card {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(51, 65, 85, 0.4) 100%);
+        }
+
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-color);
+        }
+
+        .stats-card h3 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stats-card p {
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin: 0;
+        }
+
+        .refresh-btn {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 1000;
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color) 0%, #1d4ed8 100%);
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .refresh-btn:hover {
+            transform: scale(1.1) translateY(-2px);
+            box-shadow: 0 12px 35px rgba(59, 130, 246, 0.6);
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0.5rem;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(180deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            border-radius: 2px;
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: rgba(248, 250, 252, 0.5);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        [data-theme="dark"] .timeline-item {
+            background: rgba(30, 41, 59, 0.5);
+        }
+
+        .timeline-item:hover {
+            background: rgba(241, 245, 249, 0.7);
+            transform: translateX(5px);
+        }
+
+        [data-theme="dark"] .timeline-item:hover {
+            background: rgba(51, 65, 85, 0.3);
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -1.5rem;
+            top: 1.5rem;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            border: 3px solid var(--card-bg);
+            box-shadow: 0 0 0 2px var(--primary-color);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+        }
+
+        .modal-header {
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-footer {
+            border-top: 1px solid var(--border-color);
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0.5rem;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--border-color);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -1.5rem;
+            top: 0.5rem;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            border: 2px solid var(--card-bg);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 1rem 0;
+            background: rgba(248, 250, 252, 0.3);
+            border-radius: 12px;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        [data-theme="dark"] .chart-container {
+            background: rgba(30, 41, 59, 0.3);
+        }
+
+        .badge {
+            font-weight: 600;
+            padding: 0.375rem 0.75rem;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .bg-success {
+            background: rgba(16, 185, 129, 0.2) !important;
+            color: #10b981 !important;
+            border: 1px solid #10b981;
+        }
+
+        .bg-secondary {
+            background: rgba(107, 114, 128, 0.2) !important;
+            color: #6b7280 !important;
+            border: 1px solid #6b7280;
+        }
+
+        .alert {
+            border-radius: 12px;
+            border: none;
+            backdrop-filter: blur(10px);
+        }
+
+        .alert-danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .dropdown-menu-dark {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: var(--shadow-lg);
+            backdrop-filter: blur(10px);
+        }
+
+        .dropdown-menu-dark .dropdown-item {
+            color: var(--text-primary);
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .dropdown-menu-dark .dropdown-item:hover {
+            background: rgba(241, 245, 249, 0.5);
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .dropdown-menu-dark .dropdown-item:hover {
+            background: rgba(51, 65, 85, 0.5);
+        }
+
+        .dropdown-menu-dark .dropdown-item.active {
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        [data-theme="dark"] .dropdown-menu-dark .dropdown-item.active {
+            background: rgba(59, 130, 246, 0.3);
+        }
+
+        .dropdown-menu-dark .dropdown-divider {
+            border-color: var(--border-color);
+            margin: 0.5rem 0;
+        }
+
+        .form-select {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            border-radius: 8px;
+        }
+
+        .form-select:focus {
+            background: var(--card-bg);
+            border-color: var(--primary-color);
+            color: var(--text-primary);
+            box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+        }
+
+        .navbar-text {
+            color: var(--text-secondary) !important;
+        }
+
+        .nav-link {
+            color: var(--text-secondary) !important;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--text-primary) !important;
+        }
+
+        /* Theme transition for all elements */
+        * {
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        /* Ensure text colors are properly set */
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            color: var(--text-primary);
+        }
+
+        p,
+        span,
+        div {
+            color: inherit;
+        }
+
+        /* Button outline styles for theme toggle */
+        .btn-outline-secondary {
+            border-color: var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .btn-outline-secondary:hover {
+            background-color: var(--card-bg-hover);
+            border-color: var(--primary-color);
+            color: var(--text-primary);
+        }
+
+        /* Ensure close button in modal is visible */
+        .btn-close {
+            filter: invert(0);
+        }
+
+        [data-theme="dark"] .btn-close {
+            filter: invert(1);
+        }
+
+        .stats-card {
+            transition: transform 0.3s ease;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .bot-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+            background: linear-gradient(135deg, var(--card-bg) 0%, rgba(51, 65, 85, 0.3) 100%);
+        }
+
+        .bot-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-color);
+            background: linear-gradient(135deg, var(--card-bg-hover) 0%, rgba(51, 65, 85, 0.5) 100%);
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            box-shadow: var(--shadow-lg);
+            backdrop-filter: blur(20px);
+        }
+
+        .modal-header {
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(248, 250, 252, 0.8);
+            border-radius: 20px 20px 0 0;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        [data-theme="dark"] .modal-header {
+            background: rgba(30, 41, 59, 0.8);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-footer {
+            border-top: 1px solid var(--border-color);
+            background: rgba(248, 250, 252, 0.8);
+            border-radius: 0 0 20px 20px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        [data-theme="dark"] .modal-footer {
+            background: rgba(30, 41, 59, 0.8);
+        }
+
+        .modal-title {
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* 黑夜模式下主要内容强制浅色 */
+        [data-theme="dark"] .modal-content,
+        [data-theme="dark"] .modal-header,
+        [data-theme="dark"] .modal-body,
+        [data-theme="dark"] .modal-footer,
+        [data-theme="dark"] .card,
+        [data-theme="dark"] .card-header,
+        [data-theme="dark"] .card-body,
+        [data-theme="dark"] .table,
+        [data-theme="dark"] .table th,
+        [data-theme="dark"] .table td {
+            color: var(--text-primary) !important;
+        }
+
+        /* 辅助色在黑夜模式下更亮 */
+        [data-theme="dark"] .text-secondary {
+            color: #b6c2d1 !important;
+        }
+
+        [data-theme="dark"] .text-info {
+            color: #38bdf8 !important;
+        }
+
+        [data-theme="dark"] .text-warning {
+            color: #fde68a !important;
+        }
+
+        [data-theme="dark"] .text-success {
+            color: #34d399 !important;
+        }
+
+        [data-theme="dark"] .text-danger {
+            color: #f87171 !important;
+        }
+
+        /* 标题加粗提升可读性 */
+        .modal-title,
+        .card-header h5,
+        .card-header h6,
+        .card-header h4,
+        .card-header h3 {
+            font-weight: 700;
+            letter-spacing: 0.01em;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+        }
+
+        .card-header h5 {
+            font-size: 1.25rem;
+        }
+
+        .card-header h6 {
+            font-size: 1rem;
+        }
+
+        /* 卡片和弹窗阴影更明显 */
+        .card,
+        .modal-content {
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.18), 0 1.5px 4px rgba(0, 0, 0, 0.08);
+        }
+
+        [data-theme="dark"] .card,
+        [data-theme="dark"] .modal-content {
+            box-shadow: 0 8px 32px 0 rgba(16, 24, 40, 0.45), 0 1.5px 4px rgba(0, 0, 0, 0.18);
+        }
+
+        /* 按钮美化 */
+        .btn-primary {
+            font-weight: 600;
+            letter-spacing: 0.03em;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.10);
+        }
+
+        .btn-primary:focus,
+        .btn-primary:active {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+
+        .btn-outline-primary {
+            font-weight: 600;
+            letter-spacing: 0.03em;
+        }
+
+        .btn-outline-primary.active,
+        .btn-outline-primary:active {
+            background: var(--primary-color);
+            color: #fff !important;
+        }
+
+        /* 表格美化 */
+        .table th,
+        .table td {
+            font-size: 1rem;
+            vertical-align: middle;
+        }
+
+        .table th {
+            font-weight: 700;
+        }
+
+        .table-hover tbody tr:hover {
+            background: rgba(59, 130, 246, 0.08);
+        }
+
+        [data-theme="dark"] .table-hover tbody tr:hover {
+            background: rgba(59, 130, 246, 0.18);
+        }
+
+        /* 状态徽章美化 */
+        .status-badge {
+            font-size: 0.85rem;
+            font-weight: 700;
+            padding: 0.35rem 1.1rem;
+            border-radius: 20px;
+            border-width: 2px;
+            letter-spacing: 0.06em;
+        }
+
+        .status-active {
+            background: rgba(16, 185, 129, 0.18);
+            color: #10b981;
+            border: 2px solid #10b981;
+            box-shadow: 0 0 0 1.5px rgba(16, 185, 129, 0.18);
+        }
+
+        .status-inactive {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            border: 2px solid #ef4444;
+            box-shadow: 0 0 0 1.5px rgba(239, 68, 68, 0.18);
+        }
+
+        /* 输入框美化 */
+        .form-select,
+        .form-control {
+            border-radius: 8px;
+            border: 1.5px solid var(--border-color);
+            background: var(--card-bg);
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .form-select:focus,
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+        }
+
+        /* 时间轴美化 */
+        .timeline-item {
+            border-left: 4px solid var(--primary-color);
+            background: rgba(59, 130, 246, 0.04);
+        }
+
+        [data-theme="dark"] .timeline-item {
+            background: rgba(59, 130, 246, 0.10);
+        }
+
+        /* 图表容器美化 */
+        .chart-container {
+            background: rgba(59, 130, 246, 0.04);
+        }
+
+        [data-theme="dark"] .chart-container {
+            background: rgba(59, 130, 246, 0.10);
+        }
+
+        [data-theme="dark"] .table,
+        [data-theme="dark"] .table th,
+        [data-theme="dark"] .table td {
+            background-color: #1e293b !important;
+            /* 深色卡片背景 */
+            color: #f8fafc !important;
+            /* 浅色文字 */
+            border-color: #334155 !important;
+            /* 深色边框 */
+        }
+
+        [data-theme="dark"] .table-hover tbody tr:hover {
+            background-color: #273449 !important;
+            /* 悬停高亮 */
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-robot me-2"></i>
+                AIP DEX Trading Bot Dashboard
+            </a>
+            <div class="navbar-nav me-auto">
+                <!-- Removed duplicate chat link -->
+            </div>
+            <div class="navbar-nav ms-auto align-items-center">
+                <span class="navbar-text me-4">
+                    <i class="fas fa-clock me-2"></i>
+                    <span id="current-time" class="fw-medium"></span>
+                </span>
+                <div class="dropdown me-3">
+                    <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button"
+                        data-bs-toggle="dropdown">
+                        <i class="fas fa-cog me-1"></i>
+                        Auto Refresh
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-dark">
+                        <li><a class="dropdown-item" href="#" onclick="changeRefreshInterval(10)">10 seconds</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="changeRefreshInterval(30)">30 seconds</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="changeRefreshInterval(60)">1 minute</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="changeRefreshInterval(300)">5 minutes</a></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item" href="#" onclick="stopAutoRefresh()">Stop Auto Refresh</a></li>
+                    </ul>
+                </div>
+                <button id="theme-toggle" class="btn btn-outline-secondary btn-sm me-2" onclick="toggleTheme()"
+                    title="Toggle theme">
+                    <i class="fas fa-sun" id="theme-icon"></i>
+                </button>
+                <a href="/chat" class="btn btn-primary btn-sm">
+                    <i class="fas fa-comments me-1"></i>
+                    Chat
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <!-- System Overview -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chart-line me-2"></i>
+                            System Overview
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row" id="system-stats">
+                            <div class="col-md-2">
+                                <div class="stats-card text-center p-3">
+                                    <h3 class="text-primary" id="total-bots">-</h3>
+                                    <p class="text-secondary mb-0">Total Bots</p>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="stats-card text-center p-3">
+                                    <h3 class="text-success" id="active-bots">-</h3>
+                                    <p class="text-secondary mb-0">Active Bots</p>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="stats-card text-center p-3">
+                                    <h3 class="text-warning" id="total-trades-24h">-</h3>
+                                    <p class="text-secondary mb-0">Trades (24h)</p>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="stats-card text-center p-3">
+                                    <h3 class="text-info" id="total-volume-24h">-</h3>
+                                    <p class="text-secondary mb-0">Volume (24h)</p>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="stats-card text-center p-3">
+                                    <h3 class="text-success" id="today-profit">-</h3>
+                                    <p class="text-secondary mb-0">Today's Profit</p>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="stats-card text-center p-3">
+                                    <h3 class="text-primary" id="total-assets">-</h3>
+                                    <p class="text-secondary mb-0">Total Assets</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trading Bots List -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-robot me-2"></i>
+                            Trading Bots
+                        </h5>
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-outline-primary btn-sm"
+                                onclick="filterBots('all')">All</button>
+                            <button type="button" class="btn btn-outline-success btn-sm"
+                                onclick="filterBots('active')">Active</button>
+                            <button type="button" class="btn btn-outline-warning btn-sm"
+                                onclick="filterBots('bsc')">BSC</button>
+                            <button type="button" class="btn btn-outline-info btn-sm"
+                                onclick="filterBots('solana')">Solana</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row" id="bots-container">
+                            <!-- Bots will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Transactions -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-history me-2"></i>
+                            Recent Transactions (24h)
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Bot</th>
+                                        <th>Type</th>
+                                        <th>Token</th>
+                                        <th>Amount</th>
+                                        <th>Token Amount</th>
+                                        <th>Price</th>
+                                        <th>P&L</th>
+                                        <th>Status</th>
+                                        <th>Time</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recent-transactions">
+                                    <!-- Transactions will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bot Detail Modal -->
+    <div class="modal fade" id="botDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-robot me-2"></i>
+                        <span id="modal-bot-name">Bot Details</span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <!-- Bot Info -->
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-header">
+                                    <h6 class="mb-0">Bot Information</h6>
+                                </div>
+                                <div class="card-body" id="bot-info">
+                                    <!-- Bot info will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Performance Stats -->
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-header">
+                                    <h6 class="mb-0">Performance Statistics</h6>
+                                </div>
+                                <div class="card-body" id="performance-stats">
+                                    <!-- Performance stats will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Revenue Chart -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0">Revenue Chart (Last 7 Days)</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-container">
+                                        <canvas id="revenueChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Current Positions -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0">Current Positions</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>Token</th>
+                                                    <th>Quantity</th>
+                                                    <th>Avg Cost</th>
+                                                    <th>Current Value</th>
+                                                    <th>Unrealized P&L</th>
+                                                    <th>P&L %</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="current-positions">
+                                                <!-- Positions will be loaded here -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Transaction History -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0">Transaction History</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="timeline" id="transaction-timeline">
+                                        <!-- Transaction timeline will be loaded here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- LLM Decisions -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-brain me-2"></i>
+                                        LLM Decision History
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="timeline" id="llm-decisions">
+                                        <!-- LLM decisions will be loaded here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Refresh Button -->
+    <button class="refresh-btn" onclick="refreshData()" title="Refresh Data">
+        <i class="fas fa-sync-alt"></i>
+    </button>
+
+    <!-- Scripts -->
+    <!-- Bootstrap Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
+
+    <script>
+        // Theme management
+        function getTheme() {
+            return localStorage.getItem('theme') || 'light';
+        }
+
+        function setTheme(theme) {
+            localStorage.setItem('theme', theme);
+            document.documentElement.setAttribute('data-theme', theme);
+            updateThemeIcon(theme);
+        }
+
+        function updateThemeIcon(theme) {
+            const icon = document.getElementById('theme-icon');
+            if (icon) {
+                icon.className = theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+            }
+        }
+
+        function toggleTheme() {
+            const currentTheme = getTheme();
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            setTheme(newTheme);
+
+            // Update chart colors if chart exists
+            if (window.dashboard && window.dashboard.revenueChart) {
+                updateChartTheme(newTheme);
+            }
+        }
+
+        function updateChartTheme(theme) {
+            if (window.dashboard && window.dashboard.revenueChart) {
+                const chart = window.dashboard.revenueChart;
+                const isDark = theme === 'dark';
+
+                // Update chart colors
+                chart.options.plugins.legend.labels.color = isDark ? '#f9fafb' : '#1e293b';
+                chart.options.scales.x.ticks.color = isDark ? '#d1d5db' : '#64748b';
+                chart.options.scales.y.ticks.color = isDark ? '#d1d5db' : '#64748b';
+                chart.options.scales.x.grid.color = isDark ? '#4b5563' : '#e2e8f0';
+                chart.options.scales.y.grid.color = isDark ? '#4b5563' : '#e2e8f0';
+
+                chart.update();
+            }
+        }
+
+        // Auto-detect system theme preference
+        function detectSystemTheme() {
+            if (localStorage.getItem('theme')) {
+                return; // User has already set a preference
+            }
+
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                setTheme('dark');
+            } else {
+                setTheme('light');
+            }
+        }
+
+        // Initialize theme on page load
+        document.addEventListener('DOMContentLoaded', function () {
+            detectSystemTheme();
+            setTheme(getTheme());
+        });
+
+        // Listen for system theme changes
+        if (window.matchMedia) {
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function (e) {
+                if (!localStorage.getItem('theme')) {
+                    setTheme(e.matches ? 'dark' : 'light');
+                }
+            });
+        }
+
+        // Ensure Chart.js is loaded before initializing dashboard
+        window.addEventListener('load', function () {
+            if (typeof Chart === 'undefined') {
+                console.error('Chart.js failed to load');
+            } else {
+                console.log('Chart.js loaded successfully');
+            }
+        });
+    </script>
+    <script src="/static/js/dashboard.js"></script>
+</body>
+
+</html>

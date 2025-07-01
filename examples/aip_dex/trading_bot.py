@@ -24,7 +24,7 @@ import time
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from sqlalchemy.orm import Session
-from models.database import get_db, TradingBot, init_database
+from models.database import get_db, TradingBot, LLMDecision, init_database
 from services.trading_service import TradingService
 from services.token_service import TokenService
 from llm.trading_analyzer import TradingDecisionAnalyzer
@@ -296,6 +296,10 @@ class AIPTradingBot:
             analysis_result = await self.trading_analyzer.analyze_sell_decisions(
                 positions_data, bot_config
             )
+            
+            # Save LLM decision to database
+            await self._save_llm_decision(db, analysis_result, "sell_analysis", "phase_1_sell")
+            
             return analysis_result
         except Exception as e:
             print(f"❌ Error in sell analysis: {e}")
@@ -342,6 +346,10 @@ class AIPTradingBot:
             analysis_result = await self.trading_analyzer.analyze_buy_decisions(
                 available_tokens, bot_status, bot_config
             )
+            
+            # Save LLM decision to database
+            await self._save_llm_decision(db, analysis_result, "buy_analysis", "phase_2_buy")
+            
             return analysis_result
         except Exception as e:
             print(f"❌ Error in buy analysis: {e}")
@@ -432,6 +440,72 @@ class AIPTradingBot:
                 print(f"   ❌ Buy failed for {token_symbol}")
         except Exception as e:
             print(f"   ❌ Error executing buy: {e}")
+    
+    async def _save_llm_decision(self, db: Session, analysis_result: Dict[str, Any], decision_type: str, decision_phase: str):
+        """Save LLM decision to database"""
+        try:
+            # Extract decision data
+            llm_response = analysis_result.get("llm_response", "")
+            reasoning = analysis_result.get("reasoning", "")
+            confidence_score = analysis_result.get("confidence_score", 0)
+            
+            # Extract recommended action and token
+            recommended_action = None
+            recommended_token_id = None
+            recommended_amount = None
+            recommended_percentage = None
+            
+            if decision_type == "sell_analysis":
+                decisions = analysis_result.get("decisions", [])
+                if decisions:
+                    # For sell analysis, we might have multiple decisions
+                    # For now, just save the first one
+                    first_decision = decisions[0]
+                    recommended_action = first_decision.get("action")
+                    recommended_percentage = first_decision.get("sell_percentage")
+            elif decision_type == "buy_analysis":
+                recommended_action = analysis_result.get("decision")
+                selected_token = analysis_result.get("selected_token", {})
+                if selected_token:
+                    # Get token ID from symbol
+                    from models.database import Token
+                    token = db.query(Token).filter(Token.symbol == selected_token.get("symbol")).first()
+                    if token:
+                        recommended_token_id = token.id
+                recommended_amount = analysis_result.get("buy_amount_usd")
+            
+            # Create LLM decision record
+            llm_decision = LLMDecision(
+                bot_id=self.bot_id,
+                decision_type=decision_type,
+                decision_phase=decision_phase,
+                input_data=analysis_result.get("input_data", {}),
+                prompt_template="",  # Could be enhanced to save actual prompt
+                llm_response=llm_response,
+                reasoning=reasoning,
+                confidence_score=confidence_score,
+                recommended_action=recommended_action,
+                recommended_token_id=recommended_token_id,
+                recommended_amount=recommended_amount,
+                recommended_percentage=recommended_percentage,
+                expected_return_percentage=analysis_result.get("expected_return", 0),
+                risk_assessment=analysis_result.get("risk_assessment", "medium"),
+                market_sentiment=analysis_result.get("market_sentiment", "neutral"),
+                technical_indicators=analysis_result.get("technical_indicators", {}),
+                fundamental_analysis=analysis_result.get("fundamental_analysis", {}),
+                was_executed=False,  # Will be updated when decision is executed
+                created_at=datetime.now(timezone.utc)
+            )
+            
+            db.add(llm_decision)
+            db.commit()
+            db.refresh(llm_decision)
+            
+            print(f"   💾 Saved LLM decision: {decision_type} - {decision_phase}")
+            
+        except Exception as e:
+            print(f"   ❌ Error saving LLM decision: {e}")
+            db.rollback()
     
     async def _print_cycle_summary(self, db: Session):
         """Print detailed cycle summary including profits and positions"""

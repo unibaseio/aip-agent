@@ -42,7 +42,7 @@ class TradingBotCreate(BaseModel):
     initial_balance_usd: Decimal = Field(..., gt=0, description="初始余额，最小1000")
     
     # Strategy configuration
-    strategy_type: Literal["conservative", "moderate", "aggressive", "momentum", "mean_reversion"]
+    strategy_type: Literal["conservative", "moderate", "aggressive", "momentum", "mean_reversion", "user_defined"]
     max_position_size: Optional[Decimal] = Field(10.0, ge=1, le=100)
     stop_loss_percentage: Optional[Decimal] = Field(5.0, ge=0, le=50)
     take_profit_percentage: Optional[Decimal] = Field(15.0, ge=1, le=200)
@@ -126,6 +126,7 @@ class TradingBotSummary(BaseSchema):
     bot_name: str
     account_address: str
     chain: str
+    strategy_type: str
     total_assets_usd: Decimal
     total_profit_usd: Decimal
     total_profit_percentage: Decimal
@@ -176,6 +177,7 @@ class TransactionResponse(BaseSchema):
     status: str
     token_symbol: str
     token_name: str
+    bot_name: Optional[str] = None  # Added for display purposes
     amount_usd: Optional[Decimal]
     token_amount: Optional[Decimal]
     price_usd: Decimal
@@ -316,6 +318,8 @@ class SystemStatus(BaseModel):
     active_bots: int
     total_trades_24h: int
     total_volume_24h_usd: Decimal
+    today_profit_usd: Decimal
+    total_assets_usd: Decimal
     system_uptime: str
     database_status: str
     api_status: str

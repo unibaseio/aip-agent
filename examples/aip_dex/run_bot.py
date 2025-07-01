@@ -29,11 +29,11 @@ async def main():
     
     # Create a simple configuration
     config = {
-        "bot_name": "Test Trading Bot1",
-        "account_address": "0x3234567890abcdef1234567890abcdef12345678",
+        "bot_name": "Test Trading Bot4",
+        "account_address": "0x4234567890abcdef1234567890abcdef12345678",
         "chain": "bsc",
         "initial_balance_usd": 1000.0,
-        "strategy_type": "conservative",
+        "strategy_type": "aggressive",
         "polling_interval_hours": 0.1,
         "min_trade_amount_usd": 10.0,
         "is_active": True
