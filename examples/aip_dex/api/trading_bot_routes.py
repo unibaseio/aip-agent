@@ -4,7 +4,7 @@ from typing import List, Optional
 from datetime import datetime, timedelta
 from decimal import Decimal
 
-from models.database import get_db, TradingBot, Position, Transaction, RevenueSnapshot, LLMDecision
+from models.database import TokenMetric, get_db, TradingBot, Position, Transaction, RevenueSnapshot, LLMDecision
 from api.schemas import (
     TradingBotResponse, TradingBotSummary, PositionResponse, 
     TransactionResponse, RevenueSnapshot as RevenueSnapshotSchema,
@@ -88,6 +88,10 @@ async def get_bot_positions(bot_id: str, db: Session = Depends(get_db)):
         for pos in positions:
             # Get token info
             token = pos.token
+
+            # get token metric
+            token_metric = db.query(TokenMetric).filter(TokenMetric.token_id == token.id).first()
+
             result.append(PositionResponse(
                 id=pos.id,
                 token_symbol=token.symbol,
@@ -95,7 +99,7 @@ async def get_bot_positions(bot_id: str, db: Session = Depends(get_db)):
                 quantity=pos.quantity,
                 average_cost_usd=pos.average_cost_usd,
                 total_cost_usd=pos.total_cost_usd,
-                current_price_usd=pos.current_price_usd,
+                current_price_usd=token_metric.weighted_price_usd,
                 current_value_usd=pos.current_value_usd,
                 unrealized_pnl_usd=pos.unrealized_pnl_usd,
                 unrealized_pnl_percentage=pos.unrealized_pnl_percentage,
