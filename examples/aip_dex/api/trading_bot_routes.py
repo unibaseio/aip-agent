@@ -79,10 +79,13 @@ async def get_bot_details(bot_id: str, db: Session = Depends(get_db)):
 async def get_bot_positions(bot_id: str, db: Session = Depends(get_db)):
     """Get current positions for a specific bot"""
     try:
+        print(f"🔍 API: Getting positions for bot {bot_id}")
         positions = db.query(Position).filter(
             Position.bot_id == bot_id,
             Position.is_active == True
         ).all()
+        
+        print(f"📊 API: Found {len(positions)} active positions")
         
         result = []
         for pos in positions:
@@ -110,6 +113,7 @@ async def get_bot_positions(bot_id: str, db: Session = Depends(get_db)):
                 updated_at=pos.updated_at
             ))
         
+        print(f"✅ API: Returning {len(result)} positions")
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

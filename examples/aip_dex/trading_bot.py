@@ -257,8 +257,18 @@ class AIPTradingBot:
     async def _update_positions_with_db(self, db: Session):
         try:
             positions = db.query(Position).filter(Position.bot_id == self.bot_id).all()
+            print(f"🔄 Updating {len(positions)} positions for bot {self.bot_id}")
+            updated_count = 0
             for pos in positions:
-                await self.trading_service._update_position_current_value(db, pos)
+                print(f"   📊 Updating position: {pos.token.symbol if pos.token else 'Unknown'} (ID: {pos.id})")
+                success = await self.trading_service._update_position_current_value(db, pos)
+                if success:
+                    updated_count += 1
+            
+            # Commit the transaction after updating all positions
+            if updated_count > 0:
+                db.commit()
+                print(f"   💾 Committed position updates for {updated_count} positions")
         except Exception as e:
             print(f"❌ Error in updating positions: {e}")
 
@@ -752,6 +762,7 @@ class AIPTradingBot:
             ).all()
             
             if not positions:
+                print(f"📝 No active positions found for bot {self.bot_id}")
                 return
             
             print(f"📝 Creating position history for {len(positions)} active positions")
@@ -760,13 +771,22 @@ class AIPTradingBot:
             success_count = 0
             for position in positions:
                 try:
+                    print(f"   📊 Creating history for {position.token.symbol if position.token else 'Unknown'} (ID: {position.id})")
                     success = await self.trading_service._create_position_history(
                         db, position, "periodic", None
                     )
                     if success:
                         success_count += 1
+                        print(f"   ✅ History created successfully")
+                    else:
+                        print(f"   ❌ Failed to create history")
                 except Exception as e:
                     print(f"   ❌ Error creating history for {position.token.symbol if position.token else 'Unknown'}: {e}")
+            
+            # Commit the transaction after creating all position history
+            if success_count > 0:
+                db.commit()
+                print(f"   💾 Committed position history transaction")
             
             print(f"   ✅ Position history created for {success_count}/{len(positions)} positions")
             

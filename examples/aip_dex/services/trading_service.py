@@ -531,12 +531,12 @@ class TradingService:
             position.unrealized_pnl_usd = unrealized_pnl
             position.unrealized_pnl_percentage = unrealized_pnl_percentage
             position.updated_at = datetime.now(timezone.utc)
-            db.commit()
-            db.refresh(position)
+            # Don't commit here - let the calling method handle the transaction
+            db.flush()  # Flush to ensure changes are applied
             return True
         except Exception as e:
             print(f"Error updating position current value: {e}")
-            db.rollback()
+            # Don't rollback here - let the calling method handle rollback
             return False
     
     async def calculate_position_expected_return(self, db: Session, position: Position, sell_percentage: float, current_price: float) -> Dict[str, Any]:
@@ -647,20 +647,36 @@ class TradingService:
                 db, bot_id, token_id, token_quantity, price_decimal, total_cost_usd
             )
             if position:
+                print(f"🔗 Linking position {position.id} to transaction")
                 transaction.position_id = position.id
                 transaction.position_before = Decimal("0") if not position else position.quantity - token_quantity
                 transaction.position_after = position.quantity
                 transaction.avg_cost_before = Decimal("0")
                 transaction.avg_cost_after = position.average_cost_usd
+            else:
+                print(f"❌ Failed to create/update position for token {token_id}")
             bot.total_assets_usd = bot.current_balance_usd + self._calculate_total_position_value(db, bot_id)
             db.add(transaction)
+            
+            # Create position history within the same transaction
+            if position:
+                await self._create_position_history(db, position, "trade_buy", transaction.id)
+            
+            # Commit everything together
             db.commit()
             db.refresh(transaction)
             db.refresh(bot)
-
             if position:
-                await self._create_position_history(db, position, "trade_buy", transaction.id)
+                db.refresh(position)
+            
             print(f"✓ Executed buy order: {amount_usd} USD for {float(token_quantity)} tokens at ${current_price}")
+            
+            # Verify position was created/updated
+            if position:
+                print(f"✅ Position verified: ID={position.id}, Quantity={position.quantity}, Active={position.is_active}")
+            else:
+                print(f"❌ No position created/updated")
+            
             return transaction
         except Exception as e:
             print(f"Error executing buy order: {e}")
@@ -728,13 +744,7 @@ class TradingService:
                 executed_at=datetime.now(timezone.utc)
             )
 
-            # save to database
-            db.add(transaction)
-            db.commit()
-            db.refresh(transaction)
-            db.refresh(position)
-
-            # update bot total assets, depends on positions
+            # Update bot total assets, depends on positions
             bot.current_balance_usd += net_proceeds_usd
             bot.total_trades += 1
             bot.last_activity_at = datetime.now(timezone.utc)
@@ -743,10 +753,19 @@ class TradingService:
                 bot.profitable_trades += 1
             bot.total_assets_usd = bot.current_balance_usd + self._calculate_total_position_value(db, bot_id)
             bot.max_drawdown_percentage = max(bot.max_drawdown_percentage or 0, abs(bot.total_assets_usd - bot.initial_balance_usd) / bot.initial_balance_usd)
-            db.commit()
-            db.refresh(bot)
-
+            
+            # Add transaction to database
+            db.add(transaction)
+            
+            # Create position history within the same transaction
             await self._create_position_history(db, position, "trade_sell", transaction.id)
+            
+            # Commit everything together
+            db.commit()
+            db.refresh(transaction)
+            db.refresh(position)
+            db.refresh(bot)
+            
             print(f"✓ Executed sell order: {sell_percentage}% of position at ${current_price}")
             return transaction
         except Exception as e:
@@ -775,6 +794,7 @@ class TradingService:
                                            total_cost: Decimal) -> Optional[Position]:
         """Create new position or update existing position for buy order"""
         try:
+            print(f"🔍 Checking for existing position: bot_id={bot_id}, token_id={token_id}")
             # Check if position already exists
             existing_position = db.query(Position).filter(
                 Position.bot_id == bot_id,
@@ -783,6 +803,7 @@ class TradingService:
             ).first()
             
             if existing_position:
+                print(f"📝 Updating existing position: {existing_position.id}")
                 # Update existing position with new average cost
                 old_quantity = existing_position.quantity
                 old_total_cost = existing_position.total_cost_usd
@@ -820,9 +841,8 @@ class TradingService:
                 existing_position.total_cost_usd = new_total_cost
                 existing_position.updated_at = datetime.now(timezone.utc)
                 
-                # 保存更改到数据库
-                db.commit()
-                db.refresh(existing_position)
+                # Don't commit here - let the calling method handle the transaction
+                db.flush()  # Flush to get updated values but don't commit
                 
                 print(f"📊 Position updated: {existing_position.token.symbol if existing_position.token else 'Unknown'}")
                 print(f"   Old quantity: {old_quantity}, New quantity: {new_quantity}")
@@ -831,6 +851,7 @@ class TradingService:
                 
                 return existing_position
             else:
+                print(f"🆕 Creating new position for token {token_id}")
                 # Create new position
                 # For new positions, the average cost should be the actual token price
                 # Trading fees are included in total_cost_usd but not in average_cost_usd
@@ -847,13 +868,10 @@ class TradingService:
                 )
                 
                 db.add(position)
-                db.flush()  # To get the ID
-                
-                # Save new position to database
-                db.commit()
-                db.refresh(position)
+                db.flush()  # To get the ID but don't commit yet
                 
                 print(f"📊 New position created: {position.token.symbol if position.token else 'Unknown'}")
+                print(f"   Position ID: {position.id}")
                 print(f"   Quantity: {quantity}")
                 print(f"   Token Price: ${price:.8f}")
                 print(f"   Average Cost: ${price:.8f}")
@@ -863,7 +881,7 @@ class TradingService:
                 
         except Exception as e:
             print(f"Error creating/updating position: {e}")
-            db.rollback()
+            # Don't rollback here - let the calling method handle rollback
             return None
     
     def _calculate_total_position_value(self, db: Session, bot_id: str) -> Decimal:
@@ -891,6 +909,7 @@ class TradingService:
                                      trigger_event: str, transaction_id: Optional[str] = None) -> bool:
         """Create position history record"""
         try:
+            print(f"📝 Creating position history: position_id={position.id}, trigger={trigger_event}")
             history = PositionHistory(
                 position_id=position.id,
                 bot_id=position.bot_id,
@@ -910,13 +929,14 @@ class TradingService:
             )
             
             db.add(history)
-            db.commit()  # Save position history to database
-            db.refresh(history)
+            # Don't commit here - let the calling method handle the transaction
+            db.flush()  # Flush to ensure the history is added to the session
+            print(f"✅ Position history created successfully")
             return True
             
         except Exception as e:
             print(f"Error creating position history: {e}")
-            db.rollback()
+            # Don't rollback here - let the calling method handle rollback
             return False
     
     async def _create_revenue_snapshot(self, db: Session, bot_id: str, 
@@ -963,10 +983,11 @@ class TradingService:
             )
             
             db.add(snapshot)
-            db.commit()
+            # Don't commit here - let the calling method handle the transaction
+            db.flush()  # Flush to ensure the snapshot is added to the session
             return True
             
         except Exception as e:
             print(f"Error creating revenue snapshot: {e}")
-            db.rollback()
+            # Don't rollback here - let the calling method handle rollback
             return False 
