@@ -667,6 +667,8 @@ class TradingService:
     async def execute_sell_order(self, db: Session, bot_id: str, position_id: str, sell_percentage: float, current_price: float, llm_decision_id: Optional[str] = None) -> Optional[Transaction]:
         """Execute virtual sell order"""
         try:
+            from decimal import Decimal
+            
             position = db.query(Position).filter(
                 Position.id == position_id,
                 Position.bot_id == bot_id,
@@ -675,21 +677,26 @@ class TradingService:
             if not position:
                 return None
             
-            sell_quantity = float(position.quantity) * (sell_percentage / 100)
-            sell_amount_usd = sell_quantity * current_price
+            # Convert all inputs to Decimal for precise calculations
+            sell_percentage_decimal = Decimal(str(sell_percentage))
+            current_price_decimal = Decimal(str(current_price))
+            
+            # Calculate sell quantity using Decimal arithmetic
+            sell_quantity = position.quantity * (sell_percentage_decimal / Decimal('100'))
+            sell_amount_usd = sell_quantity * current_price_decimal
             trading_fee_usd = sell_amount_usd * (Decimal(str(self._trading_fee_percentage)) / Decimal('100'))
             total_cost_usd = Decimal(str(self._gas_cost_usd)) + trading_fee_usd
             net_proceeds_usd = sell_amount_usd - total_cost_usd
-            cost_basis = sell_quantity * float(position.average_cost_usd)
+            cost_basis = sell_quantity * position.average_cost_usd
             net_profit_usd = net_proceeds_usd - cost_basis
             bot = db.query(TradingBot).filter(TradingBot.id == bot_id).first()
             if not bot:
                 return None
-            bot.current_balance_usd += Decimal(str(net_proceeds_usd))
+            bot.current_balance_usd += net_proceeds_usd
             bot.total_trades += 1
             bot.last_activity_at = datetime.now(timezone.utc)
             # Calculate remaining quantity and handle precision issues
-            remaining_quantity = position.quantity - Decimal(str(sell_quantity))
+            remaining_quantity = position.quantity - sell_quantity
             
             # Handle floating point precision issues - if remaining quantity is very small, treat as zero
             if remaining_quantity <= Decimal("0.000000000000001"):  # Very small threshold
@@ -700,30 +707,7 @@ class TradingService:
                 position.is_active = False
             else:
                 position.quantity = remaining_quantity
-                position.total_cost_usd -= Decimal(str(cost_basis))
-                
-                # Ensure average cost is positive and reasonable
-                if position.quantity > 0:
-                    new_average_cost = position.total_cost_usd / position.quantity
-                    if new_average_cost <= 0:
-                        print(f"⚠️  Warning: Calculated negative average cost: {new_average_cost}, setting to 0")
-                        position.average_cost_usd = Decimal("0")
-                        position.total_cost_usd = Decimal("0")
-                        position.quantity = Decimal("0")
-                        position.is_active = False
-                    else:
-                        position.average_cost_usd = new_average_cost
-                else:
-                    # This shouldn't happen given the above check, but just in case
-                    position.average_cost_usd = Decimal("0")
-                    position.total_cost_usd = Decimal("0")
-                    position.is_active = False
-            
-
-            # save to database
-            db.add(position)
-            db.commit()
-            db.refresh(position)
+                position.total_cost_usd -= cost_basis
 
             transaction = Transaction(
                 bot_id=bot_id,
@@ -731,21 +715,28 @@ class TradingService:
                 llm_decision_id=llm_decision_id,
                 transaction_type="sell",
                 status="executed",
-                amount_usd=Decimal(str(sell_amount_usd)),
-                token_amount=Decimal(str(sell_quantity)),
-                price_usd=Decimal(str(current_price)),
+                amount_usd=sell_amount_usd,
+                token_amount=sell_quantity,
+                price_usd=current_price_decimal,
                 gas_cost_usd=Decimal(str(self._gas_cost_usd or 0)),
-                trading_fee_usd=Decimal(str(trading_fee_usd)),
-                total_cost_usd=Decimal(str(total_cost_usd)),
-                realized_pnl_usd=Decimal(str(net_profit_usd)),
-                balance_before_usd=bot.current_balance_usd - Decimal(str(net_proceeds_usd)),
+                trading_fee_usd=trading_fee_usd,
+                total_cost_usd=total_cost_usd,
+                realized_pnl_usd=net_profit_usd,
+                balance_before_usd=bot.current_balance_usd - net_proceeds_usd,
                 balance_after_usd=bot.current_balance_usd,
                 executed_at=datetime.now(timezone.utc)
             )
+
+            # update bot total assets
             bot.total_assets_usd = bot.current_balance_usd + self._calculate_total_position_value(db, bot_id)
+            
+            # save to database
             db.add(transaction)
             db.commit()
             db.refresh(transaction)
+            db.refresh(bot)
+            db.refresh(position)
+    
             await self._create_position_history(db, position, "trade_sell", transaction.id)
             print(f"✓ Executed sell order: {sell_percentage}% of position at ${current_price}")
             return transaction
