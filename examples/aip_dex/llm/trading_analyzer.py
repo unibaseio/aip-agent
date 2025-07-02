@@ -23,7 +23,24 @@ class TradingDecisionAnalyzer:
             api_key=api_key or os.getenv("OPENAI_API_KEY")
         )
     
+    def _safe_calculate_return_rate(self, financial_status: Dict[str, Any]) -> float:
+        """Safely calculate return rate from financial status"""
+        try:
+            total_profit = float(financial_status.get('total_profit_usd', 0) or 0)
+            total_assets = float(financial_status.get('total_assets_usd', 0) or 0)
+            
+            # Calculate initial investment (total_assets - total_profit)
+            initial_investment = total_assets - total_profit
+            
+            if initial_investment > 0:
+                return (total_profit / initial_investment) * 100
+            else:
+                return 0.0
+        except (ValueError, TypeError, ZeroDivisionError):
+            return 0.0
+    
     async def analyze_sell_decisions(self, positions_data: List[Dict[str, Any]], 
+                                   bot_status: Dict[str, Any],
                                    bot_config: Dict[str, Any]) -> Dict[str, Any]:
         """Phase 1: Analyze current positions for selling opportunities"""
         try:
@@ -35,7 +52,7 @@ class TradingDecisionAnalyzer:
                 }
             
             # Create comprehensive sell analysis prompt
-            prompt = self._create_sell_analysis_prompt(positions_data, bot_config)
+            prompt = self._create_sell_analysis_prompt(positions_data, bot_status, bot_config)
 
             print("sell analysis prompt: ", prompt)        
 
@@ -141,13 +158,13 @@ class TradingDecisionAnalyzer:
         
 Your task is to analyze current trading positions and provide selling recommendations.
 
-Please respond in Chinese but keep data and code parts in English."""
+"""
     
     def _get_token_screening_system_prompt(self) -> str:
         """System prompt for token screening (Stage 1)"""
         return """You are a cryptocurrency market analyst specializing in initial token screening and opportunity identification.
 
-Your task is to quickly evaluate a large list of tokens and select the top 5 most promising candidates for detailed analysis.
+Your task is to quickly evaluate a large list of tokens and select the top 10 most promising candidates for detailed analysis.
 
 SCREENING CRITERIA:
 1. Market activity (trading volume, liquidity)
@@ -167,10 +184,9 @@ RESPONSE FORMAT:
 Return only a JSON array of exactly 5 token symbols, ordered by preference:
 
 ```json
-["TOKEN1", "TOKEN2", "TOKEN3", "TOKEN4", "TOKEN5"]
+["TOKEN1", "TOKEN2", "TOKEN3", "TOKEN4", "TOKEN5", "TOKEN6", "TOKEN7", "TOKEN8", "TOKEN9", "TOKEN10"]
 ```
-
-请用中文回答，但保持数据和代码部分用英文。"""
+"""
 
     def _get_buy_analysis_system_prompt(self) -> str:
         """System prompt for buy analysis (Stage 2)"""
@@ -217,12 +233,21 @@ Always provide detailed reasoning and confidence scores (0.0-1.0).
 请用中文回答，但保持数据和代码部分用英文。"""
     
     def _create_sell_analysis_prompt(self, positions_data: List[Dict[str, Any]], 
+                                   bot_status: Dict[str, Any],
                                    bot_config: Dict[str, Any]) -> str:
         """Create detailed sell analysis prompt"""
         
-        prompt = f"""请分析以下持仓情况，提供卖出建议：
+        prompt = f"""请根据账户状态、交易策略和持仓情况，提供卖出建议，并给出详细的分析理由：
 
-## 交易机器人配置
+## 当前账户状态
+初始资金: ${bot_status.get('financial_status', {}).get('initial_balance_usd', 0):,.2f}
+可用余额: ${bot_status.get('financial_status', {}).get('current_balance_usd', 0):,.2f}
+总资产: ${bot_status.get('financial_status', {}).get('total_assets_usd', 0):,.2f}
+总收益: ${bot_status.get('financial_status', {}).get('total_profit_usd', 0):,.2f}
+收益率: {self._safe_calculate_return_rate(bot_status.get('financial_status', {})):.2f}%
+最大回撤: {float(bot_status.get('financial_status', {}).get('max_drawdown_percentage', 0) or 0):.2f}%
+
+## 交易策略配置
 策略类型: {bot_config.get('strategy_type', 'unknown')}
 止损百分比: {bot_config.get('stop_loss_percentage', 0)}%
 止盈百分比: {bot_config.get('take_profit_percentage', 0)}%
@@ -246,19 +271,19 @@ Always provide detailed reasoning and confidence scores (0.0-1.0).
 **基本信息:**
 - 代币名称: {token_info.get('name', 'Unknown')} ({token_info.get('symbol', 'Unknown')})
 - 持有数量: {position.get('quantity', 0):,.2f}
-- 平均成本: ${position.get('average_cost_usd', 0):.6f}
-- 总成本: ${position.get('total_cost_usd', 0):,.2f}
+- 平均成本: ${float(position.get('average_cost_usd', 0) or 0):.6f}
+- 总成本: ${float(position.get('total_cost_usd', 0) or 0):,.2f}
 
 **当前市场状况:**
-- 当前价格: ${current_metrics.get('weighted_price_usd', 0):.6f}
-- 当前市值: ${position.get('current_value_usd', 0):,.2f}
-- 未实现盈亏: ${position.get('unrealized_pnl_usd', 0):,.2f} ({position.get('unrealized_pnl_percentage', 0):.2f}%)
+- 当前价格: ${float(current_metrics.get('weighted_price_usd', 0) or 0):.6f}
+- 当前市值: ${float(position.get('current_value_usd', 0) or 0):,.2f}
+- 未实现盈亏: ${float(position.get('unrealized_pnl_usd', 0) or 0):,.2f} ({float(position.get('unrealized_pnl_percentage', 0) or 0):.2f}%)
 
 **市场数据:**
 - 24h交易量: ${current_metrics.get('total_volume_24h', 0):,.2f}
 - 流动性: ${current_metrics.get('total_liquidity_usd', 0):,.2f}
-- 24h价格变化: {moralis_data.get('price_changes', {}).get('24h', 0):.2f}%
-- RSI: {technical_indicators.get('rsi_14d', 50):.1f}
+- 24h价格变化: {float(moralis_data.get('price_changes', {}).get('24h', 0) or 0):.2f}%
+- RSI: {float(technical_indicators.get('rsi_14d', 50) or 50):.1f}
 - 趋势方向: {technical_indicators.get('trend_direction', 'unknown')}
 
 **不同卖出比例的预期收益率:**
@@ -268,14 +293,16 @@ Always provide detailed reasoning and confidence scores (0.0-1.0).
             for percentage in [10, 20, 30, 50, 75, 100]:
                 if str(percentage) in expected_returns:
                     ret_data = expected_returns[str(percentage)]
-                    fin_ret =  ret_data.get('financial_impact', {})
-                    prompt += f"- 卖出{percentage}%: 净收益率 {fin_ret.get('net_return_rate', 0):.2f}%, 净收益 ${fin_ret.get('net_profit_usd', 0):,.2f}\n"
+                    fin_ret = ret_data.get('financial_impact', {}) if ret_data else {}
+                    net_rate = float(fin_ret.get('net_return_rate', 0) or 0) if fin_ret else 0
+                    net_profit = float(fin_ret.get('net_profit_usd', 0) or 0) if fin_ret else 0
+                    prompt += f"- 卖出{percentage}%: 净收益率 {net_rate:.2f}%, 净收益 ${net_profit:,.2f}\n"
         
         prompt += f"""
 
 ## 分析要求
 
-请为每个持仓提供详细分析和建议，格式如下：
+请综合分析所有持仓的盈亏情况，为每个持仓提供详细分析和建议，格式如下：
 
 ```json
 {{
@@ -290,20 +317,24 @@ Always provide detailed reasoning and confidence scores (0.0-1.0).
       "expected_outcome": "预期结果说明"
     }}
   ],
-  "market_sentiment": "bullish/bearish/neutral",
-  "risk_assessment": "low/medium/high", 
+  "market_sentiment": "bullish/bearish/neutral", // 整体市场情绪
+  "risk_assessment": "low/medium/high",  // 整体风险评估
   "reasoning": "整体市场分析和决策逻辑"
 }}
 ```
 
 **关键分析要点:**
-1. 考虑交易成本对小比例卖出收益率的影响
-2. 评估当前技术指标和市场趋势
-3. 考虑风险管理和止盈止损策略
-4. 分析是否达到预设的收益率阈值
-5. 评估继续持有 vs 部分/全部卖出的风险收益比
+1. 严格遵守当前账户状态和交易策略
+2. 考虑交易成本对小比例卖出收益率的影响
+3. 评估当前技术指标和市场趋势
+4. 考虑风险管理和止盈止损策略
+5. 分析是否达到预设的收益率阈值
+6. 评估继续持有 vs 部分/全部卖出的风险收益比
+7. 考虑当前市场情绪和整体风险评估
 
 """
+
+# for test        
 #**注意:**
 #- 无论何种情况，至少选择一个代币卖出, 如果所有持仓都亏损，则选择亏损最小的代币卖出
 #"""
@@ -337,12 +368,12 @@ Always provide detailed reasoning and confidence scores (0.0-1.0).
             
             prompt += f"""
 ### {i}. {token_info.get('symbol', 'Unknown')} ({token_info.get('name', 'Unknown')})
-- 当前价格: ${current_metrics.get('weighted_price_usd', 0):.6f}
-- 市值: ${current_metrics.get('market_cap', 0):,.0f}
+- 当前价格: ${float(current_metrics.get('weighted_price_usd', 0) or 0):.6f}
+- 市值: ${float(current_metrics.get('market_cap', 0) or 0):,.0f}
 - 24h交易量: ${current_metrics.get('total_volume_24h', 0):,.0f}
 - 流动性: ${current_metrics.get('total_liquidity_usd', 0):,.0f}
-- 24h价格变化: {moralis_data.get('price_changes', {}).get('24h', 0):.2f}%
-- 1h价格变化: {moralis_data.get('price_changes', {}).get('1h', 0):.2f}%
+- 24h价格变化: {float(moralis_data.get('price_changes', {}).get('24h', 0) or 0):.2f}%
+- 1h价格变化: {float(moralis_data.get('price_changes', {}).get('1h', 0) or 0):.2f}%
 - 交易池数量: {current_metrics.get('pools_count', 0)}
 """
         
@@ -469,35 +500,35 @@ Always provide detailed reasoning and confidence scores (0.0-1.0).
 **基本信息:**
 - 名称: {token_info.get('name', 'Unknown')} ({token_info.get('symbol', 'Unknown')})
 - 链: {token_info.get('chain', 'unknown')}
-- 当前价格: ${current_metrics.get('weighted_price_usd', 0):.6f}
+- 当前价格: ${float(current_metrics.get('weighted_price_usd', 0) or 0):.6f}
 
 **市场数据:**
-- 市值: ${current_metrics.get('market_cap', 0):,.2f}
-- 24h交易量: ${current_metrics.get('total_volume_24h', 0):,.2f}
-- 流动性: ${current_metrics.get('total_liquidity_usd', 0):,.2f}
+- 市值: ${float(current_metrics.get('market_cap', 0) or 0):,.2f}
+- 24h交易量: ${float(current_metrics.get('total_volume_24h', 0) or 0):,.2f}
+- 流动性: ${float(current_metrics.get('total_liquidity_usd', 0) or 0):,.2f}
 - 交易对数量: {current_metrics.get('pools_count', 0)}
 
 **价格走势:**
-- 5分钟: {moralis_data.get('price_changes', {}).get('5m', 0):.2f}%
-- 1小时: {moralis_data.get('price_changes', {}).get('1h', 0):.2f}%
-- 6小时: {moralis_data.get('price_changes', {}).get('6h', 0):.2f}%
-- 24小时: {moralis_data.get('price_changes', {}).get('24h', 0):.2f}%
+- 5分钟: {float(moralis_data.get('price_changes', {}).get('5m', 0) or 0):.2f}%
+- 1小时: {float(moralis_data.get('price_changes', {}).get('1h', 0) or 0):.2f}%
+- 6小时: {float(moralis_data.get('price_changes', {}).get('6h', 0) or 0):.2f}%
+- 24小时: {float(moralis_data.get('price_changes', {}).get('24h', 0) or 0):.2f}%
 
 **技术指标:**
-- RSI: {technical_indicators.get('rsi_14d', 50):.1f}
+- RSI: {float(technical_indicators.get('rsi_14d', 50) or 50):.1f}
 - 趋势方向: {technical_indicators.get('trend_direction', 'unknown')}
-- 信号强度: {technical_indicators.get('signal_strength', 0):.2f}
-- 波动率: {technical_indicators.get('volatility_24h', 0):.2f}%
+- 信号强度: {float(technical_indicators.get('signal_strength', 0) or 0):.2f}
+- 波动率: {float(technical_indicators.get('volatility_24h', 0) or 0):.2f}%
 
 **交易活动:**
-- 24h买入量: ${moralis_data.get('volume_analysis', {}).get('buy_volume_24h', 0):,.2f}
-- 24h卖出量: ${moralis_data.get('volume_analysis', {}).get('sell_volume_24h', 0):,.2f}
-- 买卖比: {moralis_data.get('volume_analysis', {}).get('buy_sell_ratio', 1):.2f}
+- 24h买入量: ${float(moralis_data.get('volume_analysis', {}).get('buy_volume_24h', 0) or 0):,.2f}
+- 24h卖出量: ${float(moralis_data.get('volume_analysis', {}).get('sell_volume_24h', 0) or 0):,.2f}
+- 买卖比: {float(moralis_data.get('volume_analysis', {}).get('buy_sell_ratio', 1) or 1):.2f}
 - 活跃钱包: {moralis_data.get('trader_activity', {}).get('unique_wallets_24h', 0)}
 
 **持币者分析:**
 - 总持币者: {moralis_data.get('holder_analysis', {}).get('total_holders', 0)}
-- 24h持币者变化: {moralis_data.get('holder_analysis', {}).get('holder_change_24h_percent', 0):.2f}%
+- 24h持币者变化: {float(moralis_data.get('holder_analysis', {}).get('holder_change_24h_percent', 0) or 0):.2f}%
 - 大户集中度: {moralis_data.get('distribution', {}).get('concentration_risk', 'unknown')}
 """
         

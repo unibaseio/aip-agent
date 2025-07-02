@@ -202,21 +202,21 @@ class AIPTradingBot:
             
             # Phase 1: Sell Analysis
             print("📊 Phase 1: Analyzing current positions for selling opportunities...")
-            sell_decisions = await self._phase_1_sell_analysis(db, gas_cost_usd, bot_config)
+            sell_decisions = await self._phase_1_sell_analysis(db, bot_config)
             
             if sell_decisions.get("decisions"):
-                await self._execute_sell_decisions(db, sell_decisions["decisions"], bot_config, gas_cost_usd)
+                await self._execute_sell_decisions(db, sell_decisions["decisions"], bot_config)
             else:
                 print("   No sell actions recommended")
             
             # Phase 2: Buy Analysis  
             print("🛒 Phase 2: Analyzing market for buying opportunities...")
-            buy_decision = await self._phase_2_buy_analysis(db, gas_cost_usd, bot_config)
+            buy_decision = await self._phase_2_buy_analysis(db, bot_config)
 
             print(buy_decision)
             
             if buy_decision.get("decision") == "BUY":
-                await self._execute_buy_decision(db, buy_decision, bot_config, gas_cost_usd)
+                await self._execute_buy_decision(db, buy_decision, bot_config)
             else:
                 print("   No buy action recommended")
             
@@ -236,13 +236,17 @@ class AIPTradingBot:
         finally:
             db.close()
     
-    async def _phase_1_sell_analysis(self, db: Session, gas_cost_usd: Optional[float], bot_config: dict) -> Dict[str, Any]:
+    async def _phase_1_sell_analysis(self, db: Session, bot_config: dict) -> Dict[str, Any]:
         """Phase 1: Analyze current positions for selling"""
         try:
             # Get current positions
-            positions = await self.trading_service.get_bot_positions(db, self.bot_id)
+            bot_status = await self.trading_service.get_bot_status(db, self.bot_id)
+            if not bot_status:
+                print("   No bot status found")
+                return {"decisions": [], "message": "No bot status found"}
             
-            if not positions:
+            positions = bot_status.get("positions", [])
+            if not positions or len(positions) == 0:
                 print("   No active positions")
                 return {"decisions": [], "message": "No active positions"}
             
@@ -286,7 +290,10 @@ class AIPTradingBot:
                         
                         # Debug: Print expected return calculation
                         if percentage == 100:  # Only print for 100% to avoid spam
-                            print(f"   💰 Expected return for 100% sell: net_profit=${expected_return.get('financial_impact', {}).get('net_profit_usd', 0):.2f}, net_rate={expected_return.get('financial_impact', {}).get('net_return_rate', 0):.2f}%")
+                            financial_impact = expected_return.get('financial_impact', {}) if expected_return else {}
+                            net_profit = financial_impact.get('net_profit_usd', 0) if financial_impact else 0
+                            net_rate = financial_impact.get('net_return_rate', 0) if financial_impact else 0
+                            print(f"   💰 Expected return for 100% sell: net_profit=${float(net_profit or 0):.2f}, net_rate={float(net_rate or 0):.2f}%")
                     else:
                         print(f"   ❌ No valid price found for {token_decision_data['token_info'].get('symbol', 'Unknown')}: token_data=${current_price:.8f}, position=${position_price:.8f}")
                 position_data = {
@@ -308,7 +315,7 @@ class AIPTradingBot:
                 return {"decisions": [], "message": "No positions with valid data"}
             # 直接用bot_config
             analysis_result = await self.trading_analyzer.analyze_sell_decisions(
-                positions_data, bot_config
+                positions_data, bot_status, bot_config
             )
 
             print("sell analysis: ", analysis_result)
@@ -321,7 +328,7 @@ class AIPTradingBot:
             print(f"❌ Error in sell analysis: {e}")
             return {"decisions": [], "error": str(e)}
     
-    async def _phase_2_buy_analysis(self, db: Session, gas_cost_usd: Optional[float], bot_config: dict) -> Dict[str, Any]:
+    async def _phase_2_buy_analysis(self, db: Session, bot_config: dict) -> Dict[str, Any]:
         """Phase 2: Analyze market for buying opportunities"""
         try:
             # Get bot status
@@ -380,7 +387,7 @@ class AIPTradingBot:
             print(f"❌ Error in buy analysis: {e}")
             return {"decision": "no_buy", "error": str(e)}
     
-    async def _execute_sell_decisions(self, db: Session, decisions: List[Dict[str, Any]], bot_config: dict, gas_cost_usd: Optional[float]):
+    async def _execute_sell_decisions(self, db: Session, decisions: List[Dict[str, Any]], bot_config: dict):
         """Execute sell decisions from LLM analysis"""
         for decision in decisions:
             try:
@@ -406,7 +413,7 @@ class AIPTradingBot:
                     continue
                 transaction = await self.trading_service.execute_sell_order(
                     db, self.bot_id, target_position["id"], 
-                    sell_percentage, current_price, None, bot_config, gas_cost_usd
+                    sell_percentage, current_price, None
                 )
                 if transaction:
                     pnl = float(transaction.realized_pnl_usd or 0)
@@ -416,7 +423,7 @@ class AIPTradingBot:
             except Exception as e:
                 print(f"   ❌ Error executing sell for {decision.get('token_symbol', 'Unknown')}: {e}")
     
-    async def _execute_buy_decision(self, db: Session, decision: Dict[str, Any], bot_config: dict, gas_cost_usd: Optional[float]):
+    async def _execute_buy_decision(self, db: Session, decision: Dict[str, Any], bot_config: dict):
         """Execute buy decision from LLM analysis"""
         try:
             selected_token = decision.get("selected_token", {})

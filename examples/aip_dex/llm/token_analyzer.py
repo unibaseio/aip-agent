@@ -161,10 +161,10 @@ class TokenDecisionAnalyzer:
         Signal Strength: {technical_indicators.get('signal_strength', 'N/A')}
 
         ## Price Changes
-        5 minutes: {moralis_data.get('price_changes', {}).get('5m', 0):.2f}%
-        1 hour: {moralis_data.get('price_changes', {}).get('1h', 0):.2f}%
-        6 hours: {moralis_data.get('price_changes', {}).get('6h', 0):.2f}%
-        24 hours: {moralis_data.get('price_changes', {}).get('24h', 0):.2f}%
+        5 minutes: {float(moralis_data.get('price_changes', {}).get('5m', 0) or 0):.2f}%
+        1 hour: {float(moralis_data.get('price_changes', {}).get('1h', 0) or 0):.2f}%
+        6 hours: {float(moralis_data.get('price_changes', {}).get('6h', 0) or 0):.2f}%
+        24 hours: {float(moralis_data.get('price_changes', {}).get('24h', 0) or 0):.2f}%
 
         ## Trading Activity Analysis
         24h Buy Volume: ${moralis_data.get('volume_analysis', {}).get('buy_volume_24h', 0):,.2f}
@@ -181,14 +181,14 @@ class TokenDecisionAnalyzer:
         ## Holder Analysis
         Total Holders: {moralis_data.get('holder_analysis', {}).get('total_holders', 0)}
         24h Holder Change: {moralis_data.get('holder_analysis', {}).get('holder_change_24h', 0)}
-        24h Holder Change Percentage: {moralis_data.get('holder_analysis', {}).get('holder_change_24h_percent', 0):.2f}%
+        24h Holder Change Percentage: {float(moralis_data.get('holder_analysis', {}).get('holder_change_24h_percent', 0) or 0):.2f}%
         7d Holder Change: {moralis_data.get('holder_analysis', {}).get('holder_change_7d', 0)}
-        7d Holder Change Percentage: {moralis_data.get('holder_analysis', {}).get('holder_change_7d_percent', 0):.2f}%
+        7d Holder Change Percentage: {float(moralis_data.get('holder_analysis', {}).get('holder_change_7d_percent', 0) or 0):.2f}%
 
         ## Token Distribution Risk
         Whale Count: {moralis_data.get('distribution', {}).get('whales_count', 0)}
-        Top 10 Holders Supply Percentage: {moralis_data.get('distribution', {}).get('top10_supply_percent', 0):.2f}%
-        Top 25 Holders Supply Percentage: {moralis_data.get('distribution', {}).get('top25_supply_percent', 0):.2f}%
+        Top 10 Holders Supply Percentage: {float(moralis_data.get('distribution', {}).get('top10_supply_percent', 0) or 0):.2f}%
+        Top 25 Holders Supply Percentage: {float(moralis_data.get('distribution', {}).get('top25_supply_percent', 0) or 0):.2f}%
         Concentration Risk: {concentration_risk}
 
         ## Risk Factors
