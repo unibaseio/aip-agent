@@ -328,6 +328,7 @@ class TradingBotDashboard {
                 <td>${pos.token_symbol}</td>
                 <td>${this.formatNumber(pos.quantity)}</td>
                 <td>${this.formatUSD(pos.average_cost_usd)}</td>
+                <td>${this.formatUSD(pos.current_price_usd)}</td>
                 <td>${this.formatUSD(pos.current_value_usd)}</td>
                 <td class="${pnlClass}">${this.formatUSD(pos.unrealized_pnl_usd)}</td>
                 <td class="${pnlClass}">${pos.unrealized_pnl_percentage}%</td>
@@ -663,12 +664,56 @@ class TradingBotDashboard {
             return '$0.00';
         }
 
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        }).format(numAmount);
+        // For very small amounts, use scientific notation or show more decimals
+        if (Math.abs(numAmount) === 0) {
+            return '$0.00';
+        }
+
+        // Format with 6 significant digits
+        const formatted = this.formatSignificantDigits(numAmount, 6);
+        return '$' + formatted;
+    }
+
+    formatSignificantDigits(num, significantDigits) {
+        // Handle zero
+        if (num === 0) return '0.00';
+
+        // Get the order of magnitude
+        const magnitude = Math.floor(Math.log10(Math.abs(num)));
+
+        // Calculate decimal places needed for significant digits
+        let decimalPlaces;
+        if (magnitude >= 0) {
+            // For numbers >= 1, decimal places = significantDigits - (magnitude + 1)
+            decimalPlaces = Math.max(0, significantDigits - (magnitude + 1));
+        } else {
+            // For numbers < 1, decimal places = significantDigits + Math.abs(magnitude) - 1
+            decimalPlaces = significantDigits + Math.abs(magnitude) - 1;
+        }
+
+        // Limit maximum decimal places to avoid overly long numbers
+        decimalPlaces = Math.min(decimalPlaces, 10);
+
+        // For very large numbers, use scientific notation if needed
+        if (magnitude >= 12) {
+            return num.toExponential(significantDigits - 1);
+        }
+
+        // Format the number
+        const formatted = num.toFixed(decimalPlaces);
+
+        // Remove trailing zeros after decimal point, but keep at least 2 decimal places for currency
+        if (formatted.includes('.')) {
+            let trimmed = formatted.replace(/0+$/, '');
+            if (trimmed.endsWith('.')) {
+                trimmed += '00'; // Ensure at least 2 decimal places for currency
+            } else if (trimmed.split('.')[1].length === 1) {
+                trimmed += '0'; // Ensure at least 2 decimal places for currency
+            }
+            return trimmed;
+        }
+
+        return formatted + '.00'; // Add .00 for whole numbers
     }
 
     formatNumber(num) {

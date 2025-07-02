@@ -620,6 +620,7 @@ class AIPTradingBot:
                     token_symbol = pos.get('token_symbol', 'Unknown')
                     quantity = pos.get('quantity', 0)
                     avg_cost = pos.get('average_cost_usd', 0)
+                    current_price = pos.get('current_price_usd', 0)
                     
                     # Always calculate cost basis from quantity and average cost for accuracy
                     # The total_cost_usd field might be incorrect in the database
@@ -636,6 +637,7 @@ class AIPTradingBot:
                     print(f"      Quantity: {float(quantity):,.2f}")
                     print(f"      Avg Cost: ${float(avg_cost):.8f}")
                     print(f"      Current Value: ${position_value:,.2f} ({position_percentage:.1f}% of total)")
+                    print(f"      Current Price: ${float(current_price):,.8f}")
                     print(f"      Unrealized P&L: ${unrealized_pnl:+,.2f} ({unrealized_pnl_percentage:+.2f}%)")
                     print(f"      Cost Basis: ${position_cost:,.2f}")
                     print()
