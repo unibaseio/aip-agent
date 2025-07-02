@@ -121,6 +121,9 @@ class TokenDataScheduler:
             return stats
         
         for token in tokens:
+            # in case of rate limiting of dexscreener, we need to sleep for a bit
+            # 60 requests per minute
+            await asyncio.sleep(1)
             try:
                 logger.info(f"Updating pools for token {token.symbol}")
                 print(f"Updating pools for token {token.symbol}")
@@ -217,7 +220,7 @@ class TokenDataScheduler:
                 logger.info("Updating pools only for newly fetched tokens")
                 pool_stats = await self.update_token_pools(db, specific_tokens=new_tokens)
             
-            # Step 3: Calculate metrics and signals for all tokens in database
+            # Step 3: Retrieve Moralis stats, then calculate metrics and signals for all tokens in database
             from models.database import Token
             all_tokens = db.query(Token).filter(Token.chain == self.chain).all()
             signal_stats = await self.calculate_and_save_signals(db, all_tokens)

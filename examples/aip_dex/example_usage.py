@@ -12,7 +12,7 @@ import argparse
 import asyncio
 import sys
 from sqlalchemy.orm import Session
-from models.database import get_db, init_database
+from models.database import TokenMetric, get_db, init_database
 from services.token_service import TokenService
 
 async def example_single_token_workflow(token_symbol: str = "beeper", chain: str = "bsc"):
@@ -51,7 +51,11 @@ async def example_single_token_workflow(token_symbol: str = "beeper", chain: str
             force_update=True
         )
         print(f"Pools update result: {pools_result}")
-        
+
+        ## get token metric
+        existing_metric = db.query(TokenMetric).filter(TokenMetric.token_id == token.id).first()
+        print(f"Existing metric: {existing_metric.weighted_price_usd}")
+
         # Step 3: Update token metrics, technical indicators and signals
         print("Step 3: Updating token metrics and indicators...")
         token_result = await token_service.update_token(
@@ -59,7 +63,7 @@ async def example_single_token_workflow(token_symbol: str = "beeper", chain: str
             token_id=str(token.id),
             force_update=False
         )
-        print(f"Token update result: {token_result}")
+        print(f"Token update result: {token_result}") 
         
         # Step 4: Get comprehensive decision data
         print("Step 4: Getting decision data...")
