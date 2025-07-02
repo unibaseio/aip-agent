@@ -239,8 +239,8 @@ class TokenService:
             should_update = force_update
             
             if not should_update and token.metrics_updated_at:
-                one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
-                should_update = self._is_datetime_before(token.metrics_updated_at, one_hour_ago)
+                five_minutes_ago = datetime.now(timezone.utc) - timedelta(minutes=5)
+                should_update = self._is_datetime_before(token.metrics_updated_at, five_minutes_ago)
             else:
                 should_update = True
 
@@ -326,8 +326,8 @@ class TokenService:
             
             print(f"Token metrics updated at: {token.metrics_updated_at} {should_update}")
             if not should_update and token.metrics_updated_at:
-                one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
-                should_update = self._is_datetime_before(token.metrics_updated_at, one_hour_ago)
+                six_hours_ago = datetime.now(timezone.utc) - timedelta(hours=6)
+                should_update = self._is_datetime_before(token.metrics_updated_at, six_hours_ago)
             else:
                 should_update = True
 
