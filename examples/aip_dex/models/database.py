@@ -465,8 +465,8 @@ class TradingBot(Base):
     total_assets_usd = Column(DECIMAL(30, 18), nullable=False)     # 总资产(余额+持仓)
     
     # 交易费用配置
-    gas_fee_native = Column(DECIMAL(10, 6), default=0.001)        # Gas费用(原生代币)
-    trading_fee_percentage = Column(DECIMAL(5, 3), default=0.5)   # 交易手续费率(%)
+    gas_fee_native = Column(DECIMAL(10, 6), default=0.00003)        # Gas费用(原生代币)
+    trading_fee_percentage = Column(DECIMAL(5, 3), default=0.1)   # 交易手续费率(%)
     slippage_tolerance = Column(DECIMAL(5, 3), default=1.0)       # 滑点容忍度(%)
     
     # 策略配置

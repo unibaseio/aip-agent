@@ -97,8 +97,8 @@ uv run trading_bot.py --config bots/my_config.json
 
 | 参数 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
-| gas_fee_native | float | 0.001 | Gas费用（原生代币） |
-| trading_fee_percentage | float | 0.5 | 交易手续费率(%) |
+| gas_fee_native | float | 0.00003 | Gas费用（原生代币） |
+| trading_fee_percentage | float | 0.1 | 交易手续费率(%) |
 | slippage_tolerance | float | 1.0 | 滑点容忍度(%) |
 | min_trade_amount_usd | float | 10.0 | 最小交易金额 |
 | max_daily_trades | int | 10 | 每日最大交易次数 |

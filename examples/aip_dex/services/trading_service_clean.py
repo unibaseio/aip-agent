@@ -49,8 +49,8 @@ class TradingService:
                 total_assets_usd=Decimal(str(config["initial_balance_usd"])),
                 
                 # Trading fees
-                gas_fee_native=Decimal(str(config.get("gas_fee_native", 0.001))),
-                trading_fee_percentage=Decimal(str(config.get("trading_fee_percentage", 0.5))),
+                gas_fee_native=Decimal(str(config.get("gas_fee_native", 0.00003))),
+                trading_fee_percentage=Decimal(str(config.get("trading_fee_percentage", 0.1))),
                 slippage_tolerance=Decimal(str(config.get("slippage_tolerance", 1.0))),
                 
                 # Strategy config

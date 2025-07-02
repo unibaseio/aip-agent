@@ -24,7 +24,7 @@ import time
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from sqlalchemy.orm import Session
-from models.database import get_db, TradingBot, LLMDecision, init_database
+from models.database import Position, get_db, TradingBot, LLMDecision, init_database
 from services.trading_service import TradingService
 from services.token_service import TokenService
 from llm.trading_analyzer import TradingDecisionAnalyzer
@@ -148,10 +148,16 @@ class AIPTradingBot:
                         print(f"⏳ Next cycle in {sleep_time:.0f} seconds")
                     
                     # Sleep in small chunks to allow for graceful shutdown
+                    # Update position current value every 10 minutes
+                    refresh_position = 0
                     while sleep_time > 0 and self.is_running:
                         chunk_sleep = min(sleep_time, 10)  # Sleep max 10 seconds at a time
                         await asyncio.sleep(chunk_sleep)
+                        refresh_position += chunk_sleep
                         sleep_time -= chunk_sleep
+                        if refresh_position >= 600:
+                            await self._update_positions()
+                            refresh_position = 0
                 else:
                     print("⚠️  Trading cycle took longer than polling interval")
                 
@@ -219,6 +225,9 @@ class AIPTradingBot:
                 await self._execute_buy_decision(db, buy_decision, bot_config)
             else:
                 print("   No buy action recommended")
+
+            # Update positions current value
+            await self._update_positions_with_db(db)
             
             # Create position history for all active positions
             await self._create_cycle_position_history(db)
@@ -236,6 +245,23 @@ class AIPTradingBot:
         finally:
             db.close()
     
+    async def _update_positions(self):
+        db = next(get_db())
+        try:
+            await self._update_positions_with_db(db)
+        except Exception as e:
+            print(f"❌ Error in updating positions: {e}")
+        finally:
+            db.close()
+    
+    async def _update_positions_with_db(self, db: Session):
+        try:
+            positions = db.query(Position).filter(Position.bot_id == self.bot_id).all()
+            for pos in positions:
+                await self.trading_service._update_position_current_value(db, pos)
+        except Exception as e:
+            print(f"❌ Error in updating positions: {e}")
+
     async def _phase_1_sell_analysis(self, db: Session, bot_config: dict) -> Dict[str, Any]:
         """Phase 1: Analyze current positions for selling"""
         try:

@@ -663,7 +663,7 @@ CHECK (token_price_usd > 0)
 ```python
 # Gas费用 (USD)
 if chain == 'bsc':
-    gas_cost_usd = 0.001 * current_wbnb_price_usd
+    gas_cost_usd = 0.00003 * current_wbnb_price_usd
 elif chain == 'solana':
     gas_cost_usd = 0.001 * current_sol_price_usd
 

@@ -29,9 +29,9 @@ class TradingService:
         self.dex_screener = DexScreenerProvider()
         self._native_token_prices = {}  # Cache for native token prices
         self._price_cache_time = {}     # Cache timestamp for price freshness
-        self._gas_fee_native = 0.001
+        self._gas_fee_native = 0.00003 # bnb gas fee 0.00003 bnb
         self._gas_cost_usd = 0.5
-        self._trading_fee_percentage = 0.001
+        self._trading_fee_percentage = 0.1 # 0.1% trading fee
     
     async def get_native_token_price(self, chain: str) -> Optional[Decimal]:
         """
@@ -206,8 +206,8 @@ class TradingService:
             # Create bot with strategy defaults
             strategy_params = self._get_strategy_defaults(config.get("strategy_type", "conservative"))
             
-            self._gas_fee_native = float(config.get("gas_fee_native", 0.001))
-            self._trading_fee_percentage = float(config.get("trading_fee_percentage", 0.001))
+            self._gas_fee_native = float(config.get("gas_fee_native", 0.00003))
+            self._trading_fee_percentage = float(config.get("trading_fee_percentage", 0.1))
             
             bot = TradingBot(
                 bot_name=config["bot_name"],
@@ -220,8 +220,8 @@ class TradingService:
                 total_assets_usd=Decimal(str(config["initial_balance_usd"])),
                 
                 # Trading fees
-                gas_fee_native=Decimal(str(config.get("gas_fee_native", 0.001))),
-                trading_fee_percentage=Decimal(str(config.get("trading_fee_percentage", 0.5))),
+                gas_fee_native=Decimal(str(config.get("gas_fee_native", 0.00003))),
+                trading_fee_percentage=Decimal(str(config.get("trading_fee_percentage", 0.1))),
                 slippage_tolerance=Decimal(str(config.get("slippage_tolerance", 1.0))),
                 
                 # Strategy config
@@ -532,6 +532,7 @@ class TradingService:
             position.unrealized_pnl_percentage = unrealized_pnl_percentage
             position.updated_at = datetime.now(timezone.utc)
             db.commit()
+            db.refresh(position)
             return True
         except Exception as e:
             print(f"Error updating position current value: {e}")

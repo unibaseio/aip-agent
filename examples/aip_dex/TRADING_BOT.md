@@ -24,11 +24,11 @@ AIP DEX交易机器人是一个自动化虚拟交易系统，支持在BSC和Sola
 ### USD计价系统
 - 所有成本和价格均以USD计价
 - Trading cost composition:
-  - **Gas Fee**: 0.001 native token
-    - BSC Chain: gas_cost_usd = 0.001 × current_wbnb_price_usd
+  - **Gas Fee**: 0.00003 native token
+    - BSC Chain: gas_cost_usd = 0.00003 × current_wbnb_price_usd
     - Solana Chain: gas_cost_usd = 0.001 × current_sol_price_usd
-  - **Trading Fee**: 0.5% of transaction amount
-  - **Total Trading Cost**: gas_cost_usd + transaction_amount × 0.5%
+  - **Trading Fee**: 0.1% of transaction amount
+  - **Total Trading Cost**: gas_cost_usd + transaction_amount × 0.1%
 
 ### 交易类型
 - **虚拟交易**：模拟链上交易，记录前后状态
@@ -144,8 +144,8 @@ python trading_bot.py --config config_minutes_example.json
 - `initial_balance_usd`: 初始USD余额，≥1000.0
 
 **交易费率**：
-- `gas_fee_native`: Gas费用，默认0.001
-- `trading_fee_percentage`: 交易手续费率，默认0.5%
+- `gas_fee_native`: Gas费用，默认0.00003
+- `trading_fee_percentage`: 交易手续费率，默认0.1%
 - `slippage_tolerance`: 滑点容忍度，默认1.0%
 
 **策略参数（根据strategy_type自动设置，可覆盖）**：
@@ -259,8 +259,8 @@ python trading_bot.py --config config_minutes_example.json
   "chain": "bsc",
   "initial_balance_usd": 10000.0,
   "strategy_type": "conservative",
-  "gas_fee_native": 0.001,
-  "trading_fee_percentage": 0.5,
+  "gas_fee_native": 0.00003,
+  "trading_fee_percentage": 0.1,
   "slippage_tolerance": 1.0,
   "min_trade_amount_usd": 10.0,
   "polling_interval_hours": 1,
