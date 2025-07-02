@@ -583,14 +583,14 @@ class AIPTradingBot:
             )
             
             db.add(llm_decision)
-            db.commit()
-            db.refresh(llm_decision)
+            # Don't commit here - let the calling method handle the transaction
+            db.flush()  # Flush to ensure the decision is added to the session
             
             print(f"   💾 Saved LLM decision: {decision_type} - {decision_phase}")
             
         except Exception as e:
             print(f"   ❌ Error saving LLM decision: {e}")
-            db.rollback()
+            # Don't rollback here - let the calling method handle rollback
     
     async def _print_cycle_summary(self, db: Session):
         """Print detailed cycle summary including profits and positions"""
