@@ -655,6 +655,7 @@ class TradingService:
             db.add(transaction)
             db.commit()
             db.refresh(transaction)
+            db.refresh(bot)
             if position:
                 await self._create_position_history(db, position, "trade_buy", transaction.id)
             print(f"✓ Executed buy order: {amount_usd} USD for {float(token_quantity)} tokens at ${current_price}")
@@ -692,9 +693,7 @@ class TradingService:
             bot = db.query(TradingBot).filter(TradingBot.id == bot_id).first()
             if not bot:
                 return None
-            bot.current_balance_usd += net_proceeds_usd
-            bot.total_trades += 1
-            bot.last_activity_at = datetime.now(timezone.utc)
+
             # Calculate remaining quantity and handle precision issues
             remaining_quantity = position.quantity - sell_quantity
             
@@ -727,16 +726,24 @@ class TradingService:
                 executed_at=datetime.now(timezone.utc)
             )
 
-            # update bot total assets
-            bot.total_assets_usd = bot.current_balance_usd + self._calculate_total_position_value(db, bot_id)
-            
             # save to database
             db.add(transaction)
             db.commit()
             db.refresh(transaction)
-            db.refresh(bot)
             db.refresh(position)
-    
+
+            # update bot total assets, depends on positions
+            bot.current_balance_usd += net_proceeds_usd
+            bot.total_trades += 1
+            bot.last_activity_at = datetime.now(timezone.utc)
+            bot.total_profit_usd += net_profit_usd
+            if net_profit_usd > 0:
+                bot.profitable_trades += 1
+            bot.total_assets_usd = bot.current_balance_usd + self._calculate_total_position_value(db, bot_id)
+            bot.max_drawdown_percentage = max(bot.max_drawdown_percentage or 0, abs(bot.total_assets_usd - bot.initial_balance_usd) / bot.initial_balance_usd)
+            db.commit()
+            db.refresh(bot)
+
             await self._create_position_history(db, position, "trade_sell", transaction.id)
             print(f"✓ Executed sell order: {sell_percentage}% of position at ${current_price}")
             return transaction
