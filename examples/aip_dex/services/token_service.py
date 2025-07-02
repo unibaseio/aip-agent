@@ -777,6 +777,94 @@ class TokenService:
             db.rollback()
             return None
 
+    def _calculate_robust_weighted_price(self, pool_metrics: List[Any]) -> float:
+        """
+        计算稳健的加权价格，过滤异常值并使用更好的权重策略
+        
+        Args:
+            pool_metrics: 池子指标列表
+            
+        Returns:
+            加权平均价格
+        """
+        if not pool_metrics:
+            return 0.0
+            
+        # 提取价格和流动性数据
+        price_liquidity_data = []
+        for metric in pool_metrics:
+            price = float(metric.price_usd or 0)
+            liquidity = float(metric.liquidity_usd or 0)
+            volume_24h = float(metric.volume_24h or 0)
+            
+            # 过滤无效数据
+            if price > 0 and liquidity > 0:
+                price_liquidity_data.append({
+                    'price': price,
+                    'liquidity': liquidity,
+                    'volume_24h': volume_24h,
+                    'metric': metric
+                })
+        
+        if not price_liquidity_data:
+            return 0.0
+            
+        # 如果只有一个池子，直接返回价格
+        if len(price_liquidity_data) == 1:
+            return price_liquidity_data[0]['price']
+            
+        # 计算价格的中位数和标准差，用于异常值检测
+        prices = [data['price'] for data in price_liquidity_data]
+        prices.sort()
+        median_price = prices[len(prices) // 2]
+        
+        # 计算价格的标准差
+        mean_price = sum(prices) / len(prices)
+        variance = sum((p - mean_price) ** 2 for p in prices) / len(prices)
+        std_dev = variance ** 0.5
+        
+        # 过滤异常价格（超过2个标准差的价格）
+        threshold = 2.0  # 可以调整这个阈值
+        filtered_data = []
+        for data in price_liquidity_data:
+            price_diff = abs(data['price'] - median_price)
+            if price_diff <= threshold * std_dev:
+                filtered_data.append(data)
+        
+        # 如果没有数据通过过滤，使用原始数据
+        if not filtered_data:
+            filtered_data = price_liquidity_data
+            
+        # 计算综合权重（流动性 + 交易量）
+        total_weight = 0
+        weighted_sum = 0
+        
+        for data in filtered_data:
+            # 流动性权重（70%）
+            liquidity_weight = data['liquidity'] * 0.7
+            
+            # 交易量权重（30%），但要有最小阈值
+            volume_weight = 0
+            if data['volume_24h'] > 100:  # 最小交易量阈值
+                volume_weight = min(data['volume_24h'], 1000000) * 0.3  # 限制最大权重
+            
+            # 综合权重
+            weight = liquidity_weight + volume_weight
+            
+            if weight > 0:
+                weighted_sum += data['price'] * weight
+                total_weight += weight
+        
+        # 计算加权平均价格
+        if total_weight > 0:
+            weighted_price = weighted_sum / total_weight
+        else:
+            # 如果权重都为0，使用简单平均
+            prices = [data['price'] for data in filtered_data]
+            weighted_price = sum(prices) / len(prices)
+            
+        return weighted_price
+
     async def _calculate_token_metrics(self, db: Session, token_id: str) -> Optional[TokenMetric]:
         """Calculate aggregated token metrics from pool metrics"""
         try:
@@ -806,16 +894,10 @@ class TokenService:
             total_volume_24h = sum(float(m.volume_24h or 0) for m in pool_metrics)
             total_liquidity_usd = sum(float(m.liquidity_usd or 0) for m in pool_metrics)
             
-            # Weighted average price (by liquidity)
-            if total_liquidity_usd > 0:
-                weighted_price = sum(
-                    float(m.price_usd or 0) * float(m.liquidity_usd or 0) 
-                    for m in pool_metrics
-                ) / total_liquidity_usd
-            else:
-                weighted_price = sum(float(m.price_usd or 0) for m in pool_metrics) / len(pool_metrics)
+            # 使用改进的加权价格计算方法
+            weighted_price = self._calculate_robust_weighted_price(pool_metrics)
             
-            # Simple average price
+            # Simple average price (仅用于对比)
             avg_price = sum(float(m.price_usd or 0) for m in pool_metrics) / len(pool_metrics)
             
             # Create or update token metric
@@ -958,11 +1040,36 @@ class TokenService:
                 # Update core price and liquidity data
                 if moralis_stats.get("usd_price", 0) > 0:
                     token_metric.usd_price_moralis = Decimal(str(moralis_stats["usd_price"]))
-                    token_metric.weighted_price_usd = Decimal(str(moralis_stats["usd_price"]))
+                    # 只有在Moralis价格更可靠时才覆盖加权价格
+                    # 检查Moralis价格是否在合理范围内（与池子价格相差不超过50%）
+                    pool_weighted_price = float(token_metric.weighted_price_usd or 0)
+                    moralis_price = float(moralis_stats["usd_price"])
+                    
+                    if pool_weighted_price > 0:
+                        price_diff_ratio = abs(moralis_price - pool_weighted_price) / pool_weighted_price
+                        if price_diff_ratio <= 0.5:  # 价格差异不超过50%
+                            token_metric.weighted_price_usd = Decimal(str(moralis_stats["usd_price"]))
+                        else:
+                            print(f"Warning: Moralis price {moralis_price} differs significantly from pool price {pool_weighted_price}, keeping pool price")
+                    else:
+                        # 如果没有池子价格，使用Moralis价格
+                        token_metric.weighted_price_usd = Decimal(str(moralis_stats["usd_price"]))
                     
                 if moralis_stats.get("total_liquidity_usd", 0) > 0:
                     token_metric.total_liquidity_usd_moralis = Decimal(str(moralis_stats["total_liquidity_usd"]))
-                    token_metric.total_liquidity_usd = Decimal(str(moralis_stats["total_liquidity_usd"]))
+                    # 只有在Moralis流动性数据更可靠时才覆盖
+                    pool_liquidity = float(token_metric.total_liquidity_usd or 0)
+                    moralis_liquidity = float(moralis_stats["total_liquidity_usd"])
+                    
+                    if pool_liquidity > 0:
+                        liquidity_diff_ratio = abs(moralis_liquidity - pool_liquidity) / pool_liquidity
+                        if liquidity_diff_ratio <= 0.5:  # 流动性差异不超过50%
+                            token_metric.total_liquidity_usd = Decimal(str(moralis_stats["total_liquidity_usd"]))
+                        else:
+                            print(f"Warning: Moralis liquidity {moralis_liquidity} differs significantly from pool liquidity {pool_liquidity}, keeping pool liquidity")
+                    else:
+                        # 如果没有池子流动性数据，使用Moralis数据
+                        token_metric.total_liquidity_usd = Decimal(str(moralis_stats["total_liquidity_usd"]))
                     
                 if moralis_stats.get("total_fdv", 0) > 0:
                     token_metric.total_fdv = Decimal(str(moralis_stats["total_fdv"]))
