@@ -76,6 +76,7 @@
             border-bottom: 1px solid var(--border-color);
             box-shadow: var(--shadow);
             transition: all 0.3s ease;
+            z-index: 1040;
         }
 
         [data-theme="dark"] .navbar {
@@ -466,6 +467,7 @@
             border-radius: 12px;
             box-shadow: var(--shadow-lg);
             backdrop-filter: blur(10px);
+            z-index: 1050;
         }
 
         .dropdown-menu-dark .dropdown-item {
@@ -496,6 +498,11 @@
         .dropdown-menu-dark .dropdown-divider {
             border-color: var(--border-color);
             margin: 0.5rem 0;
+        }
+
+        /* Ensure all dropdown menus have proper z-index */
+        .dropdown-menu {
+            z-index: 1050 !important;
         }
 
         .form-select {
