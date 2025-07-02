@@ -657,6 +657,7 @@ class TradingService:
             db.commit()
             db.refresh(transaction)
             db.refresh(bot)
+
             if position:
                 await self._create_position_history(db, position, "trade_buy", transaction.id)
             print(f"✓ Executed buy order: {amount_usd} USD for {float(token_quantity)} tokens at ${current_price}")
@@ -821,6 +822,7 @@ class TradingService:
                 
                 # 保存更改到数据库
                 db.commit()
+                db.refresh(existing_position)
                 
                 print(f"📊 Position updated: {existing_position.token.symbol if existing_position.token else 'Unknown'}")
                 print(f"   Old quantity: {old_quantity}, New quantity: {new_quantity}")
@@ -849,6 +851,7 @@ class TradingService:
                 
                 # Save new position to database
                 db.commit()
+                db.refresh(position)
                 
                 print(f"📊 New position created: {position.token.symbol if position.token else 'Unknown'}")
                 print(f"   Quantity: {quantity}")
@@ -908,6 +911,7 @@ class TradingService:
             
             db.add(history)
             db.commit()  # Save position history to database
+            db.refresh(history)
             return True
             
         except Exception as e:
