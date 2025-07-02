@@ -233,7 +233,15 @@ class AIPTradingBot:
             await self._create_cycle_position_history(db)
             
             # Update revenue snapshot
-            await self.trading_service._create_revenue_snapshot(db, self.bot_id, "hourly")
+            success = await self.trading_service._create_revenue_snapshot(db, self.bot_id, "hourly")
+            if success:
+                print(f"   💾 Revenue snapshot created successfully")
+            else:
+                print(f"   ❌ Failed to create revenue snapshot")
+            
+            # Commit all changes from this cycle
+            db.commit()
+            print(f"   💾 Committed all cycle changes")
             
             # Print cycle summary report
             await self._print_cycle_summary(db)
@@ -249,8 +257,12 @@ class AIPTradingBot:
         db = next(get_db())
         try:
             await self._update_positions_with_db(db)
+            # Commit the transaction since this is called independently
+            db.commit()
+            print(f"   💾 Committed position updates")
         except Exception as e:
             print(f"❌ Error in updating positions: {e}")
+            db.rollback()
         finally:
             db.close()
     
@@ -265,10 +277,9 @@ class AIPTradingBot:
                 if success:
                     updated_count += 1
             
-            # Commit the transaction after updating all positions
+            # Don't commit here - let the calling method handle the transaction
             if updated_count > 0:
-                db.commit()
-                print(f"   💾 Committed position updates for {updated_count} positions")
+                print(f"   📊 Updated {updated_count} positions (not committed yet)")
         except Exception as e:
             print(f"❌ Error in updating positions: {e}")
 
@@ -783,10 +794,9 @@ class AIPTradingBot:
                 except Exception as e:
                     print(f"   ❌ Error creating history for {position.token.symbol if position.token else 'Unknown'}: {e}")
             
-            # Commit the transaction after creating all position history
+            # Don't commit here - let the calling method handle the transaction
             if success_count > 0:
-                db.commit()
-                print(f"   💾 Committed position history transaction")
+                print(f"   📝 Created position history for {success_count} positions (not committed yet)")
             
             print(f"   ✅ Position history created for {success_count}/{len(positions)} positions")
             
