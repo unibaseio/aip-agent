@@ -226,7 +226,7 @@ class AIPTradingBot:
             else:
                 print("   No buy action recommended")
 
-            # Update positions current value
+            # Update positions current value - 只调用一次
             await self._update_positions_with_db(db)
             
             # Create position history for all active positions
@@ -250,10 +250,12 @@ class AIPTradingBot:
             
         except Exception as e:
             print(f"❌ Error in trading cycle: {e}")
+            db.rollback()  # 添加回滚操作
         finally:
             db.close()
     
     async def _update_positions(self):
+        """Independent position update method - only use outside of trading cycle"""
         db = next(get_db())
         try:
             await self._update_positions_with_db(db)
@@ -267,6 +269,7 @@ class AIPTradingBot:
             db.close()
     
     async def _update_positions_with_db(self, db: Session):
+        """Update positions within existing database session - no commit"""
         try:
             positions = db.query(Position).filter(Position.bot_id == self.bot_id).all()
             print(f"🔄 Updating {len(positions)} positions for bot {self.bot_id}")
@@ -280,8 +283,12 @@ class AIPTradingBot:
             # Don't commit here - let the calling method handle the transaction
             if updated_count > 0:
                 print(f"   📊 Updated {updated_count} positions (not committed yet)")
+            else:
+                print(f"   📊 No positions needed updating")
         except Exception as e:
             print(f"❌ Error in updating positions: {e}")
+            # Don't rollback here - let the calling method handle rollback
+            raise  # Re-raise the exception for the calling method to handle
 
     async def _phase_1_sell_analysis(self, db: Session, bot_config: dict) -> Dict[str, Any]:
         """Phase 1: Analyze current positions for selling"""
