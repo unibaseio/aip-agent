@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from fastapi import FastAPI, Request, HTTPException, Depends, Header, Security
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 import os
 import json
@@ -205,7 +205,7 @@ async def load_user_agents():
 async def refresh_users_task():
     """Background task to periodically refresh users list"""
     while app.running:
-        await asyncio.sleep(60)
+        await asyncio.sleep(6000)
         try:
             print(f"Refreshing users list at {datetime.now()}")
             finished_users, unfinished_users = load_usernames()
@@ -344,7 +344,7 @@ async def refresh_users_task():
 async def save_users_task():
     """Background task to periodically save users tweets"""
     while app.running:
-        await asyncio.sleep(78)  # Refresh every 13 minutes
+        await asyncio.sleep(7800)  # Refresh every 13 minutes
         try:
             print(f"Saving users tweets at {datetime.now()}")
             users = list(app.users.keys())
@@ -681,6 +681,457 @@ async def chat_api(
         return {"success": True, "data": response}
     except Exception as e:
         print(f"Error in chat_api: {str(e)}")
+        print(f"Exception type: {type(e).__name__}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+def _stream_chat_base(
+    username: str,
+    message: str,
+    description: str,
+    conversation_id: str,
+    progress_config: dict = None,
+    chunking_config: dict = None
+):
+    """Base streaming chat function to reduce code duplication"""
+    
+    # Default progress configuration for basic streaming
+    if progress_config is None:
+        progress_config = {
+            "messages": [
+                "正在分析您的请求...",
+                "正在生成回复内容...",
+                "正在优化回复质量...",
+                "即将完成...",
+                "正在处理中...",
+                "请稍候...",
+                "正在准备回复...",
+                "正在整理信息..."
+            ],
+            "interval": 3.0,
+            "progress_calc": lambda elapsed: min(90, (elapsed / 150) * 90)
+        }
+    
+    # Default chunking configuration for basic streaming
+    if chunking_config is None:
+        chunking_config = {
+            "type": "character",
+            "size": 20,
+            "delay_base": 0.05,
+            "delay_per_char": 0.002
+        }
+    
+    async def generate_base_stream():
+        try:
+            start_time = time.time()
+            
+            # Send initial connection message
+            yield f"data: {json.dumps({'success': True, 'data': '', 'status': 'connecting'}, ensure_ascii=False)}\n\n"
+            
+            # Send processing started message
+            yield f"data: {json.dumps({'success': True, 'data': '', 'status': 'processing', 'message': '正在处理您的请求...'}, ensure_ascii=False)}\n\n"
+            
+            # Start processing in background
+            if username in app.agents:
+                print(f"Using user agent for {username}")
+                uagent = app.agents[username]
+                processing_task = asyncio.create_task(
+                    uagent.process_query(
+                        message,
+                        use_history=False,
+                        system_prompt=description,
+                        conversation_id=conversation_id
+                    )
+                )
+            else:
+                print(f"Using main agent")
+                processing_task = asyncio.create_task(
+                    app.agent.process_query(
+                        message,
+                        use_history=False,
+                        system_prompt=description,
+                        conversation_id=conversation_id
+                    )
+                )
+            
+            # Send progress updates during processing
+            message_index = 0
+            
+            while not processing_task.done():
+                # Check for timeout (150 seconds)
+                elapsed_time = time.time() - start_time
+                if elapsed_time > 150:
+                    # Force cancel the task
+                    processing_task.cancel()
+                    yield f"data: {json.dumps(({'success': False, 'error': '处理超时，请稍后重试', 'status': 'timeout', 'is_complete': True, 'elapsed_time': round(elapsed_time, 1)}), ensure_ascii=False)}\n\n"
+                    return
+                
+                # Get current message (cycle through the list)
+                current_message = progress_config["messages"][message_index % len(progress_config["messages"])]
+                
+                # Calculate elapsed time and progress
+                elapsed_time = time.time() - start_time
+                progress_percent = progress_config["progress_calc"](elapsed_time)
+                
+                # Send progress message
+                yield f"data: {json.dumps(({'success': True, 'data': '', 'status': 'processing', 'message': current_message, 'progress': round(progress_percent, 1), 'elapsed_time': round(elapsed_time, 1)}), ensure_ascii=False)}\n\n"
+                
+                # Wait before next message
+                await asyncio.sleep(progress_config["interval"])
+                
+                # Move to next message
+                message_index += 1
+            
+            # Wait for processing to complete
+            response = await processing_task
+            
+            # Send processing complete message
+            yield f"data: {json.dumps(({'success': True, 'data': '', 'status': 'processing_complete', 'progress': 100, 'message': '处理完成，正在发送回复...'}), ensure_ascii=False)}\n\n"
+            
+            # Stream the response based on chunking configuration
+            if chunking_config["type"] == "character":
+                # Character-based chunking
+                chunk_size = chunking_config["size"]
+                total_length = len(response)
+                
+                for i in range(0, total_length, chunk_size):
+                    chunk = response[i:i + chunk_size]
+                    progress = min(100, (i + chunk_size) / total_length * 100)
+                    
+                    data_chunk = {
+                        "success": True,
+                        "data": chunk,
+                        "status": "streaming",
+                        "progress": round(progress, 1),
+                        "is_complete": i + chunk_size >= total_length,
+                        "total_length": total_length,
+                        "current_position": i + len(chunk)
+                    }
+                    yield f"data: {json.dumps(data_chunk, ensure_ascii=False)}\n\n"
+                    
+                    # Variable delay based on chunk size and content
+                    delay = chunking_config["delay_base"] + (len(chunk) * chunking_config["delay_per_char"])
+                    await asyncio.sleep(delay)
+            
+            elif chunking_config["type"] == "word":
+                # Word-based chunking
+                words = response.split()
+                current_chunk = ""
+                chunk_count = 0
+                total_words = len(words)
+                
+                for i, word in enumerate(words):
+                    current_chunk += word + " "
+                    chunk_count += 1
+                    
+                    # Send chunk when it reaches a certain size or at sentence boundaries
+                    if (len(current_chunk) >= 30 or 
+                        word.endswith('.') or 
+                        word.endswith('!') or 
+                        word.endswith('?') or
+                        chunk_count >= 5):
+                        
+                        # Calculate streaming progress
+                        streaming_progress = min(100, (i + 1) / total_words * 100)
+                        
+                        data_chunk = {
+                            "success": True,
+                            "data": current_chunk.strip(),
+                            "status": "streaming",
+                            "chunk_number": chunk_count,
+                            "streaming_progress": round(streaming_progress, 1),
+                            "is_complete": False
+                        }
+                        yield f"data: {json.dumps(data_chunk, ensure_ascii=False)}\n\n"
+                        
+                        # Reset for next chunk
+                        current_chunk = ""
+                        chunk_count = 0
+                        
+                        # Dynamic delay based on chunk size and word length
+                        delay = 0.08 + (len(word) * 0.005)
+                        await asyncio.sleep(delay)
+                
+                # Send any remaining content
+                if current_chunk.strip():
+                    data_chunk = {
+                        "success": True,
+                        "data": current_chunk.strip(),
+                        "status": "streaming",
+                        "chunk_number": chunk_count,
+                        "streaming_progress": 100,
+                        "is_complete": False
+                    }
+                    yield f"data: {json.dumps(data_chunk, ensure_ascii=False)}\n\n"
+            
+            # Send final completion signal
+            yield f"data: {json.dumps(({'success': True, 'data': '', 'status': 'complete', 'is_complete': True}), ensure_ascii=False)}\n\n"
+            
+        except Exception as e:
+            error_data = {
+                "success": False,
+                "error": str(e),
+                "status": "error",
+                "is_complete": True
+            }
+            yield f"data: {json.dumps(error_data, ensure_ascii=False)}\n\n"
+    
+    return generate_base_stream()
+
+@app.post("/api/stream_chat")
+async def stream_chat_api(
+    request: Request,
+    token: str = Depends(validate_token),
+    data: Dict[str, Any] = Depends(validate_required_fields(['username', 'message']))
+):
+    """Stream chat with a specific profile using username"""
+    try:
+        # Log request details for debugging
+        print(f"=== Stream Chat API Request Debug ===")
+        print(f"Request URL: {request.url}")
+        print(f"Request method: {request.method}")
+        print(f"Request headers: {dict(request.headers)}")
+        print(f"Request body: {data}")
+        print(f"Bearer token: {token}")
+        
+        username = data['username']
+        prompt = data.get('prompt', "")
+        message = data['message']
+        prompt_mode = data.get('prompt_mode', "append")
+        
+        print(f"Username: {username}")
+        print(f"Message: {message}")
+        print(f"Message starts with @: {message.startswith('@')}")
+        
+        conversation_id = data.get('conversation_id', None)
+        if conversation_id is None or conversation_id == "":
+            conversation_id = membase_id + "_" + username
+
+        if username not in app.users:
+            raise HTTPException(status_code=404, detail="User profile not found")
+
+        # TODO: may change due to another task
+        switch_user(username)
+        profile = app.users[username]["profile"]
+        description = get_description(username, profile)
+        if prompt != "":
+            print(f"Prompt mode: {prompt_mode}")
+            print(f"Prompt: {prompt}")
+            
+            if prompt_mode == "replace":
+                description = prompt
+            else:
+                description = description + "\n\n" + prompt
+
+        return StreamingResponse(
+            _stream_chat_base(
+                username,
+                message,
+                description,
+                conversation_id
+            ),
+            media_type="text/plain",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "Content-Type": "text/event-stream",
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Headers": "*",
+                "Access-Control-Allow-Methods": "*",
+            }
+        )
+        
+    except Exception as e:
+        print(f"Error in stream_chat_api: {str(e)}")
+        print(f"Exception type: {type(e).__name__}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/stream_chat_smart")
+async def stream_chat_smart_api(
+    request: Request,
+    token: str = Depends(validate_token),
+    data: Dict[str, Any] = Depends(validate_required_fields(['username', 'message']))
+):
+    """Smart streaming chat with intelligent progress tracking"""
+    try:
+        # Log request details for debugging
+        print(f"=== Smart Stream Chat API Request Debug ===")
+        print(f"Request URL: {request.url}")
+        print(f"Request method: {request.method}")
+        print(f"Request headers: {dict(request.headers)}")
+        print(f"Request body: {data}")
+        print(f"Bearer token: {token}")
+        
+        username = data['username']
+        prompt = data.get('prompt', "")
+        message = data['message']
+        prompt_mode = data.get('prompt_mode', "append")
+        
+        print(f"Username: {username}")
+        print(f"Message: {message}")
+        print(f"Message starts with @: {message.startswith('@')}")
+        
+        conversation_id = data.get('conversation_id', None)
+        if conversation_id is None or conversation_id == "":
+            conversation_id = membase_id + "_" + username
+
+        if username not in app.users:
+            raise HTTPException(status_code=404, detail="User profile not found")
+
+        # TODO: may change due to another task
+        switch_user(username)
+        profile = app.users[username]["profile"]
+        description = get_description(username, profile)
+        if prompt != "":
+            print(f"Prompt mode: {prompt_mode}")
+            print(f"Prompt: {prompt}")
+            
+            if prompt_mode == "replace":
+                description = prompt
+            else:
+                description = description + "\n\n" + prompt
+
+        # Smart progress configuration
+        smart_progress_config = {
+            "messages": [
+                "正在分析用户请求...",
+                "正在检索相关信息...",
+                "正在生成回复内容...",
+                "正在优化回复质量...",
+                "正在完成最终处理...",
+                "正在处理中...",
+                "请稍候...",
+                "正在准备回复...",
+                "正在整理信息..."
+            ],
+            "interval": 2.0,  # Shorter interval for more responsive feel
+            "progress_calc": lambda elapsed: min(95, (elapsed / 150) * 95)  # More aggressive progress
+        }
+        
+        # Smart chunking configuration
+        smart_chunking_config = {
+            "type": "word",
+            "size": 30,
+            "delay_base": 0.08,
+            "delay_per_char": 0.005
+        }
+
+        return StreamingResponse(
+            _stream_chat_base(
+                username,
+                message,
+                description,
+                conversation_id,
+                smart_progress_config,
+                smart_chunking_config
+            ),
+            media_type="text/plain",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "Content-Type": "text/event-stream",
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Headers": "*",
+                "Access-Control-Allow-Methods": "*",
+            }
+        )
+        
+    except Exception as e:
+        print(f"Error in stream_chat_smart_api: {str(e)}")
+        print(f"Exception type: {type(e).__name__}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/stream_chat_advanced")
+async def stream_chat_advanced_api(
+    request: Request,
+    token: str = Depends(validate_token),
+    data: Dict[str, Any] = Depends(validate_required_fields(['username', 'message']))
+):
+    """Advanced streaming chat with real-time response generation"""
+    try:
+        # Log request details for debugging
+        print(f"=== Advanced Stream Chat API Request Debug ===")
+        print(f"Request URL: {request.url}")
+        print(f"Request method: {request.method}")
+        print(f"Request headers: {dict(request.headers)}")
+        print(f"Request body: {data}")
+        print(f"Bearer token: {token}")
+        
+        username = data['username']
+        prompt = data.get('prompt', "")
+        message = data['message']
+        prompt_mode = data.get('prompt_mode', "append")
+        
+        print(f"Username: {username}")
+        print(f"Message: {message}")
+        print(f"Message starts with @: {message.startswith('@')}")
+        
+        conversation_id = data.get('conversation_id', None)
+        if conversation_id is None or conversation_id == "":
+            conversation_id = membase_id + "_" + username
+
+        if username not in app.users:
+            raise HTTPException(status_code=404, detail="User profile not found")
+
+        # TODO: may change due to another task
+        switch_user(username)
+        profile = app.users[username]["profile"]
+        description = get_description(username, profile)
+        if prompt != "":
+            print(f"Prompt mode: {prompt_mode}")
+            print(f"Prompt: {prompt}")
+            
+            if prompt_mode == "replace":
+                description = prompt
+            else:
+                description = description + "\n\n" + prompt
+
+        # Advanced progress configuration
+        advanced_progress_config = {
+            "messages": [
+                "正在分析用户请求...",
+                "正在检索相关信息...",
+                "正在生成回复内容...",
+                "正在优化回复质量...",
+                "正在完成最终处理...",
+                "正在处理中...",
+                "请稍候...",
+                "正在准备回复...",
+                "正在整理信息..."
+            ],
+            "interval": 2.0,
+            "progress_calc": lambda elapsed: min(90, (elapsed / 150) * 90)
+        }
+        
+        # Advanced chunking configuration
+        advanced_chunking_config = {
+            "type": "word",
+            "size": 30,
+            "delay_base": 0.1,
+            "delay_per_char": 0.01
+        }
+
+        return StreamingResponse(
+            _stream_chat_base(
+                username,
+                message,
+                description,
+                conversation_id,
+                advanced_progress_config,
+                advanced_chunking_config
+            ),
+            media_type="text/plain",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "Content-Type": "text/event-stream",
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Headers": "*",
+                "Access-Control-Allow-Methods": "*",
+            }
+        )
+        
+    except Exception as e:
+        print(f"Error in stream_chat_advanced_api: {str(e)}")
         print(f"Exception type: {type(e).__name__}")
         raise HTTPException(status_code=500, detail=str(e))
 
