@@ -18,7 +18,7 @@ import uuid
 
 from models.database import (
     TradingBot, Position, PositionHistory, Transaction, 
-    LLMDecision, RevenueSnapshot, Token, get_db
+    LLMDecision, RevenueSnapshot, Token, BotOwner, TradingStrategy, get_db
 )
 from data_aggregator.dex_screener import DexScreenerProvider
 
@@ -197,19 +197,38 @@ class TradingService:
             
             if existing_bot:
                 print(f"✅ Found existing bot with account {config['account_address']}: {existing_bot.bot_name}")
-                print(f"   Chain: {existing_bot.chain}, Strategy: {existing_bot.strategy_type}")
+                print(f"   Chain: {existing_bot.chain}")
                 print(f"   Current Balance: ${float(existing_bot.current_balance_usd):,.2f}")
-                self._gas_fee_native = float(existing_bot.gas_fee_native)
-                self._trading_fee_percentage = float(existing_bot.trading_fee_percentage)
                 return existing_bot
             
-            # Create bot with strategy defaults
-            strategy_params = self._get_strategy_defaults(config.get("strategy_type", "conservative"))
+            # Get owner and strategy (optional)
+            owner_id = config.get("owner_id")
+            strategy_id = config.get("strategy_id")
             
-            self._gas_fee_native = float(config.get("gas_fee_native", 0.00003))
-            self._trading_fee_percentage = float(config.get("trading_fee_percentage", 0.1))
+            # Check if bot is configured (has both owner and strategy)
+            is_configured = bool(owner_id and strategy_id)
+            
+            if owner_id:
+                # Verify owner exists
+                owner = db.query(BotOwner).filter(BotOwner.id == owner_id).first()
+                if not owner:
+                    print(f"❌ Owner with ID {owner_id} not found")
+                    return None
+            
+            if strategy_id:
+                # Verify strategy exists
+                strategy = db.query(TradingStrategy).filter(TradingStrategy.id == strategy_id).first()
+                if not strategy:
+                    print(f"❌ Strategy with ID {strategy_id} not found")
+                    return None
+                
+                # Set service parameters from strategy
+                self._gas_fee_native = float(strategy.gas_fee_native)
+                self._trading_fee_percentage = float(strategy.trading_fee_percentage)
             
             bot = TradingBot(
+                owner_id=owner_id,
+                strategy_id=strategy_id,
                 bot_name=config["bot_name"],
                 account_address=config["account_address"],
                 chain=config["chain"],
@@ -219,28 +238,9 @@ class TradingService:
                 current_balance_usd=Decimal(str(config["initial_balance_usd"])),
                 total_assets_usd=Decimal(str(config["initial_balance_usd"])),
                 
-                # Trading fees
-                gas_fee_native=Decimal(str(config.get("gas_fee_native", 0.00003))),
-                trading_fee_percentage=Decimal(str(config.get("trading_fee_percentage", 0.1))),
-                slippage_tolerance=Decimal(str(config.get("slippage_tolerance", 1.0))),
-                
-                # Strategy config
-                strategy_type=config["strategy_type"],
-                max_position_size=Decimal(str(config.get("max_position_size", strategy_params["max_position_size"]))),
-                stop_loss_percentage=Decimal(str(config.get("stop_loss_percentage", strategy_params["stop_loss_percentage"]))),
-                take_profit_percentage=Decimal(str(config.get("take_profit_percentage", strategy_params["take_profit_percentage"]))),
-                min_profit_threshold=Decimal(str(config.get("min_profit_threshold", strategy_params["min_profit_threshold"]))),
-                
-                # Runtime config
-                min_trade_amount_usd=Decimal(str(config.get("min_trade_amount_usd", 10.0))),
-                max_daily_trades=config.get("max_daily_trades", strategy_params["max_daily_trades"]),
-                polling_interval_hours=config.get("polling_interval_hours", 1),
-                llm_confidence_threshold=Decimal(str(config.get("llm_confidence_threshold", strategy_params["llm_confidence_threshold"]))),
-                
-                # Feature flags
-                enable_stop_loss=config.get("enable_stop_loss", True),
-                enable_take_profit=config.get("enable_take_profit", True),
-                is_active=config.get("is_active", True)
+                # Bot status
+                is_active=config.get("is_active", True),
+                is_configured=is_configured
             )
             
             db.add(bot)
@@ -251,6 +251,10 @@ class TradingService:
             await self._create_revenue_snapshot(db, bot.id, "initial")
             
             print(f"✓ Created trading bot: {bot.bot_name} with ${bot.initial_balance_usd} initial balance")
+            if is_configured:
+                print(f"   Status: Configured and ready for trading")
+            else:
+                print(f"   Status: Created but not configured (needs owner and strategy)")
             return bot
             
         except Exception as e:
@@ -261,9 +265,55 @@ class TradingService:
             db.rollback()
             return None
     
+    async def configure_bot(self, db: Session, bot_id: uuid.UUID, owner_id: uuid.UUID, strategy_id: uuid.UUID) -> Optional[TradingBot]:
+        """Configure a bot with owner and strategy"""
+        try:
+            # Get bot
+            bot = db.query(TradingBot).filter(TradingBot.id == bot_id).first()
+            if not bot:
+                print(f"❌ Bot with ID {bot_id} not found")
+                return None
+            
+            # Verify owner exists
+            owner = db.query(BotOwner).filter(BotOwner.id == owner_id).first()
+            if not owner:
+                print(f"❌ Owner with ID {owner_id} not found")
+                return None
+            
+            # Verify strategy exists
+            strategy = db.query(TradingStrategy).filter(TradingStrategy.id == strategy_id).first()
+            if not strategy:
+                print(f"❌ Strategy with ID {strategy_id} not found")
+                return None
+            
+            # Update bot configuration
+            bot.owner_id = owner_id
+            bot.strategy_id = strategy_id
+            bot.is_configured = True
+            bot.updated_at = datetime.now(timezone.utc)
+            
+            # Set service parameters from strategy
+            self._gas_fee_native = float(strategy.gas_fee_native)
+            self._trading_fee_percentage = float(strategy.trading_fee_percentage)
+            
+            db.commit()
+            db.refresh(bot)
+            
+            print(f"✅ Configured bot: {bot.bot_name}")
+            print(f"   Owner: {owner.owner_name}")
+            print(f"   Strategy: {strategy.strategy_name}")
+            print(f"   Status: Ready for trading")
+            
+            return bot
+            
+        except Exception as e:
+            print(f"Error configuring bot: {e}")
+            db.rollback()
+            return None
+    
     def _validate_bot_config(self, config: Dict[str, Any]) -> bool:
         """Validate bot configuration"""
-        required_fields = ["bot_name", "account_address", "chain", "initial_balance_usd", "strategy_type"]
+        required_fields = ["bot_name", "account_address", "chain", "initial_balance_usd"]
         
         for field in required_fields:
             if field not in config:
@@ -273,12 +323,6 @@ class TradingService:
         # Validate chain
         if config["chain"] not in ["bsc", "solana"]:
             print(f"Invalid chain: {config['chain']}")
-            return False
-        
-        # Validate strategy type
-        valid_strategies = ["conservative", "moderate", "aggressive", "momentum", "mean_reversion", "user_defined"]
-        if config["strategy_type"] not in valid_strategies:
-            print(f"Invalid strategy type: {config['strategy_type']}")
             return False
         
         # Validate balance

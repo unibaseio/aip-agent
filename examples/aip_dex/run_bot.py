@@ -73,9 +73,8 @@ def get_default_config():
         "account_address": "0x4234567890abcdef1234567890abcdef12345678",
         "chain": "bsc",
         "initial_balance_usd": 1000.0,
-        "strategy_type": "aggressive",
-        "polling_interval_hours": 0.1,
-        "min_trade_amount_usd": 10.0,
+        # owner_id and strategy_id are optional - bot can be created without them
+        # and configured later
         "is_active": True
     }
 

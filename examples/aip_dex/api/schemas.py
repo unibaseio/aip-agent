@@ -33,6 +33,166 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     response: str
 
+# Bot Owner Schemas
+class BotOwnerCreate(BaseModel):
+    """创建机器人所有者的请求模型"""
+    owner_name: str = Field(..., min_length=1, max_length=100)
+    email: str = Field(..., description="邮箱地址")
+    wallet_address: str = Field(..., min_length=20, max_length=100, description="主钱包地址")
+    phone: Optional[str] = Field(None, max_length=20)
+    subscription_tier: Literal["basic", "premium", "enterprise"] = Field("basic")
+    max_bots_allowed: int = Field(5, ge=1, le=100)
+
+class BotOwnerUpdate(BaseModel):
+    """更新机器人所有者的请求模型"""
+    owner_name: Optional[str] = Field(None, min_length=1, max_length=100)
+    email: Optional[str] = Field(None)
+    phone: Optional[str] = Field(None, max_length=20)
+    subscription_tier: Optional[Literal["basic", "premium", "enterprise"]] = None
+    max_bots_allowed: Optional[int] = Field(None, ge=1, le=100)
+    is_active: Optional[bool] = None
+
+class BotOwnerResponse(BaseSchema):
+    """机器人所有者详情响应模型"""
+    id: uuid.UUID
+    owner_name: str
+    email: str
+    wallet_address: str
+    phone: Optional[str]
+    is_active: bool
+    max_bots_allowed: int
+    subscription_tier: str
+    total_bots_created: int
+    total_trading_volume_usd: Decimal
+    created_at: datetime
+    updated_at: datetime
+    last_login_at: Optional[datetime]
+
+# Trading Strategy Schemas
+class TradingStrategyCreate(BaseModel):
+    """创建交易策略的请求模型"""
+    strategy_name: str = Field(..., min_length=1, max_length=100)
+    strategy_description: Optional[str] = None
+    strategy_type: Literal["conservative", "moderate", "aggressive", "momentum", "mean_reversion", "user_defined"]
+    risk_level: Literal["low", "medium", "high"]
+    
+    # 数值参数设置
+    max_position_size: Decimal = Field(..., ge=1, le=100, description="单币最大仓位比例(%)")
+    stop_loss_percentage: Decimal = Field(..., ge=0, le=50, description="止损百分比(%)")
+    take_profit_percentage: Decimal = Field(..., ge=1, le=200, description="止盈百分比(%)")
+    min_profit_threshold: Decimal = Field(..., ge=0, le=50, description="最低收益率阈值(%)")
+    max_daily_trades: int = Field(..., ge=1, le=100, description="每日最大交易次数")
+    llm_confidence_threshold: Decimal = Field(..., ge=0, le=1, description="LLM决策置信度阈值")
+    
+    # 交易费用设置
+    gas_fee_native: Optional[Decimal] = Field(0.00003, ge=0)
+    trading_fee_percentage: Optional[Decimal] = Field(0.1, ge=0, le=10)
+    slippage_tolerance: Optional[Decimal] = Field(1.0, ge=0, le=50)
+    
+    # 运行控制参数
+    min_trade_amount_usd: Optional[Decimal] = Field(10.0, ge=1)
+    polling_interval_hours: Optional[Decimal] = Field(1.0, ge=0.1, le=24)
+    
+    # 功能开关
+    enable_stop_loss: Optional[bool] = True
+    enable_take_profit: Optional[bool] = True
+    
+    # 策略描述性配置
+    buy_strategy_description: Optional[str] = None
+    sell_strategy_description: Optional[str] = None
+    filter_strategy_description: Optional[str] = None
+    summary_strategy_description: Optional[str] = None
+    
+    # 状态
+    is_public: Optional[bool] = False
+
+class TradingStrategyUpdate(BaseModel):
+    """更新交易策略的请求模型"""
+    strategy_name: Optional[str] = Field(None, min_length=1, max_length=100)
+    strategy_description: Optional[str] = None
+    strategy_type: Optional[Literal["conservative", "moderate", "aggressive", "momentum", "mean_reversion", "user_defined"]] = None
+    risk_level: Optional[Literal["low", "medium", "high"]] = None
+    
+    # 数值参数设置
+    max_position_size: Optional[Decimal] = Field(None, ge=1, le=100)
+    stop_loss_percentage: Optional[Decimal] = Field(None, ge=0, le=50)
+    take_profit_percentage: Optional[Decimal] = Field(None, ge=1, le=200)
+    min_profit_threshold: Optional[Decimal] = Field(None, ge=0, le=50)
+    max_daily_trades: Optional[int] = Field(None, ge=1, le=100)
+    llm_confidence_threshold: Optional[Decimal] = Field(None, ge=0, le=1)
+    
+    # 交易费用设置
+    gas_fee_native: Optional[Decimal] = Field(None, ge=0)
+    trading_fee_percentage: Optional[Decimal] = Field(None, ge=0, le=10)
+    slippage_tolerance: Optional[Decimal] = Field(None, ge=0, le=50)
+    
+    # 运行控制参数
+    min_trade_amount_usd: Optional[Decimal] = Field(None, ge=1)
+    polling_interval_hours: Optional[Decimal] = Field(None, ge=0.1, le=24)
+    
+    # 功能开关
+    enable_stop_loss: Optional[bool] = None
+    enable_take_profit: Optional[bool] = None
+    
+    # 策略描述性配置
+    buy_strategy_description: Optional[str] = None
+    sell_strategy_description: Optional[str] = None
+    filter_strategy_description: Optional[str] = None
+    summary_strategy_description: Optional[str] = None
+    
+    # 状态
+    is_public: Optional[bool] = None
+
+class TradingStrategyResponse(BaseSchema):
+    """交易策略详情响应模型"""
+    id: uuid.UUID
+    owner_id: uuid.UUID
+    
+    # 策略基本信息
+    strategy_name: str
+    strategy_description: Optional[str]
+    strategy_type: str
+    risk_level: str
+    
+    # 数值参数设置
+    max_position_size: Decimal
+    stop_loss_percentage: Decimal
+    take_profit_percentage: Decimal
+    min_profit_threshold: Decimal
+    max_daily_trades: int
+    llm_confidence_threshold: Decimal
+    
+    # 交易费用设置
+    gas_fee_native: Decimal
+    trading_fee_percentage: Decimal
+    slippage_tolerance: Decimal
+    
+    # 运行控制参数
+    min_trade_amount_usd: Decimal
+    polling_interval_hours: Decimal
+    
+    # 功能开关
+    enable_stop_loss: bool
+    enable_take_profit: bool
+    
+    # 策略描述性配置
+    buy_strategy_description: Optional[str]
+    sell_strategy_description: Optional[str]
+    filter_strategy_description: Optional[str]
+    summary_strategy_description: Optional[str]
+    
+    # 状态
+    is_public: bool
+    
+    # 使用统计
+    usage_count: int
+    success_rate: Optional[Decimal]
+    average_profit_percentage: Optional[Decimal]
+    
+    # 时间戳
+    created_at: datetime
+    updated_at: datetime
+
 # Trading Bot Configuration Schemas
 class TradingBotCreate(BaseModel):
     """创建交易机器人的请求模型"""
@@ -41,22 +201,9 @@ class TradingBotCreate(BaseModel):
     chain: Literal["bsc", "solana"]
     initial_balance_usd: Decimal = Field(..., gt=0, description="初始余额，最小1000")
     
-    # Strategy configuration
-    strategy_type: Literal["conservative", "moderate", "aggressive", "momentum", "mean_reversion", "user_defined"]
-    max_position_size: Optional[Decimal] = Field(10.0, ge=1, le=100)
-    stop_loss_percentage: Optional[Decimal] = Field(5.0, ge=0, le=50)
-    take_profit_percentage: Optional[Decimal] = Field(15.0, ge=1, le=200)
-    min_profit_threshold: Optional[Decimal] = Field(3.0, ge=0, le=50)
-    
-    # Trading configuration
-    min_trade_amount_usd: Optional[Decimal] = Field(10.0, ge=1)
-    max_daily_trades: Optional[int] = Field(10, ge=1, le=100)
-    polling_interval_hours: Optional[int] = Field(1, ge=1, le=24)
-    llm_confidence_threshold: Optional[Decimal] = Field(0.7, ge=0, le=1)
-    
-    # Feature toggles
-    enable_stop_loss: Optional[bool] = True
-    enable_take_profit: Optional[bool] = True
+    # 所有者信息（可选，启动后可以设置）
+    owner_id: Optional[uuid.UUID] = Field(None, description="机器人所有者ID")
+    strategy_id: Optional[uuid.UUID] = Field(None, description="关联的策略ID")
     
     @field_validator('initial_balance_usd')
     @classmethod
@@ -68,20 +215,16 @@ class TradingBotCreate(BaseModel):
 class TradingBotUpdate(BaseModel):
     """更新交易机器人的请求模型"""
     bot_name: Optional[str] = Field(None, min_length=1, max_length=100)
-    max_position_size: Optional[Decimal] = Field(None, ge=1, le=100)
-    stop_loss_percentage: Optional[Decimal] = Field(None, ge=0, le=50)
-    take_profit_percentage: Optional[Decimal] = Field(None, ge=1, le=200)
-    min_profit_threshold: Optional[Decimal] = Field(None, ge=0, le=50)
-    max_daily_trades: Optional[int] = Field(None, ge=1, le=100)
-    polling_interval_hours: Optional[int] = Field(None, ge=1, le=24)
-    llm_confidence_threshold: Optional[Decimal] = Field(None, ge=0, le=1)
-    enable_stop_loss: Optional[bool] = None
-    enable_take_profit: Optional[bool] = None
+    strategy_id: Optional[uuid.UUID] = None
     is_active: Optional[bool] = None
 
 class TradingBotResponse(BaseSchema):
     """交易机器人详情响应模型"""
     id: uuid.UUID
+    owner_id: Optional[uuid.UUID]
+    strategy_id: Optional[uuid.UUID]
+    
+    # 基础信息
     bot_name: str
     account_address: str
     chain: str
@@ -91,23 +234,9 @@ class TradingBotResponse(BaseSchema):
     current_balance_usd: Decimal
     total_assets_usd: Decimal
     
-    # Strategy configuration
-    strategy_type: str
-    max_position_size: Decimal
-    stop_loss_percentage: Decimal
-    take_profit_percentage: Decimal
-    min_profit_threshold: Decimal
-    
-    # Trading configuration
-    min_trade_amount_usd: Decimal
-    max_daily_trades: int
-    polling_interval_hours: int
-    llm_confidence_threshold: Decimal
-    
     # Status
     is_active: bool
-    enable_stop_loss: bool
-    enable_take_profit: bool
+    is_configured: bool
     
     # Statistics
     total_trades: int
@@ -119,19 +248,10 @@ class TradingBotResponse(BaseSchema):
     created_at: datetime
     updated_at: datetime
     last_activity_at: Optional[datetime]
-
-class TradingBotSummary(BaseSchema):
-    """交易机器人摘要响应模型"""
-    id: uuid.UUID
-    bot_name: str
-    account_address: str
-    chain: str
-    strategy_type: str
-    total_assets_usd: Decimal
-    total_profit_usd: Decimal
-    total_profit_percentage: Decimal
-    is_active: bool
-    last_activity_at: Optional[datetime]
+    
+    # 关联信息
+    owner: Optional[BotOwnerResponse] = None
+    strategy: Optional[TradingStrategyResponse] = None
 
 # Position Schemas
 class PositionResponse(BaseSchema):

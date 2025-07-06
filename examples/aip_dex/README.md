@@ -284,3 +284,464 @@ Based on the design document, optional enhancements include:
 ---
 
 **Built with ❤️ for the Web3 community** 
+
+# AIP DEX Trading Bot
+
+一个基于AI的DEX交易机器人系统，支持灵活的所有者管理和策略配置。
+
+## 系统概述
+
+### 核心特性
+
+- **灵活的所有者管理**：支持机器人所有者创建和管理
+- **策略管理系统**：完整的交易策略配置和共享
+- **灵活启动模式**：机器人可以不依赖owner和strategy启动
+- **智能交易决策**：基于LLM的交易决策系统
+- **多链支持**：支持BSC和Solana链
+- **实时监控**：完整的交易历史和收益跟踪
+
+### 系统架构
+
+```
+BotOwner (所有者)
+    ├── TradingStrategy (策略1)
+    │   ├── TradingBot (机器人1)
+    │   └── TradingBot (机器人2)
+    ├── TradingStrategy (策略2)
+    │   └── TradingBot (机器人3)
+    └── TradingStrategy (策略3)
+        └── TradingBot (机器人4)
+```
+
+## 快速开始
+
+### 1. 环境准备
+
+```bash
+# 克隆项目
+git clone <repository-url>
+cd examples/aip_dex
+
+# 安装依赖
+pip install -r requirements.txt
+
+# 初始化数据库
+python -c "from models.database import init_database; init_database()"
+```
+
+### 2. 创建所有者
+
+```python
+from services.owner_service import OwnerService
+from api.schemas import BotOwnerCreate
+
+owner_service = OwnerService()
+
+owner_data = BotOwnerCreate(
+    owner_name="Your Name",
+    email="your.email@example.com",
+    wallet_address="your_wallet_address",
+    subscription_tier="basic"
+)
+
+owner = await owner_service.create_bot_owner(db, owner_data)
+```
+
+### 3. 创建策略
+
+```python
+from api.schemas import TradingStrategyCreate
+
+strategy_data = TradingStrategyCreate(
+    strategy_name="My Strategy",
+    strategy_type="user_defined",
+    risk_level="medium",
+    max_position_size=Decimal("15.0"),
+    stop_loss_percentage=Decimal("8.0"),
+    take_profit_percentage=Decimal("20.0"),
+    buy_strategy_description="买入策略描述...",
+    sell_strategy_description="卖出策略描述...",
+    filter_strategy_description="筛选策略描述...",
+    summary_strategy_description="策略总结..."
+)
+
+strategy = await owner_service.create_trading_strategy(db, owner.id, strategy_data)
+```
+
+### 4. 创建机器人
+
+#### 方法A：立即配置
+
+```python
+from services.trading_service import TradingService
+
+trading_service = TradingService()
+
+bot_config = {
+    "bot_name": "My Trading Bot",
+    "account_address": "0x1234567890abcdef1234567890abcdef12345678",
+    "chain": "bsc",
+    "initial_balance_usd": 5000.0,
+    "owner_id": owner.id,
+    "strategy_id": strategy.id,
+    "is_active": True
+}
+
+bot = await trading_service.create_trading_bot(db, bot_config)
+```
+
+#### 方法B：灵活启动
+
+```python
+# 步骤1：创建未配置机器人
+bot_config = {
+    "bot_name": "My Trading Bot",
+    "account_address": "0x1234567890abcdef1234567890abcdef12345678",
+    "chain": "bsc",
+    "initial_balance_usd": 5000.0,
+    "is_active": True
+}
+
+bot = await trading_service.create_trading_bot(db, bot_config)
+
+# 步骤2：稍后配置
+configured_bot = await trading_service.configure_bot(
+    db, bot.id, owner.id, strategy.id
+)
+```
+
+### 5. 运行机器人
+
+```bash
+# 使用默认配置
+python run_bot.py --default
+
+# 使用自定义配置文件
+python run_bot.py --config my_config.json
+
+# 交互式配置
+python run_bot.py
+```
+
+## 核心概念
+
+### BotOwner（机器人所有者）
+
+每个交易机器人可以属于一个所有者。所有者具有以下特性：
+
+- **基本信息**：姓名、邮箱、钱包地址、电话
+- **权限控制**：订阅等级、最大机器人数量限制
+- **统计信息**：创建的机器人数量、交易量等
+
+### TradingStrategy（交易策略）
+
+策略包含两个主要部分：
+
+#### 1. 数值参数设置（具体数字性）
+
+- **仓位管理**：最大仓位比例、止损百分比、止盈百分比
+- **交易控制**：最小交易金额、每日最大交易次数、轮询间隔
+- **风险控制**：最低收益率阈值、LLM置信度阈值
+- **费用设置**：Gas费用、交易手续费率、滑点容忍度
+
+#### 2. 策略描述性配置（文字描述性）
+
+- **买入策略描述**：详细的买入逻辑和条件
+- **卖出策略描述**：详细的卖出逻辑和条件
+- **筛选策略描述**：代币筛选条件和标准
+- **总结性策略描述**：策略的整体理念和适用场景
+
+### TradingBot（交易机器人）
+
+机器人具有以下特性：
+
+- **灵活启动**：可以不依赖owner和strategy启动
+- **状态管理**：支持未配置、已配置、停用等状态
+- **策略关联**：直接关联策略实体，获取所有策略参数
+- **交易执行**：基于策略参数执行买卖决策
+
+## 机器人状态
+
+### 状态定义
+
+```python
+# 未配置状态
+UNCONFIGURED = {
+    "is_active": True,
+    "is_configured": False,
+    "owner_id": None,
+    "strategy_id": None,
+    "can_trade": False
+}
+
+# 已配置状态
+CONFIGURED = {
+    "is_active": True,
+    "is_configured": True,
+    "owner_id": "uuid",
+    "strategy_id": "uuid",
+    "can_trade": True
+}
+
+# 停用状态
+INACTIVE = {
+    "is_active": False,
+    "is_configured": True/False,
+    "can_trade": False
+}
+```
+
+### 状态转换
+
+```
+创建机器人 → 未配置状态 → 配置机器人 → 已配置状态 → 激活交易
+     ↓              ↓              ↓              ↓
+   基础设施      待激活状态      准备就绪      开始交易
+```
+
+## 策略管理
+
+### 默认策略
+
+系统提供三种默认策略：
+
+- **Conservative Strategy**：保守策略，低风险，稳定收益
+- **Moderate Strategy**：平衡策略，中等风险，平衡收益
+- **Aggressive Strategy**：激进策略，高风险，高收益
+
+### 自定义策略
+
+用户可以创建完全自定义的策略：
+
+```python
+strategy_data = TradingStrategyCreate(
+    strategy_name="My Custom Strategy",
+    strategy_type="user_defined",
+    risk_level="medium",
+    max_position_size=Decimal("25.0"),
+    stop_loss_percentage=Decimal("8.0"),
+    take_profit_percentage=Decimal("30.0"),
+    buy_strategy_description="详细的买入策略描述...",
+    sell_strategy_description="详细的卖出策略描述...",
+    filter_strategy_description="详细的筛选策略描述...",
+    summary_strategy_description="策略总结描述..."
+)
+```
+
+### 策略共享
+
+策略可以设置为公开，供其他用户使用：
+
+```python
+# 创建公开策略
+strategy_data = TradingStrategyCreate(
+    strategy_name="Public Strategy",
+    is_public=True,
+    # ... 其他参数
+)
+
+# 获取公开策略
+public_strategies = await owner_service.list_public_strategies(db)
+```
+
+## 使用示例
+
+### 基础示例
+
+```bash
+# 运行基础示例
+python examples/owner_strategy_example.py
+```
+
+### 灵活启动示例
+
+```bash
+# 运行灵活启动示例
+python examples/flexible_bot_example.py
+```
+
+### 测试示例
+
+```bash
+# 运行测试
+python test_owner_strategy.py
+```
+
+## 配置说明
+
+### 机器人配置
+
+```json
+{
+    "bot_name": "My Trading Bot",
+    "account_address": "0x1234567890abcdef1234567890abcdef12345678",
+    "chain": "bsc",
+    "initial_balance_usd": 5000.0,
+    "owner_id": "optional-owner-id",
+    "strategy_id": "optional-strategy-id",
+    "is_active": true
+}
+```
+
+### 策略配置
+
+```json
+{
+    "strategy_name": "My Strategy",
+    "strategy_type": "user_defined",
+    "risk_level": "medium",
+    "max_position_size": 15.0,
+    "stop_loss_percentage": 8.0,
+    "take_profit_percentage": 20.0,
+    "min_profit_threshold": 3.0,
+    "max_daily_trades": 12,
+    "llm_confidence_threshold": 0.7,
+    "buy_strategy_description": "买入策略描述...",
+    "sell_strategy_description": "卖出策略描述...",
+    "filter_strategy_description": "筛选策略描述...",
+    "summary_strategy_description": "策略总结..."
+}
+```
+
+## API 参考
+
+### 所有者管理
+
+```python
+# 创建所有者
+owner = await owner_service.create_bot_owner(db, owner_data)
+
+# 获取所有者
+owner = await owner_service.get_bot_owner(db, owner_id)
+
+# 更新所有者
+updated_owner = await owner_service.update_bot_owner(db, owner_id, update_data)
+
+# 列出所有者
+owners = await owner_service.list_bot_owners(db)
+```
+
+### 策略管理
+
+```python
+# 创建策略
+strategy = await owner_service.create_trading_strategy(db, owner_id, strategy_data)
+
+# 获取策略
+strategy = await owner_service.get_trading_strategy(db, strategy_id)
+
+# 更新策略
+updated_strategy = await owner_service.update_trading_strategy(db, strategy_id, update_data)
+
+# 列出所有者的策略
+strategies = await owner_service.list_owner_strategies(db, owner_id)
+
+# 获取公开策略
+public_strategies = await owner_service.list_public_strategies(db)
+```
+
+### 机器人管理
+
+```python
+# 创建机器人
+bot = await trading_service.create_trading_bot(db, config)
+
+# 配置机器人
+configured_bot = await trading_service.configure_bot(db, bot_id, owner_id, strategy_id)
+
+# 获取机器人状态
+status = await trading_service.get_bot_status(db, bot_id)
+
+# 获取机器人持仓
+positions = await trading_service.get_bot_positions(db, bot_id)
+```
+
+## 部署指南
+
+### 开发环境
+
+```bash
+# 1. 设置开发环境
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# 或
+venv\Scripts\activate  # Windows
+
+# 2. 安装依赖
+pip install -r requirements.txt
+
+# 3. 初始化数据库
+python -c "from models.database import init_database; init_database()"
+
+# 4. 运行示例
+python examples/flexible_bot_example.py
+```
+
+### 生产环境
+
+```bash
+# 1. 配置环境变量
+export DATABASE_URL="your_database_url"
+export API_KEY="your_api_key"
+
+# 2. 运行机器人
+python run_bot.py --config production_config.json
+```
+
+## 故障排除
+
+### 常见问题
+
+1. **数据库连接错误**
+   - 检查数据库URL配置
+   - 确保数据库服务正在运行
+
+2. **机器人创建失败**
+   - 检查账户地址格式
+   - 确保账户地址唯一性
+
+3. **策略配置错误**
+   - 验证策略参数范围
+   - 检查必需字段
+
+4. **交易执行失败**
+   - 检查账户余额
+   - 验证网络连接
+
+### 日志查看
+
+```bash
+# 查看机器人日志
+tail -f trading_bot.log
+
+# 查看错误日志
+grep "ERROR" trading_bot.log
+```
+
+## 贡献指南
+
+### 开发流程
+
+1. Fork 项目
+2. 创建功能分支
+3. 提交更改
+4. 创建 Pull Request
+
+### 代码规范
+
+- 使用 Python 3.8+
+- 遵循 PEP 8 代码规范
+- 添加适当的注释和文档
+- 编写单元测试
+
+## 许可证
+
+本项目采用 MIT 许可证。详见 [LICENSE](LICENSE) 文件。
+
+## 联系方式
+
+如有问题或建议，请通过以下方式联系：
+
+- 邮箱：support@example.com
+- GitHub Issues：[项目 Issues](https://github.com/your-repo/issues)
+- 文档：[完整文档](https://docs.example.com) 
