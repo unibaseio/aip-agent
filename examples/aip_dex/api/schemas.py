@@ -218,6 +218,20 @@ class TradingBotUpdate(BaseModel):
     strategy_id: Optional[uuid.UUID] = None
     is_active: Optional[bool] = None
 
+class TradingBotSummary(BaseSchema):
+    """交易机器人摘要响应模型"""
+    id: uuid.UUID
+    bot_name: str
+    account_address: str
+    chain: str
+    strategy_type: str
+    total_assets_usd: Decimal
+    total_profit_usd: Decimal
+    total_profit_percentage: Decimal
+    is_active: bool
+    last_activity_at: Optional[datetime]
+    owner_name: Optional[str] = None
+
 class TradingBotResponse(BaseSchema):
     """交易机器人详情响应模型"""
     id: uuid.UUID
@@ -228,6 +242,7 @@ class TradingBotResponse(BaseSchema):
     bot_name: str
     account_address: str
     chain: str
+    strategy_type: str
     
     # Financial status
     initial_balance_usd: Decimal
@@ -243,6 +258,11 @@ class TradingBotResponse(BaseSchema):
     profitable_trades: int
     total_profit_usd: Decimal
     max_drawdown_percentage: Decimal
+    
+    # Strategy parameters (from associated strategy)
+    max_position_size: Optional[Decimal] = None
+    stop_loss_percentage: Optional[Decimal] = None
+    take_profit_percentage: Optional[Decimal] = None
     
     # Timestamps
     created_at: datetime
@@ -339,6 +359,26 @@ class LLMDecisionResponse(BaseSchema):
 # Revenue Schemas
 class RevenueSnapshot(BaseSchema):
     """收益快照响应模型"""
+    id: uuid.UUID
+    total_assets_usd: Decimal
+    available_balance_usd: Decimal
+    total_positions_value_usd: Decimal
+    total_profit_usd: Decimal
+    total_profit_percentage: Decimal
+    daily_profit_usd: Optional[Decimal]
+    daily_profit_percentage: Optional[Decimal]
+    total_trades: int
+    profitable_trades: int
+    win_rate: Optional[Decimal]
+    average_profit_per_trade: Optional[Decimal]
+    max_drawdown_percentage: Optional[Decimal]
+    current_drawdown_percentage: Optional[Decimal]
+    active_positions_count: int
+    snapshot_type: str
+    created_at: datetime
+
+class RevenueSnapshotSchema(BaseSchema):
+    """收益快照响应模型（别名）"""
     id: uuid.UUID
     total_assets_usd: Decimal
     available_balance_usd: Decimal

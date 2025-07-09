@@ -249,10 +249,33 @@ Always provide detailed reasoning and confidence scores (0.0-1.0).
 
 ## 交易策略配置
 策略类型: {bot_config.get('strategy_type', 'unknown')}
-止损百分比: {bot_config.get('stop_loss_percentage', 0)}%
-止盈百分比: {bot_config.get('take_profit_percentage', 0)}%
-最低收益率阈值: {bot_config.get('min_profit_threshold', 0)}%
-交易手续费率: {bot_config.get('trading_fee_percentage', 0.5)}%
+风险等级: {bot_config.get('risk_level', 'medium')}
+
+**仓位管理参数:**
+- 最大仓位比例: {bot_config.get('max_position_size', 10)}%
+- 最小交易金额: ${bot_config.get('min_trade_amount_usd', 10)}
+- 每日最大交易次数: {bot_config.get('max_daily_trades', 10)}
+
+**风险管理参数:**
+- 止损百分比: {bot_config.get('stop_loss_percentage', 0)}%
+- 止盈百分比: {bot_config.get('take_profit_percentage', 0)}%
+- 最低收益率阈值: {bot_config.get('min_profit_threshold', 0)}%
+- 启用止损: {bot_config.get('enable_stop_loss', True)}
+- 启用止盈: {bot_config.get('enable_take_profit', True)}
+
+**交易费用设置:**
+- 交易手续费率: {bot_config.get('trading_fee_percentage', 0.5)}%
+- Gas费用(原生代币): {bot_config.get('gas_fee_native', 0.00003)}
+- 滑点容忍度: {bot_config.get('slippage_tolerance', 1.0)}%
+
+**LLM决策参数:**
+- LLM置信度阈值: {bot_config.get('llm_confidence_threshold', 0.7)}
+- 轮询间隔: {bot_config.get('polling_interval_hours', 1.0)}小时
+
+**策略描述:**
+- 买入策略: {bot_config.get('buy_strategy_description', '未配置')}
+- 卖出策略: {bot_config.get('sell_strategy_description', '未配置')}
+- 筛选策略: {bot_config.get('filter_strategy_description', '未配置')}
 
 ## 当前持仓分析
 
@@ -381,10 +404,28 @@ Always provide detailed reasoning and confidence scores (0.0-1.0).
 
 ## 策略配置参数
 - 策略类型: {strategy_type}
+- 风险等级: {bot_config.get('risk_level', 'medium')}
+
+**仓位管理参数:**
 - 最大仓位比例: {bot_config.get('max_position_size', 10)}%
+- 最小交易金额: ${bot_config.get('min_trade_amount_usd', 10)}
+- 每日最大交易次数: {bot_config.get('max_daily_trades', 10)}
+
+**风险管理参数:**
 - 止损百分比: {bot_config.get('stop_loss_percentage', 5)}%
 - 止盈百分比: {bot_config.get('take_profit_percentage', 15)}%
 - 最低收益率阈值: {bot_config.get('min_profit_threshold', 3)}%
+- 启用止损: {bot_config.get('enable_stop_loss', True)}
+- 启用止盈: {bot_config.get('enable_take_profit', True)}
+
+**交易费用设置:**
+- 交易手续费率: {bot_config.get('trading_fee_percentage', 0.5)}%
+- Gas费用(原生代币): {bot_config.get('gas_fee_native', 0.00003)}
+- 滑点容忍度: {bot_config.get('slippage_tolerance', 1.0)}%
+
+**LLM决策参数:**
+- LLM置信度阈值: {bot_config.get('llm_confidence_threshold', 0.7)}
+- 轮询间隔: {bot_config.get('polling_interval_hours', 1.0)}小时
 
 ## 筛选要求
 
@@ -536,12 +577,33 @@ Always provide detailed reasoning and confidence scores (0.0-1.0).
 
 ## 策略配置参数
 - 策略类型: {bot_config.get('strategy_type', 'unknown')}
+- 风险等级: {bot_config.get('risk_level', 'medium')}
+
+**仓位管理参数:**
 - 最大仓位比例: {bot_config.get('max_position_size', 10)}%
+- 最小交易金额: ${bot_config.get('min_trade_amount_usd', 10)}
+- 每日最大交易次数: {bot_config.get('max_daily_trades', 10)}
+
+**风险管理参数:**
 - 止损百分比: {bot_config.get('stop_loss_percentage', 5)}%
 - 止盈百分比: {bot_config.get('take_profit_percentage', 15)}%
 - 最低收益率阈值: {bot_config.get('min_profit_threshold', 3)}%
+- 启用止损: {bot_config.get('enable_stop_loss', True)}
+- 启用止盈: {bot_config.get('enable_take_profit', True)}
+
+**交易费用设置:**
 - 交易手续费率: {bot_config.get('trading_fee_percentage', 0.5)}%
+- Gas费用(原生代币): {bot_config.get('gas_fee_native', 0.00003)}
+- 滑点容忍度: {bot_config.get('slippage_tolerance', 1.0)}%
+
+**LLM决策参数:**
 - LLM置信度阈值: {bot_config.get('llm_confidence_threshold', 0.7)}
+- 轮询间隔: {bot_config.get('polling_interval_hours', 1.0)}小时
+
+**策略描述:**
+- 买入策略: {bot_config.get('buy_strategy_description', '未配置')}
+- 卖出策略: {bot_config.get('sell_strategy_description', '未配置')}
+- 筛选策略: {bot_config.get('filter_strategy_description', '未配置')}
 
 ## 分析要求
 

@@ -120,6 +120,7 @@ class TradingBotDashboard {
         const strategyType = bot.strategy_type || '-';
         const chain = bot.chain ? bot.chain.toUpperCase() : '-';
         const accountShort = bot.account_address ? `${bot.account_address.substring(0, 8)}...${bot.account_address.substring(bot.account_address.length - 6)}` : '-';
+        const ownerName = bot.owner_name ? `<small class="text-info d-block">Owner: ${bot.owner_name}</small>` : '';
 
         col.innerHTML = `
             <div class="card bot-card" onclick="dashboard.showBotDetails('${bot.id}')">
@@ -131,6 +132,7 @@ class TradingBotDashboard {
                         </h6>
                     </div>
                     <small class="text-secondary">${accountShort}</small>
+                    ${ownerName}
                     <div class="row text-center mt-3">
                         <div class="col-6">
                             <div class="mb-2">
@@ -457,7 +459,7 @@ class TradingBotDashboard {
             return;
         }
 
-        // Prepare data with formatted labels
+        // Prepare data with formatted labels - reverse order for newest on right
         const labels = revenueData.map((item, index) => {
             try {
                 // Use created_at field for time labels
@@ -469,11 +471,11 @@ class TradingBotDashboard {
                     // Check if date is valid
                     if (isNaN(date.getTime())) {
                         // If invalid, use index as fallback
-                        return `Point ${index + 1}`;
+                        return `Point ${revenueData.length - index}`;
                     }
                 } else {
                     // If no timestamp, use index as fallback
-                    return `Point ${index + 1}`;
+                    return `Point ${revenueData.length - index}`;
                 }
 
                 // Format the date
@@ -485,10 +487,10 @@ class TradingBotDashboard {
                 });
             } catch (error) {
                 console.warn('Error formatting date:', error, item.created_at);
-                return `Point ${index + 1}`;
+                return `Point ${revenueData.length - index}`;
             }
-        });
-        const data = revenueData.map(item => parseFloat(item.total_profit_usd));
+        }).reverse(); // Reverse the labels array
+        const data = revenueData.map(item => parseFloat(item.total_profit_usd)).reverse(); // Reverse the data array too
 
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
 

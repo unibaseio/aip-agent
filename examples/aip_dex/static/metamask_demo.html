@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIP DEX Trading Bot - Metamask Login & Bot Claiming Demo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #6366f1;
+            --secondary-color: #8b5cf6;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --dark-color: #1f2937;
+            --light-color: #f9fafb;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .demo-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .step-card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .step-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .step-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+
+        .bot-card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .bot-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-unclaimed {
+            background-color: var(--warning-color);
+            color: white;
+        }
+
+        .status-claimed {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .status-configured {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .metamask-btn {
+            background: linear-gradient(135deg, #f6851b, #e2761b);
+            border: none;
+            border-radius: 12px;
+            padding: 12px 24px;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .metamask-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(246, 133, 27, 0.3);
+            color: white;
+        }
+
+        .claim-btn {
+            background: linear-gradient(135deg, var(--success-color), #059669);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .claim-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(16, 185, 129, 0.3);
+            color: white;
+        }
+
+        .strategy-card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .strategy-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .progress-bar {
+            height: 8px;
+            border-radius: 4px;
+            background: linear-gradient(90deg, var(--success-color), var(--primary-color));
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .user-info {
+            background: linear-gradient(135deg, var(--success-color), #059669);
+            color: white;
+            border-radius: 12px;
+            padding: 15px;
+        }
+
+        .balance-display {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container-fluid py-4">
+        <div class="row justify-content-center">
+            <div class="col-12 col-lg-10">
+                <div class="demo-container p-4">
+                    <!-- Header -->
+                    <div class="text-center mb-5">
+                        <h1 class="display-4 fw-bold text-dark mb-3">
+                            <i class="fas fa-robot text-primary me-3"></i>
+                            AIP DEX Trading Bot
+                        </h1>
+                        <p class="lead text-muted">Metamask Login & Bot Claiming Demo</p>
+                    </div>
+
+                    <!-- Progress Steps -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="progress-bar mb-3"></div>
+                            <div class="d-flex justify-content-between">
+                                <div class="d-flex align-items-center">
+                                    <div class="step-number">1</div>
+                                    <span class="fw-medium">Login</span>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <div class="step-number">2</div>
+                                    <span class="fw-medium">View Bots</span>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <div class="step-number">3</div>
+                                    <span class="fw-medium">Claim Bot</span>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <div class="step-number">4</div>
+                                    <span class="fw-medium">Configure</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 1: Metamask Login -->
+                    <div class="row mb-4" id="login-section">
+                        <div class="col-12">
+                            <div class="card step-card">
+                                <div class="card-body p-4">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div class="step-number">1</div>
+                                        <h4 class="mb-0">Metamask Login</h4>
+                                    </div>
+
+                                    <div class="text-center py-4" id="login-content">
+                                        <i class="fab fa-ethereum fa-3x text-primary mb-3"></i>
+                                        <h5 class="mb-3">Connect Your Metamask Wallet</h5>
+                                        <p class="text-muted mb-4">Connect your wallet to access the trading bot
+                                            platform</p>
+                                        <button class="btn metamask-btn btn-lg" onclick="connectMetamask()">
+                                            <i class="fab fa-ethereum me-2"></i>
+                                            Connect MetaMask
+                                        </button>
+                                    </div>
+
+                                    <div class="user-info" id="user-info" style="display: none;">
+                                        <div class="d-flex align-items-center justify-content-between">
+                                            <div>
+                                                <h6 class="mb-1">
+                                                    <i class="fas fa-user me-2"></i>
+                                                    <span id="user-name">User</span>
+                                                </h6>
+                                                <small id="user-wallet">Wallet Address</small>
+                                            </div>
+                                            <button class="btn btn-outline-light btn-sm" onclick="disconnectMetamask()">
+                                                <i class="fas fa-sign-out-alt me-1"></i>
+                                                Disconnect
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Unclaimed Bots -->
+                    <div class="row mb-4" id="unclaimed-section" style="display: none;">
+                        <div class="col-12">
+                            <div class="card step-card">
+                                <div class="card-header bg-transparent border-0">
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <div class="d-flex align-items-center">
+                                            <div class="step-number">2</div>
+                                            <h4 class="mb-0">Unclaimed Bots</h4>
+                                        </div>
+                                        <button class="btn btn-outline-primary btn-sm" onclick="loadUnclaimedBots()">
+                                            <i class="fas fa-sync-alt me-1"></i>
+                                            Refresh
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row" id="unclaimed-bots-container">
+                                        <!-- Unclaimed bots will be loaded here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: My Strategies -->
+                    <div class="row mb-4" id="strategies-section" style="display: none;">
+                        <div class="col-12">
+                            <div class="card step-card">
+                                <div class="card-header bg-transparent border-0">
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <div class="d-flex align-items-center">
+                                            <div class="step-number">3</div>
+                                            <h4 class="mb-0">My Strategies</h4>
+                                        </div>
+                                        <button class="btn btn-success btn-sm" onclick="showCreateStrategyModal()">
+                                            <i class="fas fa-plus me-1"></i>
+                                            Create Strategy
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row" id="strategies-container">
+                                        <!-- Strategies will be loaded here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 4: My Claimed Bots -->
+                    <div class="row mb-4" id="claimed-section" style="display: none;">
+                        <div class="col-12">
+                            <div class="card step-card">
+                                <div class="card-header bg-transparent border-0">
+                                    <div class="d-flex align-items-center">
+                                        <div class="step-number">4</div>
+                                        <h4 class="mb-0">My Claimed Bots</h4>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row" id="claimed-bots-container">
+                                        <!-- Claimed bots will be loaded here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Strategy Modal -->
+    <div class="modal fade" id="createStrategyModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-chart-line me-2"></i>
+                        Create New Strategy
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="strategy-form">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Strategy Name</label>
+                                    <input type="text" class="form-control" id="strategy-name" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Risk Level</label>
+                                    <select class="form-select" id="risk-level" required>
+                                        <option value="low">Low</option>
+                                        <option value="medium" selected>Medium</option>
+                                        <option value="high">High</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Max Position Size (%)</label>
+                                    <input type="number" class="form-control" id="max-position" value="20" min="1"
+                                        max="100" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Stop Loss (%)</label>
+                                    <input type="number" class="form-control" id="stop-loss" value="10" min="1" max="50"
+                                        required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Take Profit (%)</label>
+                                    <input type="number" class="form-control" id="take-profit" value="25" min="1"
+                                        max="100" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Buy Strategy Description</label>
+                            <textarea class="form-control" id="buy-strategy" rows="3" required></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Sell Strategy Description</label>
+                            <textarea class="form-control" id="sell-strategy" rows="3" required></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="createStrategy()">
+                        <i class="fas fa-save me-1"></i>
+                        Create Strategy
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Configure Bot Modal -->
+    <div class="modal fade" id="configureBotModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-cog me-2"></i>
+                        Configure Bot
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Select Strategy</label>
+                        <select class="form-select" id="bot-strategy-select">
+                            <option value="">Choose a strategy...</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="configureBot()">
+                        <i class="fas fa-check me-1"></i>
+                        Configure Bot
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notification-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Demo state
+        let currentUser = null;
+        let unclaimedBots = [];
+        let myStrategies = [];
+        let claimedBots = [];
+
+        // Simulate Metamask connection
+        function connectMetamask() {
+            // Simulate wallet connection
+            const walletAddress = '0x' + Math.random().toString(16).substr(2, 40);
+
+            // Simulate authentication
+            setTimeout(() => {
+                currentUser = {
+                    wallet_address: walletAddress,
+                    owner_id: 'owner_' + Math.random().toString(36).substr(2, 9),
+                    owner_name: 'User_' + walletAddress.substring(0, 8)
+                };
+
+                updateLoginUI();
+                showNotification('Successfully connected to MetaMask!', 'success');
+
+                // Show next sections
+                document.getElementById('unclaimed-section').style.display = 'block';
+                document.getElementById('strategies-section').style.display = 'block';
+                document.getElementById('claimed-section').style.display = 'block';
+
+                // Load demo data
+                loadDemoData();
+            }, 1000);
+        }
+
+        function disconnectMetamask() {
+            currentUser = null;
+            updateLoginUI();
+            showNotification('Disconnected from MetaMask', 'info');
+
+            // Hide sections
+            document.getElementById('unclaimed-section').style.display = 'none';
+            document.getElementById('strategies-section').style.display = 'none';
+            document.getElementById('claimed-section').style.display = 'none';
+        }
+
+        function updateLoginUI() {
+            const loginContent = document.getElementById('login-content');
+            const userInfo = document.getElementById('user-info');
+
+            if (currentUser) {
+                loginContent.style.display = 'none';
+                userInfo.style.display = 'block';
+                document.getElementById('user-name').textContent = currentUser.owner_name;
+                document.getElementById('user-wallet').textContent = currentUser.wallet_address;
+            } else {
+                loginContent.style.display = 'block';
+                userInfo.style.display = 'none';
+            }
+        }
+
+        function loadDemoData() {
+            // Load unclaimed bots
+            loadUnclaimedBots();
+
+            // Load strategies
+            loadMyStrategies();
+
+            // Load claimed bots
+            loadMyClaimedBots();
+        }
+
+        function loadUnclaimedBots() {
+            // Simulate API call
+            unclaimedBots = [
+                {
+                    id: 'bot_1',
+                    bot_name: 'Demo Bot 1',
+                    account_address: '0x1111111111111111111111111111111111111111',
+                    chain: 'bsc',
+                    current_balance_usd: 1000.0,
+                    is_active: true
+                },
+                {
+                    id: 'bot_2',
+                    bot_name: 'Demo Bot 2',
+                    account_address: '0x2222222222222222222222222222222222222222',
+                    chain: 'bsc',
+                    current_balance_usd: 2000.0,
+                    is_active: true
+                },
+                {
+                    id: 'bot_3',
+                    bot_name: 'Demo Bot 3',
+                    account_address: '0x3333333333333333333333333333333333333333',
+                    chain: 'bsc',
+                    current_balance_usd: 1500.0,
+                    is_active: true
+                }
+            ];
+
+            renderUnclaimedBots();
+        }
+
+        function renderUnclaimedBots() {
+            const container = document.getElementById('unclaimed-bots-container');
+            container.innerHTML = '';
+
+            if (unclaimedBots.length === 0) {
+                container.innerHTML = `
+                    <div class="col-12 text-center">
+                        <p class="text-muted">No unclaimed bots available</p>
+                    </div>
+                `;
+                return;
+            }
+
+            unclaimedBots.forEach(bot => {
+                const col = document.createElement('div');
+                col.className = 'col-md-6 col-lg-4 mb-3';
+                col.innerHTML = `
+                    <div class="card bot-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="mb-1">${bot.bot_name}</h6>
+                                <span class="status-badge status-unclaimed">UNCLAIMED</span>
+                            </div>
+                            <p class="text-secondary small mb-2">${bot.account_address}</p>
+                            <div class="row text-center">
+                                <div class="col-6">
+                                    <div class="mb-2">
+                                        <h6 class="mb-0">$${bot.current_balance_usd.toLocaleString()}</h6>
+                                        <small class="text-secondary">Balance</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="mb-2">
+                                        <small class="text-secondary">${bot.chain.toUpperCase()}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="btn claim-btn btn-sm w-100" onclick="claimBot('${bot.id}')">
+                                <i class="fas fa-hand-holding-usd me-1"></i>
+                                Claim Bot
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(col);
+            });
+        }
+
+        function claimBot(botId) {
+            if (!currentUser) {
+                showNotification('Please connect MetaMask first', 'error');
+                return;
+            }
+
+            // Simulate claiming
+            setTimeout(() => {
+                const bot = unclaimedBots.find(b => b.id === botId);
+                if (bot) {
+                    // Move bot from unclaimed to claimed
+                    unclaimedBots = unclaimedBots.filter(b => b.id !== botId);
+                    claimedBots.push({
+                        ...bot,
+                        owner_id: currentUser.owner_id,
+                        strategy_id: null,
+                        is_configured: false
+                    });
+
+                    renderUnclaimedBots();
+                    renderClaimedBots();
+                    showNotification('Successfully claimed bot!', 'success');
+                }
+            }, 500);
+        }
+
+        function loadMyStrategies() {
+            // Simulate API call
+            myStrategies = [
+                {
+                    id: 'strategy_1',
+                    strategy_name: 'Conservative',
+                    strategy_type: 'conservative',
+                    risk_level: 'low',
+                    max_position_size: 10,
+                    stop_loss_percentage: 5,
+                    take_profit_percentage: 15
+                },
+                {
+                    id: 'strategy_2',
+                    strategy_name: 'Moderate',
+                    strategy_type: 'moderate',
+                    risk_level: 'medium',
+                    max_position_size: 20,
+                    stop_loss_percentage: 10,
+                    take_profit_percentage: 25
+                },
+                {
+                    id: 'strategy_3',
+                    strategy_name: 'Aggressive',
+                    strategy_type: 'aggressive',
+                    risk_level: 'high',
+                    max_position_size: 40,
+                    stop_loss_percentage: 15,
+                    take_profit_percentage: 50
+                }
+            ];
+
+            renderStrategies();
+        }
+
+        function renderStrategies() {
+            const container = document.getElementById('strategies-container');
+            container.innerHTML = '';
+
+            myStrategies.forEach(strategy => {
+                const col = document.createElement('div');
+                col.className = 'col-md-6 col-lg-4 mb-3';
+                col.innerHTML = `
+                    <div class="card strategy-card">
+                        <div class="card-body">
+                            <h6 class="mb-2">${strategy.strategy_name}</h6>
+                            <div class="mb-2">
+                                <span class="badge bg-primary me-1">${strategy.strategy_type}</span>
+                                <span class="badge bg-secondary">${strategy.risk_level}</span>
+                            </div>
+                            <div class="row text-center">
+                                <div class="col-6">
+                                    <small class="text-secondary">Position</small>
+                                    <div class="fw-medium">${strategy.max_position_size}%</div>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-secondary">Stop Loss</small>
+                                    <div class="fw-medium">${strategy.stop_loss_percentage}%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(col);
+            });
+        }
+
+        function loadMyClaimedBots() {
+            renderClaimedBots();
+        }
+
+        function renderClaimedBots() {
+            const container = document.getElementById('claimed-bots-container');
+            container.innerHTML = '';
+
+            if (claimedBots.length === 0) {
+                container.innerHTML = `
+                    <div class="col-12 text-center">
+                        <p class="text-muted">No claimed bots yet</p>
+                    </div>
+                `;
+                return;
+            }
+
+            claimedBots.forEach(bot => {
+                const col = document.createElement('div');
+                col.className = 'col-md-6 col-lg-4 mb-3';
+                col.innerHTML = `
+                    <div class="card bot-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="mb-1">${bot.bot_name}</h6>
+                                <span class="status-badge ${bot.is_configured ? 'status-configured' : 'status-claimed'}">
+                                    ${bot.is_configured ? 'CONFIGURED' : 'CLAIMED'}
+                                </span>
+                            </div>
+                            <p class="text-secondary small mb-2">${bot.account_address}</p>
+                            <div class="row text-center mb-3">
+                                <div class="col-6">
+                                    <div class="mb-2">
+                                        <h6 class="mb-0">$${bot.current_balance_usd.toLocaleString()}</h6>
+                                        <small class="text-secondary">Balance</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="mb-2">
+                                        <small class="text-secondary">${bot.chain.toUpperCase()}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            ${!bot.is_configured ? `
+                                <button class="btn btn-primary btn-sm w-100" onclick="showConfigureBotModal('${bot.id}')">
+                                    <i class="fas fa-cog me-1"></i>
+                                    Configure Bot
+                                </button>
+                            ` : `
+                                <button class="btn btn-success btn-sm w-100" disabled>
+                                    <i class="fas fa-check me-1"></i>
+                                    Ready to Trade
+                                </button>
+                            `}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(col);
+            });
+        }
+
+        function showCreateStrategyModal() {
+            if (!currentUser) {
+                showNotification('Please connect MetaMask first', 'error');
+                return;
+            }
+
+            const modal = new bootstrap.Modal(document.getElementById('createStrategyModal'));
+            modal.show();
+        }
+
+        function createStrategy() {
+            const name = document.getElementById('strategy-name').value;
+            const riskLevel = document.getElementById('risk-level').value;
+            const maxPosition = document.getElementById('max-position').value;
+            const stopLoss = document.getElementById('stop-loss').value;
+            const takeProfit = document.getElementById('take-profit').value;
+            const buyStrategy = document.getElementById('buy-strategy').value;
+            const sellStrategy = document.getElementById('sell-strategy').value;
+
+            if (!name || !buyStrategy || !sellStrategy) {
+                showNotification('Please fill in all required fields', 'error');
+                return;
+            }
+
+            // Simulate strategy creation
+            const newStrategy = {
+                id: 'strategy_' + Math.random().toString(36).substr(2, 9),
+                strategy_name: name,
+                strategy_type: 'user_defined',
+                risk_level: riskLevel,
+                max_position_size: parseInt(maxPosition),
+                stop_loss_percentage: parseInt(stopLoss),
+                take_profit_percentage: parseInt(takeProfit)
+            };
+
+            myStrategies.push(newStrategy);
+            renderStrategies();
+
+            const modal = bootstrap.Modal.getInstance(document.getElementById('createStrategyModal'));
+            modal.hide();
+
+            showNotification('Strategy created successfully!', 'success');
+        }
+
+        function showConfigureBotModal(botId) {
+            if (!currentUser) {
+                showNotification('Please connect MetaMask first', 'error');
+                return;
+            }
+
+            // Load strategies for the select dropdown
+            const select = document.getElementById('bot-strategy-select');
+            select.innerHTML = '<option value="">Choose a strategy...</option>';
+
+            myStrategies.forEach(strategy => {
+                const option = document.createElement('option');
+                option.value = strategy.id;
+                option.textContent = strategy.strategy_name;
+                select.appendChild(option);
+            });
+
+            // Store bot ID for configuration
+            select.dataset.botId = botId;
+
+            const modal = new bootstrap.Modal(document.getElementById('configureBotModal'));
+            modal.show();
+        }
+
+        function configureBot() {
+            const select = document.getElementById('bot-strategy-select');
+            const botId = select.dataset.botId;
+            const strategyId = select.value;
+
+            if (!strategyId) {
+                showNotification('Please select a strategy', 'error');
+                return;
+            }
+
+            // Simulate bot configuration
+            const bot = claimedBots.find(b => b.id === botId);
+            if (bot) {
+                bot.strategy_id = strategyId;
+                bot.is_configured = true;
+                renderClaimedBots();
+
+                const modal = bootstrap.Modal.getInstance(document.getElementById('configureBotModal'));
+                modal.hide();
+
+                showNotification('Bot configured successfully!', 'success');
+            }
+        }
+
+        function showNotification(message, type = 'info') {
+            const container = document.getElementById('notification-container');
+            const notification = document.createElement('div');
+            notification.className = `notification alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show`;
+            notification.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+
+            container.appendChild(notification);
+
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+
+        // Initialize demo
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log('AIP DEX Trading Bot Demo loaded');
+        });
+    </script>
+</body>
+
+</html>

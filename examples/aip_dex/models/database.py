@@ -61,7 +61,6 @@ def create_indexes():
         "CREATE INDEX IF NOT EXISTS idx_trading_bots_strategy ON trading_bots(strategy_id)",
         "CREATE INDEX IF NOT EXISTS idx_trading_bots_account_chain ON trading_bots(account_address, chain)",
         "CREATE INDEX IF NOT EXISTS idx_trading_bots_active ON trading_bots(is_active)",
-        "CREATE INDEX IF NOT EXISTS idx_trading_bots_strategy_type ON trading_bots(strategy_type)",
         
         # Position indexes
         "CREATE INDEX IF NOT EXISTS idx_positions_bot_active ON positions(bot_id, is_active)",
@@ -876,7 +875,7 @@ class RevenueSnapshot(Base):
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     
     __table_args__ = (
-        CheckConstraint("snapshot_type IN ('hourly', 'daily', 'manual', 'triggered')", name='check_snapshot_type'),
+        CheckConstraint("snapshot_type IN ('hourly', 'daily', 'manual', 'triggered', 'initial')", name='check_snapshot_type'),
         CheckConstraint("calculation_method IN ('v1.0', 'v1.1', 'v2.0')", name='check_calculation_method'),
         CheckConstraint("data_completeness >= 0 AND data_completeness <= 100", name='check_data_completeness'),
         CheckConstraint("win_rate >= 0 AND win_rate <= 100", name='check_win_rate'),

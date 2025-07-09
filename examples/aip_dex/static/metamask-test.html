@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MetaMask Connection Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .card {
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        .status-connected {
+            background-color: #28a745;
+        }
+
+        .status-disconnected {
+            background-color: #dc3545;
+        }
+
+        .status-unknown {
+            background-color: #ffc107;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">
+                            <i class="fas fa-wallet me-2"></i>
+                            MetaMask Connection Test
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <h6>MetaMask Status</h6>
+                                <div id="metamask-status">
+                                    <span class="status-indicator status-unknown"></span>
+                                    <span>Checking...</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Connection Status</h6>
+                                <div id="connection-status">
+                                    <span class="status-indicator status-disconnected"></span>
+                                    <span>Not Connected</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6>Account Information</h6>
+                                <div id="account-info" class="text-muted">
+                                    No account connected
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6>Network Information</h6>
+                                <div id="network-info" class="text-muted">
+                                    No network information
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <button class="btn btn-primary w-100" onclick="connectMetaMask()">
+                                    <i class="fas fa-plug me-2"></i>
+                                    Connect MetaMask
+                                </button>
+                            </div>
+                            <div class="col-md-6">
+                                <button class="btn btn-outline-danger w-100" onclick="disconnectMetaMask()">
+                                    <i class="fas fa-unlink me-2"></i>
+                                    Disconnect
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <h6>Test Results</h6>
+                            <div id="test-results" class="alert alert-info">
+                                Click "Connect MetaMask" to start testing
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/metamask.js"></script>
+    <script>
+        let testResults = [];
+
+        document.addEventListener('DOMContentLoaded', function () {
+            setTimeout(() => {
+                if (typeof metamaskLogin !== 'undefined' && metamaskLogin) {
+                    updateStatus();
+                    runTests();
+                } else {
+                    updateTestResults('MetaMask login not initialized', 'danger');
+                }
+            }, 1000);
+        });
+
+        function updateStatus() {
+            const metamaskStatus = document.getElementById('metamask-status');
+            const connectionStatus = document.getElementById('connection-status');
+            const accountInfo = document.getElementById('account-info');
+            const networkInfo = document.getElementById('network-info');
+
+            // Check if MetaMask is available
+            if (metamaskLogin && metamaskLogin.isMetaMaskAvailable()) {
+                metamaskStatus.innerHTML = `
+                    <span class="status-indicator status-connected"></span>
+                    <span>MetaMask Available</span>
+                `;
+            } else {
+                metamaskStatus.innerHTML = `
+                    <span class="status-indicator status-disconnected"></span>
+                    <span>MetaMask Not Available</span>
+                `;
+            }
+
+            // Check connection status
+            if (metamaskLogin && metamaskLogin.isConnected && metamaskLogin.currentAccount) {
+                connectionStatus.innerHTML = `
+                    <span class="status-indicator status-connected"></span>
+                    <span>Connected</span>
+                `;
+                accountInfo.innerHTML = `
+                    <strong>Address:</strong> ${metamaskLogin.currentAccount}<br>
+                    <strong>Formatted:</strong> ${metamaskLogin.formatAddress(metamaskLogin.currentAccount)}
+                `;
+            } else {
+                connectionStatus.innerHTML = `
+                    <span class="status-indicator status-disconnected"></span>
+                    <span>Not Connected</span>
+                `;
+                accountInfo.innerHTML = 'No account connected';
+            }
+
+            // Get network info
+            if (metamaskLogin) {
+                metamaskLogin.getCurrentNetwork().then(chainId => {
+                    if (chainId) {
+                        networkInfo.innerHTML = `
+                            <strong>Chain ID:</strong> ${chainId}<br>
+                            <strong>Network:</strong> ${getNetworkName(chainId)}
+                        `;
+                    } else {
+                        networkInfo.innerHTML = 'Unable to get network information';
+                    }
+                });
+            }
+        }
+
+        function getNetworkName(chainId) {
+            const networks = {
+                '0x1': 'Ethereum Mainnet',
+                '0x3': 'Ropsten Testnet',
+                '0x4': 'Rinkeby Testnet',
+                '0x5': 'Goerli Testnet',
+                '0x2a': 'Kovan Testnet',
+                '0x89': 'Polygon Mainnet',
+                '0x13881': 'Mumbai Testnet',
+                '0xa86a': 'Avalanche C-Chain',
+                '0x38': 'Binance Smart Chain',
+                '0x61': 'BSC Testnet'
+            };
+            return networks[chainId] || 'Unknown Network';
+        }
+
+        async function connectMetaMask() {
+            if (!metamaskLogin) {
+                updateTestResults('MetaMask login not initialized', 'danger');
+                return;
+            }
+
+            try {
+                updateTestResults('Attempting to connect to MetaMask...', 'info');
+                const success = await metamaskLogin.connectWallet();
+
+                if (success) {
+                    updateTestResults('Successfully connected to MetaMask!', 'success');
+                    updateStatus();
+                } else {
+                    updateTestResults('Failed to connect to MetaMask', 'danger');
+                }
+            } catch (error) {
+                updateTestResults('Error connecting to MetaMask: ' + error.message, 'danger');
+            }
+        }
+
+        function disconnectMetaMask() {
+            if (metamaskLogin) {
+                metamaskLogin.disconnect();
+                updateStatus();
+                updateTestResults('Disconnected from MetaMask', 'warning');
+            }
+        }
+
+        function updateTestResults(message, type = 'info') {
+            const resultsDiv = document.getElementById('test-results');
+            const timestamp = new Date().toLocaleTimeString();
+            testResults.push(`[${timestamp}] ${message}`);
+
+            resultsDiv.className = `alert alert-${type}`;
+            resultsDiv.innerHTML = testResults.slice(-5).join('<br>');
+        }
+
+        async function runTests() {
+            updateTestResults('Running MetaMask connection tests...', 'info');
+
+            // Test 1: Check if MetaMask is available
+            if (metamaskLogin && metamaskLogin.isMetaMaskAvailable()) {
+                updateTestResults('✓ MetaMask is available', 'success');
+            } else {
+                updateTestResults('✗ MetaMask is not available', 'danger');
+            }
+
+            // Test 2: Check if already connected
+            if (metamaskLogin && metamaskLogin.isConnected) {
+                updateTestResults('✓ Already connected to MetaMask', 'success');
+            } else {
+                updateTestResults('ℹ Not connected to MetaMask', 'info');
+            }
+
+            // Test 3: Check network
+            if (metamaskLogin) {
+                try {
+                    const chainId = await metamaskLogin.getCurrentNetwork();
+                    if (chainId) {
+                        updateTestResults(`✓ Connected to network: ${getNetworkName(chainId)}`, 'success');
+                    } else {
+                        updateTestResults('⚠ Unable to get network information', 'warning');
+                    }
+                } catch (error) {
+                    updateTestResults('✗ Error getting network: ' + error.message, 'danger');
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>

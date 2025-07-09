@@ -439,7 +439,7 @@ class TradingService:
                     "name": bot.bot_name,
                     "account_address": bot.account_address,
                     "chain": bot.chain,
-                    "strategy_type": bot.strategy_type,
+                    "strategy_type": bot.strategy.strategy_type if bot.strategy else "Not configured",
                     "is_active": bot.is_active
                 },
                 "financial_status": {

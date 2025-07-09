@@ -10,7 +10,7 @@ from decimal import Decimal
 
 from models.database import (
     TradingBot, Position, PositionHistory, Transaction, 
-    LLMDecision, RevenueSnapshot, Token
+    LLMDecision, RevenueSnapshot, Token, TradingStrategy
 )
 
 class TradingService:
@@ -35,9 +35,7 @@ class TradingService:
                 print(f"Bot with account {config['account_address']} already exists")
                 return existing_bot
             
-            # Create bot with strategy defaults
-            strategy_params = self._get_strategy_defaults(config.get("strategy_type", "conservative"))
-            
+            # Create bot with basic configuration
             bot = TradingBot(
                 bot_name=config["bot_name"],
                 account_address=config["account_address"],
@@ -48,28 +46,9 @@ class TradingService:
                 current_balance_usd=Decimal(str(config["initial_balance_usd"])),
                 total_assets_usd=Decimal(str(config["initial_balance_usd"])),
                 
-                # Trading fees
-                gas_fee_native=Decimal(str(config.get("gas_fee_native", 0.00003))),
-                trading_fee_percentage=Decimal(str(config.get("trading_fee_percentage", 0.1))),
-                slippage_tolerance=Decimal(str(config.get("slippage_tolerance", 1.0))),
-                
-                # Strategy config
-                strategy_type=config["strategy_type"],
-                max_position_size=Decimal(str(config.get("max_position_size", strategy_params["max_position_size"]))),
-                stop_loss_percentage=Decimal(str(config.get("stop_loss_percentage", strategy_params["stop_loss_percentage"]))),
-                take_profit_percentage=Decimal(str(config.get("take_profit_percentage", strategy_params["take_profit_percentage"]))),
-                min_profit_threshold=Decimal(str(config.get("min_profit_threshold", strategy_params["min_profit_threshold"]))),
-                
-                # Runtime config
-                min_trade_amount_usd=Decimal(str(config.get("min_trade_amount_usd", 10.0))),
-                max_daily_trades=config.get("max_daily_trades", strategy_params["max_daily_trades"]),
-                polling_interval_hours=config.get("polling_interval_hours", 1),
-                llm_confidence_threshold=Decimal(str(config.get("llm_confidence_threshold", strategy_params["llm_confidence_threshold"]))),
-                
-                # Feature flags
-                enable_stop_loss=config.get("enable_stop_loss", True),
-                enable_take_profit=config.get("enable_take_profit", True),
-                is_active=config.get("is_active", True)
+                # Basic status
+                is_active=config.get("is_active", True),
+                is_configured=False  # Will be set to True when strategy is assigned
             )
             
             db.add(bot)
@@ -84,9 +63,36 @@ class TradingService:
             db.rollback()
             return None
     
+    async def configure_bot_strategy(self, db: Session, bot_id: str, strategy_id: str) -> bool:
+        """Configure a bot with a strategy"""
+        try:
+            bot = db.query(TradingBot).filter(TradingBot.id == bot_id).first()
+            if not bot:
+                print(f"Bot {bot_id} not found")
+                return False
+            
+            strategy = db.query(TradingStrategy).filter(TradingStrategy.id == strategy_id).first()
+            if not strategy:
+                print(f"Strategy {strategy_id} not found")
+                return False
+            
+            # Assign strategy to bot
+            bot.strategy_id = strategy_id
+            bot.is_configured = True
+            bot.updated_at = datetime.now(timezone.utc)
+            
+            db.commit()
+            print(f"✓ Configured bot {bot.bot_name} with strategy {strategy.strategy_name}")
+            return True
+            
+        except Exception as e:
+            print(f"Error configuring bot strategy: {e}")
+            db.rollback()
+            return False
+    
     def _validate_bot_config(self, config: Dict[str, Any]) -> bool:
         """Validate bot configuration"""
-        required_fields = ["bot_name", "account_address", "chain", "initial_balance_usd", "strategy_type"]
+        required_fields = ["bot_name", "account_address", "chain", "initial_balance_usd"]
         
         for field in required_fields:
             if field not in config:
@@ -97,10 +103,12 @@ class TradingService:
             print(f"Invalid chain: {config['chain']}")
             return False
         
-        valid_strategies = ["conservative", "moderate", "aggressive", "momentum", "mean_reversion"]
-        if config["strategy_type"] not in valid_strategies:
-            print(f"Invalid strategy type: {config['strategy_type']}")
-            return False
+        # Strategy type is optional now, but validate if provided
+        if "strategy_type" in config:
+            valid_strategies = ["conservative", "moderate", "aggressive", "momentum", "mean_reversion"]
+            if config["strategy_type"] not in valid_strategies:
+                print(f"Invalid strategy type: {config['strategy_type']}")
+                return False
         
         if float(config["initial_balance_usd"]) < 100:
             print("Initial balance must be at least $100")
@@ -158,7 +166,7 @@ class TradingService:
                     "name": bot.bot_name,
                     "account_address": bot.account_address,
                     "chain": bot.chain,
-                    "strategy_type": bot.strategy_type,
+                    "strategy_type": bot.strategy.strategy_type if bot.strategy else "Not configured",
                     "is_active": bot.is_active
                 },
                 "financial_status": {

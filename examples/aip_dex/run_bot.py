@@ -9,11 +9,14 @@ import os
 import logging
 import json
 import argparse
+import time
+from datetime import datetime
 
 # Add current directory to path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from trading_bot import AIPTradingBot
+from models.database import get_db, TradingBot
 
 # Configure logging
 logging.basicConfig(
@@ -52,7 +55,7 @@ def load_config_from_file(config_path):
     # Validate required fields
     required_fields = [
         "bot_name", "account_address", "chain", "initial_balance_usd",
-        "strategy_type", "polling_interval_hours", "min_trade_amount_usd", "is_active"
+        "is_active"
     ]
     
     missing_fields = [field for field in required_fields if field not in config]
@@ -78,6 +81,80 @@ def get_default_config():
         "is_active": True
     }
 
+async def check_bot_configuration(bot_id: str) -> bool:
+    """
+    Check if bot has owner and strategy configured
+    
+    Args:
+        bot_id (str): Bot ID to check
+        
+    Returns:
+        bool: True if bot is configured (has owner and strategy), False otherwise
+    """
+    try:
+        db = next(get_db())
+        try:
+            bot = db.query(TradingBot).filter(TradingBot.id == bot_id).first()
+            if not bot:
+                print(f"❌ Bot with ID {bot_id} not found")
+                return False
+            
+            is_configured = bot.is_configured and bot.owner_id and bot.strategy_id
+            if is_configured:
+                print(f"✅ Bot is configured:")
+                print(f"   Owner ID: {bot.owner_id}")
+                print(f"   Strategy ID: {bot.strategy_id}")
+                print(f"   Strategy Type: {bot.strategy.strategy_type if bot.strategy else 'Unknown'}")
+            else:
+                print(f"⏳ Bot is not configured:")
+                print(f"   Owner ID: {bot.owner_id or 'None'}")
+                print(f"   Strategy ID: {bot.strategy_id or 'None'}")
+                print(f"   Is Configured: {bot.is_configured}")
+            
+            return is_configured
+            
+        finally:
+            db.close()
+            
+    except Exception as e:
+        print(f"❌ Error checking bot configuration: {e}")
+        return False
+
+async def wait_for_configuration(bot_id: str, check_interval_minutes: int = 5):
+    """
+    Wait for bot to be configured with owner and strategy
+    
+    Args:
+        bot_id (str): Bot ID to monitor
+        check_interval_minutes (int): How often to check for configuration (default: 5 minutes)
+    """
+    print(f"\n⏳ Waiting for bot configuration...")
+    print(f"   Check interval: {check_interval_minutes} minutes")
+    print(f"   Press Ctrl+C to stop waiting")
+    
+    check_interval_seconds = check_interval_minutes * 60
+    check_count = 0
+    
+    while True:
+        check_count += 1
+        current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        print(f"\n🔄 Configuration check #{check_count} at {current_time}")
+        
+        # Check if bot is configured
+        if await check_bot_configuration(bot_id):
+            print(f"✅ Bot is ready to start trading!")
+            return True
+        
+        # Wait before next check
+        print(f"⏳ Next check in {check_interval_minutes} minutes...")
+        
+        # Sleep in small chunks to allow for graceful shutdown
+        remaining_time = check_interval_seconds
+        while remaining_time > 0:
+            chunk_sleep = min(remaining_time, 30)  # Sleep max 30 seconds at a time
+            await asyncio.sleep(chunk_sleep)
+            remaining_time -= chunk_sleep
+
 async def main():
     # Parse command line arguments
     parser = argparse.ArgumentParser(description='AIP DEX Trading Bot')
@@ -90,6 +167,17 @@ async def main():
         '--default',
         action='store_true',
         help='Use default configuration'
+    )
+    parser.add_argument(
+        '--wait-config',
+        action='store_true',
+        help='Wait for bot configuration (owner and strategy) before starting trading'
+    )
+    parser.add_argument(
+        '--check-interval',
+        type=int,
+        default=5,
+        help='Configuration check interval in minutes (default: 5)'
     )
     
     args = parser.parse_args()
@@ -138,12 +226,23 @@ async def main():
     
     print("\n🚀 Starting bot...")
     
-    # Create and run bot
+    # Create and initialize bot
     bot = AIPTradingBot(config)
     
     if await bot.initialize():
         print("✅ Bot initialized successfully")
         logging.info(f"Trading bot '{config['bot_name']}' initialized successfully")
+        
+        # Check if we should wait for configuration
+        if args.wait_config or not config.get('owner_id') or not config.get('strategy_id'):
+            print("\n🔍 Checking bot configuration status...")
+            
+            # Wait for configuration if needed
+            if not await check_bot_configuration(bot.bot_id):
+                print(f"\n⏳ Bot is not configured. Waiting for owner and strategy...")
+                await wait_for_configuration(bot.bot_id, args.check_interval)
+        
+        # Start trading
         await bot.run()
     else:
         print("❌ Failed to initialize bot")

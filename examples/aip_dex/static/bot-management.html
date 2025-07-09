@@ -1,0 +1,1466 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bot Management - AIP DEX Trading Bot</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --secondary-color: #8b5cf6;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --card-bg: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --card-bg: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --border-color: #334155;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 50%, var(--bg-secondary) 100%);
+            min-height: 100vh;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: all 0.3s ease;
+        }
+
+        [data-theme="dark"] body {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e1b4b 100%);
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+            z-index: 1040;
+        }
+
+        [data-theme="dark"] .navbar {
+            background: rgba(15, 23, 42, 0.95) !important;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-color);
+        }
+
+        .btn {
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #1d4ed8 100%);
+            border: none;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success-color) 0%, #059669 100%);
+            border: none;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-success:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+        }
+
+        .form-control,
+        .form-select {
+            border-radius: 8px;
+            border: 1.5px solid var(--border-color);
+            background: var(--card-bg);
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            box-shadow: var(--shadow-lg);
+            backdrop-filter: blur(20px);
+        }
+
+        .modal-header {
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(248, 250, 252, 0.8);
+            border-radius: 20px 20px 0 0;
+            padding: 1.5rem;
+        }
+
+        [data-theme="dark"] .modal-header {
+            background: rgba(30, 41, 59, 0.8);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-footer {
+            border-top: 1px solid var(--border-color);
+            background: rgba(248, 250, 252, 0.8);
+            border-radius: 0 0 20px 20px;
+            padding: 1.5rem;
+        }
+
+        [data-theme="dark"] .modal-footer {
+            background: rgba(30, 41, 59, 0.8);
+        }
+
+        .bot-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+            background: linear-gradient(135deg, var(--card-bg) 0%, rgba(51, 65, 85, 0.3) 100%);
+        }
+
+        .bot-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-color);
+            background: linear-gradient(135deg, var(--card-bg) 0%, rgba(51, 65, 85, 0.5) 100%);
+        }
+
+        .strategy-card {
+            border-left: 4px solid var(--primary-color);
+            background: rgba(59, 130, 246, 0.04);
+        }
+
+        [data-theme="dark"] .strategy-card {
+            background: rgba(59, 130, 246, 0.10);
+        }
+
+        .status-badge {
+            padding: 0.375rem 1rem;
+            border-radius: 25px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border: 2px solid;
+            transition: all 0.3s ease;
+        }
+
+        .status-unclaimed {
+            background: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+            border-color: #f59e0b;
+            box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.2);
+        }
+
+        .status-claimed {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+            border-color: #10b981;
+            box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.2);
+        }
+
+        .status-configured {
+            background: rgba(59, 130, 246, 0.15);
+            color: #3b82f6;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2);
+        }
+
+        .status-trading {
+            background: rgba(139, 92, 246, 0.15);
+            color: #8b5cf6;
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.2);
+        }
+
+        .notification-container {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            z-index: 1050;
+            max-width: 400px;
+        }
+
+        .notification {
+            border-radius: 12px;
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 1rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .user-info {
+            background: linear-gradient(135deg, var(--success-color), #059669);
+            color: white;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .stats-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            height: 100%;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-color);
+        }
+
+        .stats-number {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stats-label {
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 767px) {
+            .stats-card {
+                padding: 1rem;
+                min-height: 100px;
+            }
+
+            .stats-number {
+                font-size: 1.5rem;
+            }
+
+            .stats-label {
+                font-size: 0.75rem;
+            }
+        }
+
+        @media (min-width: 768px) and (max-width: 1199px) {
+            .stats-card {
+                padding: 1.25rem;
+                min-height: 110px;
+            }
+
+            .stats-number {
+                font-size: 1.75rem;
+            }
+
+            .stats-label {
+                font-size: 0.8rem;
+            }
+        }
+
+        @media (min-width: 1200px) {
+            .stats-card {
+                padding: 1.5rem;
+                min-height: 120px;
+            }
+
+            .stats-number {
+                font-size: 2rem;
+            }
+
+            .stats-label {
+                font-size: 0.875rem;
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="fas fa-robot me-2"></i>
+                AIP DEX Trading Bot
+            </a>
+            <div class="navbar-nav ms-auto">
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+                        data-bs-toggle="dropdown">
+                        <i class="fas fa-user me-1"></i>
+                        <span id="user-wallet">Not Connected</span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" onclick="connectWallet()">Connect MetaMask</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="refreshSession()">Refresh Session</a></li>
+                        <li><a class="dropdown-item" href="/login">Login</a></li>
+                        <li><a class="dropdown-item" href="/">Dashboard</a></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item" href="#" onclick="disconnectWallet()">Disconnect</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Notification Container -->
+    <div id="notification-container" class="notification-container"></div>
+
+    <div class="container-fluid mt-4">
+        <!-- User Info Section -->
+        <div class="row mb-4" id="user-info-section" style="display: none;">
+            <div class="col-12">
+                <div class="user-info">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-1">
+                                <i class="fas fa-wallet me-2"></i>
+                                Connected Wallet
+                            </h5>
+                            <p class="mb-0" id="connected-wallet-address"></p>
+                        </div>
+                        <div class="text-end">
+                            <small>Owner ID: <span id="owner-id"></span></small><br>
+                            <small>Subscription: <span id="subscription-tier">Basic</span></small><br>
+                            <small>Bots: <span id="bots-claimed">0</span>/<span id="max-bots">1</span></small><br>
+                            <small>Session: <span id="session-status">Active</span></small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Section -->
+        <div class="row mb-4" id="stats-section" style="display: none;">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chart-bar me-2"></i>
+                            Statistics Overview
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row" id="system-stats">
+                            <div class="col-md-3 col-sm-6 mb-3">
+                                <div class="stats-card text-center p-3">
+                                    <h3 class="text-primary" id="total-bots">0</h3>
+                                    <p class="text-secondary mb-0">Total Bots</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-sm-6 mb-3">
+                                <div class="stats-card text-center p-3">
+                                    <h3 class="text-success" id="claimed-bots">0</h3>
+                                    <p class="text-secondary mb-0">Claimed Bots</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-sm-6 mb-3">
+                                <div class="stats-card text-center p-3">
+                                    <h3 class="text-warning" id="configured-bots">0</h3>
+                                    <p class="text-secondary mb-0">Configured Bots</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-sm-6 mb-3">
+                                <div class="stats-card text-center p-3">
+                                    <h3 class="text-info" id="total-strategies">0</h3>
+                                    <p class="text-secondary mb-0">Strategies</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Unclaimed Bots Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-robot me-2"></i>
+                            Unclaimed Bots
+                        </h5>
+                        <button class="btn btn-primary btn-sm" onclick="loadUnclaimedBots()">
+                            <i class="fas fa-sync-alt me-1"></i>
+                            Refresh
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="row" id="unclaimed-bots-container">
+                            <div class="col-12">
+                                <div class="empty-state">
+                                    <i class="fas fa-robot"></i>
+                                    <h5>No Unclaimed Bots</h5>
+                                    <p>All bots have been claimed or there are no bots available.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- My Strategies Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chart-line me-2"></i>
+                            My Strategies
+                        </h5>
+                        <button class="btn btn-success btn-sm" onclick="showCreateStrategyModal()">
+                            <i class="fas fa-plus me-1"></i>
+                            Create Strategy
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="row" id="strategies-container">
+                            <div class="col-12">
+                                <div class="empty-state">
+                                    <i class="fas fa-chart-line"></i>
+                                    <h5>No Strategies</h5>
+                                    <p>Create your first trading strategy to get started.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upgrade Notice for Basic Users -->
+        <div class="row mb-4" id="upgrade-notice" style="display: none;">
+            <div class="col-12">
+                <div class="alert alert-info">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-info-circle me-3"></i>
+                        <div>
+                            <h6 class="mb-1">Upgrade Your Subscription</h6>
+                            <p class="mb-2">Basic users can only claim 1 bot. Upgrade to Premium to claim up to 5 bots,
+                                or Enterprise for up to 20 bots.</p>
+                            <button class="btn btn-primary btn-sm" onclick="showUpgradeModal()">
+                                <i class="fas fa-arrow-up me-1"></i>
+                                Upgrade Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- My Claimed Bots Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-user-robot me-2"></i>
+                            My Claimed Bots
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row" id="claimed-bots-container">
+                            <div class="col-12">
+                                <div class="empty-state">
+                                    <i class="fas fa-user-robot"></i>
+                                    <h5>No Claimed Bots</h5>
+                                    <p>Claim a bot from the unclaimed bots section to get started.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Strategy Modal -->
+    <div class="modal fade" id="createStrategyModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-chart-line me-2"></i>
+                        Create New Strategy
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="strategy-form">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Strategy Name *</label>
+                                    <input type="text" class="form-control" id="strategy-name" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Risk Level *</label>
+                                    <select class="form-select" id="risk-level" required>
+                                        <option value="">Choose risk level...</option>
+                                        <option value="low">Low</option>
+                                        <option value="medium" selected>Medium</option>
+                                        <option value="high">High</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Max Position Size (%) *</label>
+                                    <input type="number" class="form-control" id="max-position" value="20" min="1"
+                                        max="100" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Stop Loss (%) *</label>
+                                    <input type="number" class="form-control" id="stop-loss" value="10" min="1" max="50"
+                                        required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Take Profit (%) *</label>
+                                    <input type="number" class="form-control" id="take-profit" value="25" min="1"
+                                        max="100" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Buy Strategy Description *</label>
+                            <textarea class="form-control" id="buy-strategy" rows="3"
+                                placeholder="Describe your buy strategy logic..." required></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Sell Strategy Description *</label>
+                            <textarea class="form-control" id="sell-strategy" rows="3"
+                                placeholder="Describe your sell strategy logic..." required></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Filter Strategy Description</label>
+                            <textarea class="form-control" id="filter-strategy" rows="2"
+                                placeholder="Describe your token filtering criteria..."></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Strategy Summary</label>
+                            <textarea class="form-control" id="strategy-summary" rows="2"
+                                placeholder="Brief summary of your strategy..."></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="createStrategy()">
+                        <i class="fas fa-save me-1"></i>
+                        Create Strategy
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Configure Bot Modal -->
+    <div class="modal fade" id="configureBotModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-cog me-2"></i>
+                        Configure Bot
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Select Strategy *</label>
+                        <select class="form-select" id="bot-strategy-select">
+                            <option value="">Choose a strategy...</option>
+                        </select>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Note:</strong> Once configured, the bot will start trading according to the selected
+                        strategy.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="configureBot()">
+                        <i class="fas fa-check me-1"></i>
+                        Configure Bot
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upgrade Subscription Modal -->
+    <div class="modal fade" id="upgradeModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-arrow-up me-2"></i>
+                        Upgrade Your Subscription
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h5 class="card-title">Basic</h5>
+                                    <h6 class="text-muted">Free</h6>
+                                    <ul class="list-unstyled">
+                                        <li>✓ 1 Bot</li>
+                                        <li>✓ Basic Strategies</li>
+                                        <li>✓ Standard Support</li>
+                                    </ul>
+                                    <button class="btn btn-outline-primary btn-sm" disabled>Current Plan</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card text-center border-primary">
+                                <div class="card-body">
+                                    <h5 class="card-title">Premium</h5>
+                                    <h6 class="text-primary">$29/month</h6>
+                                    <ul class="list-unstyled">
+                                        <li>✓ 5 Bots</li>
+                                        <li>✓ Advanced Strategies</li>
+                                        <li>✓ Priority Support</li>
+                                        <li>✓ Analytics Dashboard</li>
+                                    </ul>
+                                    <button class="btn btn-primary btn-sm">Upgrade to Premium</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h5 class="card-title">Enterprise</h5>
+                                    <h6 class="text-muted">$99/month</h6>
+                                    <ul class="list-unstyled">
+                                        <li>✓ 20 Bots</li>
+                                        <li>✓ Custom Strategies</li>
+                                        <li>✓ 24/7 Support</li>
+                                        <li>✓ API Access</li>
+                                        <li>✓ White-label Options</li>
+                                    </ul>
+                                    <button class="btn btn-outline-primary btn-sm">Upgrade to Enterprise</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/metamask.js"></script>
+    <script>
+        // Global state
+        let currentUser = null;
+        let unclaimedBots = [];
+        let myStrategies = [];
+        let claimedBots = [];
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function () {
+            // Wait for MetaMask to be initialized
+            setTimeout(() => {
+                if (typeof metamaskLogin !== 'undefined' && metamaskLogin) {
+                    checkUserConnection();
+                    loadAllData();
+                } else {
+                    console.error('MetaMask login not initialized. Please refresh the page.');
+                    showNotification('MetaMask login not initialized. Please refresh the page.', 'danger');
+                }
+            }, 1000);
+        });
+
+        function checkUserConnection() {
+            console.log('Checking user connection...');
+            console.log('MetaMask login object:', metamaskLogin);
+
+            // Check if MetaMask is available
+            if (!metamaskLogin || !metamaskLogin.isMetaMaskAvailable()) {
+                showNotification('MetaMask is not installed. Please install MetaMask to continue.', 'warning');
+                setTimeout(() => {
+                    window.location.href = '/login';
+                }, 3000);
+                return;
+            }
+
+            const savedOwnerId = localStorage.getItem('owner_id');
+            const savedWallet = localStorage.getItem('wallet_address');
+            const sessionExpiry = localStorage.getItem('session_expiry');
+
+            console.log('Session data:', {
+                savedOwnerId,
+                savedWallet,
+                sessionExpiry,
+                currentTime: Date.now()
+            });
+
+            if (savedOwnerId && savedWallet && sessionExpiry) {
+                // Check if session is still valid
+                const now = Date.now();
+                const expiry = parseInt(sessionExpiry);
+
+                if (now < expiry) {
+                    currentUser = {
+                        ownerId: savedOwnerId,
+                        walletAddress: savedWallet,
+                        subscriptionTier: 'Basic', // Default, will be updated from API
+                        botsClaimed: 0,
+                        maxBots: 1
+                    };
+
+                    // Sync with MetaMask login module
+                    if (metamaskLogin) {
+                        metamaskLogin.ownerId = savedOwnerId;
+                        metamaskLogin.currentAccount = savedWallet;
+                        metamaskLogin.isConnected = true;
+                    }
+
+                    updateUserInfo();
+                    showUserSections();
+
+                    // Try to get user details from API
+                    loadUserDetails();
+                } else {
+                    // Session expired, clear data and redirect
+                    localStorage.removeItem('owner_id');
+                    localStorage.removeItem('wallet_address');
+                    localStorage.removeItem('session_expiry');
+                    showNotification('Session expired. Please reconnect your MetaMask wallet.', 'warning');
+                    setTimeout(() => {
+                        window.location.href = '/login';
+                    }, 2000);
+                }
+            } else {
+                showNotification('Please connect your MetaMask wallet first', 'warning');
+                setTimeout(() => {
+                    window.location.href = '/login';
+                }, 2000);
+            }
+        }
+
+        async function loadUserDetails() {
+            if (!currentUser || !currentUser.ownerId) return;
+
+            try {
+                // Get user's claimed bots to update counts
+                const response = await fetch(`/api/v1/bots/owner/${currentUser.ownerId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${getAuthToken()}`
+                    }
+                });
+
+                if (response.ok) {
+                    const bots = await response.json();
+                    currentUser.botsClaimed = bots.length;
+                    updateUserInfo();
+                }
+            } catch (error) {
+                console.error('Error loading user details:', error);
+            }
+        }
+
+        function updateUserInfo() {
+            if (currentUser) {
+                document.getElementById('user-wallet').textContent = formatAddress(currentUser.walletAddress);
+                document.getElementById('connected-wallet-address').textContent = currentUser.walletAddress;
+                document.getElementById('owner-id').textContent = currentUser.ownerId;
+
+                // Update subscription info
+                const subscriptionTier = currentUser.subscriptionTier || 'Basic';
+                const botsClaimed = currentUser.botsClaimed || 0;
+                const maxBots = currentUser.maxBots || 1;
+
+                document.getElementById('subscription-tier').textContent = subscriptionTier;
+                document.getElementById('bots-claimed').textContent = botsClaimed;
+                document.getElementById('max-bots').textContent = maxBots;
+
+                // Update session status
+                updateSessionStatus();
+            }
+        }
+
+        function showUserSections() {
+            document.getElementById('user-info-section').style.display = 'block';
+            document.getElementById('stats-section').style.display = 'block';
+        }
+
+        function formatAddress(address) {
+            if (!address) return '';
+            return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
+        }
+
+        function disconnectWallet() {
+            if (metamaskLogin) {
+                metamaskLogin.disconnect();
+            }
+            localStorage.removeItem('owner_id');
+            localStorage.removeItem('wallet_address');
+            window.location.href = '/login';
+        }
+
+        async function connectWallet() {
+            if (!metamaskLogin) {
+                showNotification('MetaMask login not initialized. Please refresh the page.', 'danger');
+                return;
+            }
+
+            try {
+                const success = await metamaskLogin.connectWallet();
+                if (success) {
+                    showNotification('Successfully connected to MetaMask!', 'success');
+                    // Refresh the page to update the UI
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                }
+            } catch (error) {
+                showNotification('Failed to connect to MetaMask: ' + error.message, 'danger');
+            }
+        }
+
+        // Load all data
+        async function loadAllData() {
+            await Promise.all([
+                loadUnclaimedBots(),
+                loadMyStrategies(),
+                loadMyClaimedBots()
+            ]);
+            updateStats();
+        }
+
+        // Unclaimed Bots
+        async function loadUnclaimedBots() {
+            try {
+                const response = await fetch('/api/v1/bots/unclaimed', {
+                    headers: {
+                        'Authorization': `Bearer ${getAuthToken()}`
+                    }
+                });
+
+                if (response.ok) {
+                    unclaimedBots = await response.json();
+                    renderUnclaimedBots();
+                } else {
+                    console.error('Failed to load unclaimed bots');
+                }
+            } catch (error) {
+                console.error('Error loading unclaimed bots:', error);
+                showNotification('Failed to load unclaimed bots', 'danger');
+            }
+        }
+
+        function renderUnclaimedBots() {
+            const container = document.getElementById('unclaimed-bots-container');
+
+            if (unclaimedBots.length === 0) {
+                container.innerHTML = `
+                    <div class="col-12">
+                        <div class="empty-state">
+                            <i class="fas fa-robot"></i>
+                            <h5>No Unclaimed Bots</h5>
+                            <p>All bots have been claimed or there are no bots available.</p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = '';
+
+            unclaimedBots.forEach(bot => {
+                const col = document.createElement('div');
+                col.className = 'col-md-6 col-lg-4 mb-3';
+                col.innerHTML = `
+                    <div class="card bot-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="mb-1">${bot.bot_name}</h6>
+                                <span class="status-badge status-unclaimed">UNCLAIMED</span>
+                            </div>
+                            <p class="text-secondary small mb-2">${bot.account_address}</p>
+                            <div class="row text-center mb-3">
+                                <div class="col-6">
+                                    <div class="mb-2">
+                                        <h6 class="mb-0">$${formatUSD(bot.current_balance_usd)}</h6>
+                                        <small class="text-secondary">Balance</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="mb-2">
+                                        <small class="text-secondary">${bot.chain.toUpperCase()}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            ${currentUser && currentUser.subscriptionTier === 'Basic' && currentUser.botsClaimed >= 1 ?
+                        `<button class="btn btn-secondary btn-sm w-100" disabled>
+                                    <i class="fas fa-lock me-1"></i>
+                                    Basic Limit Reached
+                                </button>` :
+                        `<button class="btn btn-primary btn-sm w-100" onclick="claimBot('${bot.id}')">
+                                    <i class="fas fa-hand-holding-usd me-1"></i>
+                                    Claim Bot
+                                </button>`
+                    }
+                        </div>
+                    </div>
+                `;
+                container.appendChild(col);
+            });
+        }
+
+        async function claimBot(botId) {
+            if (!currentUser) {
+                showNotification('Please connect MetaMask first', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/v1/bots/${botId}/claim`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getAuthToken()}`
+                    },
+                    body: JSON.stringify({
+                        owner_id: currentUser.ownerId,
+                        wallet_address: currentUser.walletAddress
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showNotification(data.message, 'success');
+
+                    // Update user info with new bot count
+                    if (data.bots_claimed !== undefined) {
+                        currentUser.botsClaimed = data.bots_claimed;
+                        currentUser.maxBots = data.max_bots_allowed;
+                        currentUser.subscriptionTier = data.subscription_tier;
+                        updateUserInfo();
+                    }
+
+                    // Refresh data
+                    await loadAllData();
+                } else {
+                    const error = await response.json();
+                    showNotification('Failed to claim bot: ' + error.detail, 'danger');
+                }
+            } catch (error) {
+                console.error('Error claiming bot:', error);
+                showNotification('Error claiming bot: ' + error.message, 'danger');
+            }
+        }
+
+        // Strategies
+        async function loadMyStrategies() {
+            if (!currentUser) return;
+
+            try {
+                const response = await fetch(`/api/v1/strategies/owner/${currentUser.ownerId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${getAuthToken()}`
+                    }
+                });
+
+                if (response.ok) {
+                    myStrategies = await response.json();
+                    renderStrategies();
+                } else {
+                    console.error('Failed to load strategies');
+                }
+            } catch (error) {
+                console.error('Error loading strategies:', error);
+                showNotification('Failed to load strategies', 'danger');
+            }
+        }
+
+        function renderStrategies() {
+            const container = document.getElementById('strategies-container');
+
+            if (myStrategies.length === 0) {
+                container.innerHTML = `
+                    <div class="col-12">
+                        <div class="empty-state">
+                            <i class="fas fa-chart-line"></i>
+                            <h5>No Strategies</h5>
+                            <p>Create your first trading strategy to get started.</p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = '';
+
+            myStrategies.forEach(strategy => {
+                const col = document.createElement('div');
+                col.className = 'col-md-6 col-lg-4 mb-3';
+                col.innerHTML = `
+                    <div class="card strategy-card">
+                        <div class="card-body">
+                            <h6 class="mb-2">${strategy.strategy_name}</h6>
+                            <div class="mb-2">
+                                <span class="badge bg-primary me-1">${strategy.strategy_type}</span>
+                                <span class="badge bg-secondary">${strategy.risk_level}</span>
+                            </div>
+                            <div class="row text-center">
+                                <div class="col-6">
+                                    <small class="text-secondary">Position</small>
+                                    <div class="fw-medium">${strategy.max_position_size}%</div>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-secondary">Stop Loss</small>
+                                    <div class="fw-medium">${strategy.stop_loss_percentage}%</div>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <small class="text-secondary">Usage: ${strategy.usage_count || 0} bots</small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(col);
+            });
+        }
+
+        function showCreateStrategyModal() {
+            if (!currentUser) {
+                showNotification('Please connect MetaMask first', 'error');
+                return;
+            }
+
+            const modal = new bootstrap.Modal(document.getElementById('createStrategyModal'));
+            modal.show();
+        }
+
+        async function createStrategy() {
+            if (!currentUser || !currentUser.ownerId) {
+                showNotification('Please connect MetaMask first', 'error');
+                return;
+            }
+
+            const name = document.getElementById('strategy-name').value;
+            const riskLevel = document.getElementById('risk-level').value;
+            const maxPosition = document.getElementById('max-position').value;
+            const stopLoss = document.getElementById('stop-loss').value;
+            const takeProfit = document.getElementById('take-profit').value;
+            const buyStrategy = document.getElementById('buy-strategy').value;
+            const sellStrategy = document.getElementById('sell-strategy').value;
+            const filterStrategy = document.getElementById('filter-strategy').value;
+            const strategySummary = document.getElementById('strategy-summary').value;
+
+            if (!name || !riskLevel || !buyStrategy || !sellStrategy) {
+                showNotification('Please fill in all required fields', 'warning');
+                return;
+            }
+
+            try {
+                const strategyData = {
+                    owner_id: currentUser.ownerId,
+                    strategy_name: name,
+                    strategy_type: 'user_defined',
+                    risk_level: riskLevel,
+                    max_position_size: parseFloat(maxPosition),
+                    stop_loss_percentage: parseFloat(stopLoss),
+                    take_profit_percentage: parseFloat(takeProfit),
+                    buy_strategy_description: buyStrategy,
+                    sell_strategy_description: sellStrategy,
+                    filter_strategy_description: filterStrategy,
+                    summary_strategy_description: strategySummary
+                };
+
+                console.log('Creating strategy with data:', strategyData);
+                console.log('Current user:', currentUser);
+
+                const response = await fetch('/api/v1/strategies', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getAuthToken()}`
+                    },
+                    body: JSON.stringify(strategyData)
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showNotification('Strategy created successfully!', 'success');
+
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('createStrategyModal'));
+                    modal.hide();
+
+                    // Reset form
+                    document.getElementById('strategy-form').reset();
+
+                    // Refresh strategies
+                    await loadMyStrategies();
+                    updateStats();
+                } else {
+                    const error = await response.json();
+                    showNotification('Failed to create strategy: ' + error.detail, 'danger');
+                }
+            } catch (error) {
+                console.error('Error creating strategy:', error);
+                showNotification('Error creating strategy: ' + error.message, 'danger');
+            }
+        }
+
+        // Claimed Bots
+        async function loadMyClaimedBots() {
+            if (!currentUser) return;
+
+            try {
+                const response = await fetch(`/api/v1/bots/owner/${currentUser.ownerId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${getAuthToken()}`
+                    }
+                });
+
+                if (response.ok) {
+                    claimedBots = await response.json();
+                    renderClaimedBots();
+                } else {
+                    console.error('Failed to load claimed bots');
+                }
+            } catch (error) {
+                console.error('Error loading claimed bots:', error);
+                showNotification('Failed to load claimed bots', 'danger');
+            }
+        }
+
+        function renderClaimedBots() {
+            const container = document.getElementById('claimed-bots-container');
+
+            if (claimedBots.length === 0) {
+                container.innerHTML = `
+                    <div class="col-12">
+                        <div class="empty-state">
+                            <i class="fas fa-user-robot"></i>
+                            <h5>No Claimed Bots</h5>
+                            <p>Claim a bot from the unclaimed bots section to get started.</p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = '';
+
+            claimedBots.forEach(bot => {
+                const statusClass = bot.is_configured ? 'status-configured' : 'status-claimed';
+                const statusText = bot.is_configured ? 'CONFIGURED' : 'CLAIMED';
+
+                const col = document.createElement('div');
+                col.className = 'col-md-6 col-lg-4 mb-3';
+                col.innerHTML = `
+                    <div class="card bot-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="mb-1">${bot.bot_name}</h6>
+                                <span class="status-badge ${statusClass}">${statusText}</span>
+                            </div>
+                            <p class="text-secondary small mb-2">${bot.account_address}</p>
+                            <div class="row text-center mb-3">
+                                <div class="col-6">
+                                    <div class="mb-2">
+                                        <h6 class="mb-0">$${formatUSD(bot.current_balance_usd)}</h6>
+                                        <small class="text-secondary">Balance</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="mb-2">
+                                        <small class="text-secondary">${bot.chain.toUpperCase()}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            ${!bot.is_configured ? `
+                                <button class="btn btn-primary btn-sm w-100" onclick="showConfigureBotModal('${bot.id}')">
+                                    <i class="fas fa-cog me-1"></i>
+                                    Configure Bot
+                                </button>
+                            ` : `
+                                <button class="btn btn-success btn-sm w-100" disabled>
+                                    <i class="fas fa-check me-1"></i>
+                                    Ready to Trade
+                                </button>
+                            `}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(col);
+            });
+        }
+
+        function showConfigureBotModal(botId) {
+            if (!currentUser) {
+                showNotification('Please connect MetaMask first', 'error');
+                return;
+            }
+
+            // Load strategies for the select dropdown
+            const select = document.getElementById('bot-strategy-select');
+            select.innerHTML = '<option value="">Choose a strategy...</option>';
+
+            myStrategies.forEach(strategy => {
+                const option = document.createElement('option');
+                option.value = strategy.id;
+                option.textContent = strategy.strategy_name;
+                select.appendChild(option);
+            });
+
+            // Store bot ID for configuration
+            select.dataset.botId = botId;
+
+            const modal = new bootstrap.Modal(document.getElementById('configureBotModal'));
+            modal.show();
+        }
+
+        async function configureBot() {
+            const select = document.getElementById('bot-strategy-select');
+            const botId = select.dataset.botId;
+            const strategyId = select.value;
+
+            if (!strategyId) {
+                showNotification('Please select a strategy', 'warning');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/v1/bots/${botId}/configure`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getAuthToken()}`
+                    },
+                    body: JSON.stringify({
+                        owner_id: currentUser.ownerId,
+                        strategy_id: strategyId
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showNotification('Bot configured successfully!', 'success');
+
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('configureBotModal'));
+                    modal.hide();
+
+                    // Refresh data
+                    await loadAllData();
+                } else {
+                    const error = await response.json();
+                    showNotification('Failed to configure bot: ' + error.detail, 'danger');
+                }
+            } catch (error) {
+                console.error('Error configuring bot:', error);
+                showNotification('Error configuring bot: ' + error.message, 'danger');
+            }
+        }
+
+        // Stats
+        function updateStats() {
+            document.getElementById('total-bots').textContent = unclaimedBots.length + claimedBots.length;
+            document.getElementById('claimed-bots').textContent = claimedBots.length;
+            document.getElementById('configured-bots').textContent = claimedBots.filter(bot => bot.is_configured).length;
+            document.getElementById('total-strategies').textContent = myStrategies.length;
+
+            // Show upgrade notice for basic users who have claimed their limit
+            if (currentUser && currentUser.subscriptionTier === 'Basic' && currentUser.botsClaimed >= 1) {
+                document.getElementById('upgrade-notice').style.display = 'block';
+            } else {
+                document.getElementById('upgrade-notice').style.display = 'none';
+            }
+        }
+
+        function showUpgradeModal() {
+            const modal = new bootstrap.Modal(document.getElementById('upgradeModal'));
+            modal.show();
+        }
+
+        function updateSessionStatus() {
+            const sessionExpiry = localStorage.getItem('session_expiry');
+            const sessionStatusElement = document.getElementById('session-status');
+
+            if (sessionExpiry) {
+                const now = Date.now();
+                const expiry = parseInt(sessionExpiry);
+                const timeLeft = expiry - now;
+
+                if (timeLeft > 0) {
+                    const hoursLeft = Math.floor(timeLeft / (1000 * 60 * 60));
+                    const minutesLeft = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+
+                    if (hoursLeft > 0) {
+                        sessionStatusElement.textContent = `Active (${hoursLeft}h ${minutesLeft}m)`;
+                        sessionStatusElement.className = 'text-success';
+                    } else {
+                        sessionStatusElement.textContent = `Active (${minutesLeft}m)`;
+                        sessionStatusElement.className = 'text-warning';
+                    }
+                } else {
+                    sessionStatusElement.textContent = 'Expired';
+                    sessionStatusElement.className = 'text-danger';
+                }
+            } else {
+                sessionStatusElement.textContent = 'None';
+                sessionStatusElement.className = 'text-muted';
+            }
+        }
+
+        function refreshSession() {
+            if (metamaskLogin && metamaskLogin.isConnected && metamaskLogin.currentAccount) {
+                // Extend session by another 24 hours
+                const expiry = Date.now() + (24 * 60 * 60 * 1000);
+                localStorage.setItem('session_expiry', expiry.toString());
+                updateSessionStatus();
+                showNotification('Session refreshed successfully', 'success');
+            }
+        }
+
+        // Utility functions
+        function getAuthToken() {
+            return localStorage.getItem('auth_token') || 'aip-dex-default-token-2025';
+        }
+
+        function formatUSD(amount) {
+            return parseFloat(amount).toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        function showNotification(message, type = 'info') {
+            const container = document.getElementById('notification-container');
+            const notification = document.createElement('div');
+            notification.className = `notification alert alert-${type} alert-dismissible fade show`;
+            notification.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-${getNotificationIcon(type)} me-2"></i>
+                    <span>${message}</span>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+
+            container.appendChild(notification);
+
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+
+        function getNotificationIcon(type) {
+            switch (type) {
+                case 'success': return 'check-circle';
+                case 'danger': return 'exclamation-triangle';
+                case 'warning': return 'exclamation-circle';
+                case 'info': return 'info-circle';
+                default: return 'info-circle';
+            }
+        }
+    </script>
+</body>
+
+</html>

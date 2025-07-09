@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MetaMask Login - AIP DEX Trading Bot</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --secondary-color: #8b5cf6;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --card-bg: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --card-bg: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --border-color: #334155;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 50%, var(--bg-secondary) 100%);
+            min-height: 100vh;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: all 0.3s ease;
+        }
+
+        [data-theme="dark"] body {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e1b4b 100%);
+        }
+
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .login-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            box-shadow: var(--shadow-lg);
+            backdrop-filter: blur(20px);
+            max-width: 500px;
+            width: 100%;
+            padding: 3rem;
+            text-align: center;
+        }
+
+        .login-logo {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .login-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .login-subtitle {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .metamask-btn {
+            background: linear-gradient(135deg, #f6851b 0%, #e2761b 100%);
+            border: none;
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(246, 133, 27, 0.3);
+            width: 100%;
+            margin-bottom: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metamask-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(246, 133, 27, 0.4);
+            background: linear-gradient(135deg, #e2761b 0%, #d2691e 100%);
+        }
+
+        .metamask-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .metamask-btn .spinner {
+            display: none;
+            animation: spin 1s linear infinite;
+        }
+
+        .metamask-btn.loading .spinner {
+            display: inline-block;
+        }
+
+        .metamask-btn.loading .btn-text {
+            opacity: 0.7;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .features-list {
+            text-align: left;
+            margin-top: 2rem;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .feature-item i {
+            color: var(--success-color);
+            margin-right: 0.75rem;
+            font-size: 1.1rem;
+        }
+
+        .alert {
+            border-radius: 12px;
+            border: none;
+            backdrop-filter: blur(10px);
+            margin-top: 1rem;
+        }
+
+        .btn-outline-secondary {
+            border-color: var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .btn-outline-secondary:hover {
+            background-color: var(--card-bg);
+            border-color: var(--primary-color);
+            color: var(--text-primary);
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            z-index: 1000;
+        }
+
+        .back-btn {
+            position: fixed;
+            top: 2rem;
+            left: 2rem;
+            z-index: 1000;
+        }
+
+        .user-info {
+            background: linear-gradient(135deg, var(--success-color), #059669);
+            color: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .wallet-info {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .wallet-address {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            margin: 0.5rem 0;
+        }
+
+        .user-details {
+            text-align: left;
+            margin-top: 1rem;
+        }
+
+        .user-detail-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            padding: 0.25rem 0;
+        }
+
+        .user-detail-label {
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .user-detail-value {
+            font-weight: 600;
+        }
+
+        .notification-container {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            z-index: 1050;
+            max-width: 400px;
+        }
+
+        .notification {
+            border-radius: 12px;
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 1rem;
+            backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Theme Toggle -->
+    <button id="theme-toggle" class="btn btn-outline-secondary btn-sm theme-toggle" onclick="toggleTheme()"
+        title="Toggle theme">
+        <i class="fas fa-sun" id="theme-icon"></i>
+    </button>
+
+    <!-- Back Button -->
+    <a href="/" class="btn btn-outline-secondary btn-sm back-btn">
+        <i class="fas fa-arrow-left me-1"></i>
+        Back to Dashboard
+    </a>
+
+    <!-- Notification Container -->
+    <div id="notification-container" class="notification-container"></div>
+
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-logo">
+                <i class="fas fa-robot"></i>
+            </div>
+            <h1 class="login-title">AIP DEX Trading Bot</h1>
+            <p class="login-subtitle">Connect your MetaMask wallet to start trading</p>
+
+            <!-- MetaMask Connection -->
+            <div id="metamask-section">
+                <button id="metamask-login-btn" class="metamask-btn" onclick="connectMetamask()">
+                    <i class="fab fa-ethereum me-2 btn-text"></i>
+                    <i class="fas fa-spinner spinner me-2"></i>
+                    <span class="btn-text">Connect MetaMask</span>
+                </button>
+
+                <div id="user-info" style="display: none;">
+                    <div class="user-info">
+                        <div class="wallet-info">
+                            <div>
+                                <i class="fas fa-wallet me-2"></i>
+                                <span class="fw-medium">Connected Wallet</span>
+                            </div>
+                            <button class="btn btn-outline-light btn-sm" onclick="disconnectMetamask()">
+                                <i class="fas fa-sign-out-alt"></i>
+                                Disconnect
+                            </button>
+                        </div>
+                        <div class="wallet-address" id="connected-address"></div>
+
+                        <div class="user-details" id="user-details">
+                            <!-- User details will be populated here -->
+                        </div>
+
+                        <div class="mt-3">
+                            <button class="btn btn-light btn-sm me-2" onclick="goToBotManagement()">
+                                <i class="fas fa-robot me-1"></i>
+                                Manage Bots
+                            </button>
+                            <button class="btn btn-outline-light btn-sm" onclick="goToDashboard()">
+                                <i class="fas fa-chart-line me-1"></i>
+                                View Dashboard
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Features -->
+            <div class="features-list">
+                <h5 class="mb-3">Platform Features</h5>
+                <div class="feature-item">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Secure wallet-based authentication</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-robot"></i>
+                    <span>Claim and manage trading bots</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Custom trading strategies</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-cog"></i>
+                    <span>Flexible bot configuration</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Real-time trading signals</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/metamask.js"></script>
+    <script>
+        // Theme management
+        function getTheme() {
+            return localStorage.getItem('theme') || 'light';
+        }
+
+        function setTheme(theme) {
+            localStorage.setItem('theme', theme);
+            document.documentElement.setAttribute('data-theme', theme);
+            updateThemeIcon(theme);
+        }
+
+        function updateThemeIcon(theme) {
+            const icon = document.getElementById('theme-icon');
+            if (icon) {
+                icon.className = theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+            }
+        }
+
+        function toggleTheme() {
+            const currentTheme = getTheme();
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            setTheme(newTheme);
+        }
+
+        // Enhanced MetaMask connection
+        async function connectMetamask() {
+            if (!metamaskLogin) {
+                showNotification('MetaMask login not initialized. Please refresh the page.', 'danger');
+                return;
+            }
+
+            // Check if MetaMask is available
+            if (!metamaskLogin.isMetaMaskAvailable()) {
+                showNotification('MetaMask is not installed. Please install MetaMask to continue.', 'danger');
+                return;
+            }
+
+            const btn = document.getElementById('metamask-login-btn');
+            const btnText = btn.querySelector('.btn-text');
+            const spinner = btn.querySelector('.spinner');
+
+            // Show loading state
+            btn.classList.add('loading');
+            btn.disabled = true;
+            btnText.textContent = 'Connecting...';
+
+            try {
+                const success = await metamaskLogin.connectWallet();
+                if (success) {
+                    showNotification('Successfully connected to MetaMask!', 'success');
+                    // Redirect to bot management after successful connection
+                    setTimeout(() => {
+                        window.location.href = '/bot-management';
+                    }, 1500);
+                }
+            } catch (error) {
+                showNotification('Failed to connect: ' + error.message, 'danger');
+            } finally {
+                // Reset button state
+                btn.classList.remove('loading');
+                btn.disabled = false;
+                btnText.textContent = 'Connect MetaMask';
+            }
+        }
+
+        function disconnectMetamask() {
+            if (metamaskLogin) {
+                metamaskLogin.disconnect();
+                showNotification('Disconnected from MetaMask', 'info');
+            }
+        }
+
+        function goToBotManagement() {
+            window.location.href = '/bot-management';
+        }
+
+        function goToDashboard() {
+            window.location.href = '/';
+        }
+
+        // Enhanced notification system
+        function showNotification(message, type = 'info') {
+            const container = document.getElementById('notification-container');
+            const notification = document.createElement('div');
+            notification.className = `notification alert alert-${type} alert-dismissible fade show`;
+            notification.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-${getNotificationIcon(type)} me-2"></i>
+                    <span>${message}</span>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+
+            container.appendChild(notification);
+
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+
+        function getNotificationIcon(type) {
+            switch (type) {
+                case 'success': return 'check-circle';
+                case 'danger': return 'exclamation-triangle';
+                case 'warning': return 'exclamation-circle';
+                case 'info': return 'info-circle';
+                default: return 'info-circle';
+            }
+        }
+
+        // Initialize theme and MetaMask
+        document.addEventListener('DOMContentLoaded', function () {
+            setTheme(getTheme());
+
+            // Wait for MetaMask to be initialized
+            setTimeout(() => {
+                if (typeof metamaskLogin !== 'undefined' && metamaskLogin) {
+                    // Override MetaMask login updateUI method for this page
+                    const originalUpdateUI = metamaskLogin.updateUI;
+                    metamaskLogin.updateUI = function () {
+                        const loginBtn = document.getElementById('metamask-login-btn');
+                        const userInfo = document.getElementById('user-info');
+                        const connectedAddress = document.getElementById('connected-address');
+                        const userDetails = document.getElementById('user-details');
+
+                        if (this.isConnected && this.currentAccount) {
+                            if (loginBtn) loginBtn.style.display = 'none';
+                            if (userInfo) {
+                                userInfo.style.display = 'block';
+                                if (connectedAddress) {
+                                    connectedAddress.textContent = this.currentAccount;
+                                }
+                                if (userDetails) {
+                                    userDetails.innerHTML = `
+                                        <div class="user-detail-item">
+                                            <span class="user-detail-label">Owner ID:</span>
+                                            <span class="user-detail-value">${this.ownerId || 'Loading...'}</span>
+                                        </div>
+                                        <div class="user-detail-item">
+                                            <span class="user-detail-label">Status:</span>
+                                            <span class="user-detail-value">Authenticated</span>
+                                        </div>
+                                        <div class="user-detail-item">
+                                            <span class="user-detail-label">Subscription:</span>
+                                            <span class="user-detail-value">Basic</span>
+                                        </div>
+                                    `;
+                                }
+                            }
+                        } else {
+                            if (loginBtn) loginBtn.style.display = 'block';
+                            if (userInfo) userInfo.style.display = 'none';
+                        }
+                    };
+
+                    // Check if user is already connected
+                    const savedOwnerId = localStorage.getItem('owner_id');
+                    const savedWallet = localStorage.getItem('wallet_address');
+                    const sessionExpiry = localStorage.getItem('session_expiry');
+
+                    if (savedOwnerId && savedWallet && sessionExpiry) {
+                        // Check if session is still valid
+                        const now = Date.now();
+                        const expiry = parseInt(sessionExpiry);
+
+                        if (now < expiry) {
+                            metamaskLogin.ownerId = savedOwnerId;
+                            metamaskLogin.currentAccount = savedWallet;
+                            metamaskLogin.isConnected = true;
+                            metamaskLogin.updateUI();
+
+                            // Auto-redirect to bot management if already logged in
+                            setTimeout(() => {
+                                window.location.href = '/bot-management';
+                            }, 1000);
+                        } else {
+                            // Session expired, clear old data
+                            localStorage.removeItem('owner_id');
+                            localStorage.removeItem('wallet_address');
+                            localStorage.removeItem('session_expiry');
+                        }
+                    }
+                } else {
+                    console.error('MetaMask login not initialized');
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+
+</html>

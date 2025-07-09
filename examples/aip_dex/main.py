@@ -8,25 +8,32 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 import os
 from dotenv import load_dotenv
+from datetime import datetime, timezone
+from decimal import Decimal
+import uuid
 
 # Load environment variables
 load_dotenv()
 
-from models.database import create_tables, create_indexes, get_db, Token, SessionLocal
+from models.database import create_tables, create_indexes, get_db, Token, SessionLocal, BotOwner, TradingBot
 from services.token_service import TokenService
 from llm.token_analyzer import TokenDecisionAnalyzer
 from api.schemas import (
-    TokenResponse, ChatRequest, ChatResponse
+    TokenResponse, ChatRequest, ChatResponse, BotOwnerCreate, TradingStrategyCreate
 )
 from api.trading_bot_routes import router as trading_bot_router
+from services.owner_service import OwnerService
+from services.trading_service import TradingService
 
 from aip_agent.agents.custom_agent import CallbackAgent
 from aip_agent.agents.full_agent import FullAgentWrapper
 from membase.chain.chain import membase_id  
 
-# Global token service instance
+# Global service instances
 token_service = TokenService()
 token_analyzer = TokenDecisionAnalyzer()
+owner_service = OwnerService()
+trading_service = TradingService()
 
 async def analyze_token(message: str, include_pools: bool = False):
     """Analyze a token in a message with enhanced multi-DEX analysis
@@ -427,6 +434,406 @@ async def chat_page():
     """Alternative route for the chat interface"""
     return await chat_interface()
 
+@app.get("/login", response_class=HTMLResponse)
+async def login_page():
+    """Serve the MetaMask login page"""
+    try:
+        login_html_path = os.path.join(os.path.dirname(__file__), "static", "login.html")
+        with open(login_html_path, "r", encoding="utf-8") as f:
+            html_content = f.read()
+        return HTMLResponse(content=html_content)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Login page not found")
+
+@app.get("/bot-management", response_class=HTMLResponse)
+async def bot_management_page():
+    """Serve the bot management page"""
+    try:
+        management_html_path = os.path.join(os.path.dirname(__file__), "static", "bot-management.html")
+        with open(management_html_path, "r", encoding="utf-8") as f:
+            html_content = f.read()
+        return HTMLResponse(content=html_content)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Bot management page not found")
+
+# ===== META MASK AUTHENTICATION ENDPOINTS =====
+
+@app.post("/api/v1/auth/metamask", dependencies=[Depends(validate_token)])
+async def metamask_auth(
+    request: dict,
+    db: Session = Depends(get_db)
+):
+    """Authenticate user with MetaMask signature"""
+    try:
+        wallet_address = request.get("wallet_address")
+        signature = request.get("signature")
+        message = request.get("message")
+        
+        if not all([wallet_address, signature, message]):
+            raise HTTPException(status_code=400, detail="Missing required fields")
+        
+        # Verify signature (simplified for demo - in production use proper verification)
+        # For now, we'll just create or get the owner
+        
+        # Check if owner exists
+        existing_owner = db.query(BotOwner).filter(
+            BotOwner.wallet_address == wallet_address
+        ).first()
+        
+        if existing_owner:
+            return {
+                "owner_id": str(existing_owner.id),
+                "owner_name": existing_owner.owner_name,
+                "wallet_address": wallet_address,
+                "message": "Existing user authenticated"
+            }
+        
+        # Create new owner with basic subscription (1 bot limit)
+        owner_data = BotOwnerCreate(
+            owner_name=f"User_{wallet_address[:8]}",
+            email=f"{wallet_address[:8]}@metamask.user",
+            wallet_address=wallet_address,
+            subscription_tier="basic",
+            max_bots_allowed=1  # Basic users can only claim 1 bot
+        )
+        
+        new_owner = await owner_service.create_bot_owner(db, owner_data)
+        
+        if not new_owner:
+            raise HTTPException(status_code=500, detail="Failed to create owner")
+        
+        return {
+            "owner_id": str(new_owner.id),
+            "owner_name": new_owner.owner_name,
+            "wallet_address": wallet_address,
+            "message": "New user created and authenticated"
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ===== BOT MANAGEMENT ENDPOINTS =====
+
+@app.get("/api/v1/bots/unclaimed", dependencies=[Depends(validate_token)])
+async def get_unclaimed_bots(db: Session = Depends(get_db)):
+    """Get all unclaimed bots (bots without owner)"""
+    try:
+        unclaimed_bots = db.query(TradingBot).filter(
+            TradingBot.owner_id.is_(None)
+        ).all()
+        
+        result = []
+        for bot in unclaimed_bots:
+            result.append({
+                "id": str(bot.id),
+                "bot_name": bot.bot_name,
+                "account_address": bot.account_address,
+                "chain": bot.chain,
+                "initial_balance_usd": float(bot.initial_balance_usd),
+                "current_balance_usd": float(bot.current_balance_usd),
+                "is_active": bot.is_active,
+                "created_at": bot.created_at.isoformat() if bot.created_at else None
+            })
+        
+        return result
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/v1/bots/{bot_id}/claim", dependencies=[Depends(validate_token)])
+async def claim_bot(
+    bot_id: str,
+    request: dict,
+    db: Session = Depends(get_db)
+):
+    """Claim an unclaimed bot with subscription tier validation"""
+    try:
+        owner_id = request.get("owner_id")
+        wallet_address = request.get("wallet_address")
+        
+        if not owner_id or not wallet_address:
+            raise HTTPException(status_code=400, detail="Missing owner_id or wallet_address")
+        
+        # Get bot
+        bot = db.query(TradingBot).filter(TradingBot.id == bot_id).first()
+        if not bot:
+            raise HTTPException(status_code=404, detail="Bot not found")
+        
+        if bot.owner_id:
+            raise HTTPException(status_code=400, detail="Bot is already claimed")
+        
+        # Verify owner
+        owner = db.query(BotOwner).filter(BotOwner.id == owner_id).first()
+        if not owner:
+            raise HTTPException(status_code=404, detail="Owner not found")
+        
+        if owner.wallet_address != wallet_address:
+            raise HTTPException(status_code=403, detail="Wallet address mismatch")
+        
+        # Check subscription tier limits
+        current_bots_count = db.query(TradingBot).filter(
+            TradingBot.owner_id == owner_id
+        ).count()
+        
+        # Define limits based on subscription tier
+        tier_limits = {
+            "basic": 1,
+            "premium": 5,
+            "enterprise": 20
+        }
+        
+        max_allowed = tier_limits.get(owner.subscription_tier, 1)
+        
+        if current_bots_count >= max_allowed:
+            tier_name = owner.subscription_tier.capitalize()
+            raise HTTPException(
+                status_code=403, 
+                detail=f"{tier_name} users can only claim {max_allowed} bot(s). You have already claimed {current_bots_count} bot(s). Upgrade to claim more bots."
+            )
+        
+        # Claim the bot
+        bot.owner_id = owner_id
+        bot.updated_at = datetime.now(timezone.utc)
+        db.commit()
+        
+        return {
+            "success": True,
+            "message": f"Bot claimed successfully. You have {current_bots_count + 1}/{max_allowed} bots claimed.",
+            "bot_id": str(bot.id),
+            "owner_id": str(owner_id),
+            "subscription_tier": owner.subscription_tier,
+            "bots_claimed": current_bots_count + 1,
+            "max_bots_allowed": max_allowed
+        }
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/v1/bots/{bot_id}/configure", dependencies=[Depends(validate_token)])
+async def configure_bot(
+    bot_id: str,
+    request: dict,
+    db: Session = Depends(get_db)
+):
+    """Configure a bot with owner and strategy"""
+    try:
+        owner_id = request.get("owner_id")
+        strategy_id = request.get("strategy_id")
+        
+        if not owner_id or not strategy_id:
+            raise HTTPException(status_code=400, detail="Missing owner_id or strategy_id")
+        
+        # Configure bot using trading service
+        configured_bot = await trading_service.configure_bot(db, bot_id, owner_id, strategy_id)
+        
+        if not configured_bot:
+            raise HTTPException(status_code=500, detail="Failed to configure bot")
+        
+        return {
+            "success": True,
+            "message": "Bot configured successfully",
+            "bot_id": str(bot_id),
+            "owner_id": str(owner_id),
+            "strategy_id": str(strategy_id)
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/v1/bots/owner/{owner_id}", dependencies=[Depends(validate_token)])
+async def get_owner_bots(
+    owner_id: str,
+    db: Session = Depends(get_db)
+):
+    """Get all bots claimed by an owner"""
+    try:
+        # Convert string ID to UUID
+        try:
+            owner_uuid = uuid.UUID(owner_id)
+        except ValueError:
+            # Return empty list for invalid UUID
+            return []
+        
+        bots = db.query(TradingBot).filter(
+            TradingBot.owner_id == owner_uuid
+        ).all()
+        
+        result = []
+        for bot in bots:
+            result.append({
+                "id": str(bot.id),
+                "bot_name": bot.bot_name,
+                "account_address": bot.account_address,
+                "chain": bot.chain,
+                "initial_balance_usd": float(bot.initial_balance_usd),
+                "current_balance_usd": float(bot.current_balance_usd),
+                "is_active": bot.is_active,
+                "is_configured": bot.is_configured,
+                "strategy_id": str(bot.strategy_id) if bot.strategy_id else None,
+                "created_at": bot.created_at.isoformat() if bot.created_at else None,
+                "updated_at": bot.updated_at.isoformat() if bot.updated_at else None
+            })
+        
+        return result
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ===== STRATEGY MANAGEMENT ENDPOINTS =====
+
+@app.post("/api/v1/strategies", dependencies=[Depends(validate_token)])
+async def create_strategy(
+    request: dict,
+    db: Session = Depends(get_db)
+):
+    """Create a new trading strategy"""
+    try:
+        owner_id = request.get("owner_id")
+        if not owner_id:
+            raise HTTPException(status_code=400, detail="Missing owner_id")
+        
+        # Convert string ID to UUID
+        try:
+            owner_uuid = uuid.UUID(owner_id)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid owner_id format")
+        
+        # Create strategy data with default values for missing fields
+        strategy_data = TradingStrategyCreate(
+            strategy_name=request.get("strategy_name", "Custom Strategy"),
+            strategy_description=request.get("strategy_description", "Custom strategy description"),
+            strategy_type=request.get("strategy_type", "user_defined"),
+            risk_level=request.get("risk_level", "medium"),
+            max_position_size=Decimal(str(request.get("max_position_size", 20.0))),
+            stop_loss_percentage=Decimal(str(request.get("stop_loss_percentage", 10.0))),
+            take_profit_percentage=Decimal(str(request.get("take_profit_percentage", 25.0))),
+            min_profit_threshold=Decimal(str(request.get("min_profit_threshold", 3.0))),
+            max_daily_trades=request.get("max_daily_trades", 15),
+            llm_confidence_threshold=Decimal(str(request.get("llm_confidence_threshold", 0.7))),
+            gas_fee_native=Decimal(str(request.get("gas_fee_native", 0.001))),
+            trading_fee_percentage=Decimal(str(request.get("trading_fee_percentage", 0.3))),
+            slippage_tolerance=Decimal(str(request.get("slippage_tolerance", 2.0))),
+            min_trade_amount_usd=Decimal(str(request.get("min_trade_amount_usd", 10.0))),
+            polling_interval_hours=Decimal(str(request.get("polling_interval_hours", 1.0))),
+            enable_stop_loss=request.get("enable_stop_loss", True),
+            enable_take_profit=request.get("enable_take_profit", True),
+            buy_strategy_description=request.get("buy_strategy_description", "Custom buy strategy"),
+            sell_strategy_description=request.get("sell_strategy_description", "Custom sell strategy"),
+            filter_strategy_description=request.get("filter_strategy_description", "Custom filter strategy"),
+            summary_strategy_description=request.get("summary_strategy_description", "Custom strategy summary"),
+            is_public=request.get("is_public", False)
+        )
+        
+        strategy = await owner_service.create_trading_strategy(db, owner_uuid, strategy_data)
+        
+        if not strategy:
+            raise HTTPException(status_code=500, detail="Failed to create strategy")
+        
+        return {
+            "success": True,
+            "strategy_id": str(strategy.id),
+            "strategy_name": strategy.strategy_name,
+            "message": "Strategy created successfully"
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/v1/strategies/owner/{owner_id}", dependencies=[Depends(validate_token)])
+async def get_owner_strategies(
+    owner_id: str,
+    db: Session = Depends(get_db)
+):
+    """Get all strategies for an owner"""
+    try:
+        # Convert string ID to UUID
+        try:
+            owner_uuid = uuid.UUID(owner_id)
+        except ValueError:
+            # Return empty list for invalid UUID
+            return []
+        
+        strategies = await owner_service.list_owner_strategies(db, owner_uuid)
+        
+        result = []
+        for strategy in strategies:
+            result.append({
+                "id": str(strategy.id),
+                "strategy_name": strategy.strategy_name,
+                "strategy_type": strategy.strategy_type,
+                "risk_level": strategy.risk_level,
+                "max_position_size": float(strategy.max_position_size),
+                "stop_loss_percentage": float(strategy.stop_loss_percentage),
+                "take_profit_percentage": float(strategy.take_profit_percentage),
+                "usage_count": strategy.usage_count,
+                "success_rate": float(strategy.success_rate) if strategy.success_rate else None
+            })
+        
+        return result
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/v1/owners", dependencies=[Depends(validate_token)])
+async def create_owner(
+    request: dict,
+    db: Session = Depends(get_db)
+):
+    """Create a new bot owner"""
+    try:
+        owner_data = BotOwnerCreate(
+            owner_name=request.get("owner_name"),
+            email=request.get("email"),
+            wallet_address=request.get("wallet_address"),
+            phone=request.get("phone"),
+            subscription_tier=request.get("subscription_tier", "basic"),
+            max_bots_allowed=request.get("max_bots_allowed", 1)
+        )
+        
+        owner = await owner_service.create_bot_owner(db, owner_data)
+        
+        if not owner:
+            raise HTTPException(status_code=500, detail="Failed to create owner")
+        
+        return {
+            "success": True,
+            "id": str(owner.id),
+            "owner_name": owner.owner_name,
+            "email": owner.email,
+            "wallet_address": owner.wallet_address,
+            "subscription_tier": owner.subscription_tier,
+            "max_bots_allowed": owner.max_bots_allowed,
+            "message": "Owner created successfully"
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/v1/owners/wallet/{wallet_address}", dependencies=[Depends(validate_token)])
+async def get_owner_by_wallet(
+    wallet_address: str,
+    db: Session = Depends(get_db)
+):
+    """Get owner by wallet address"""
+    try:
+        owner = await owner_service.get_bot_owner_by_wallet(db, wallet_address)
+        
+        if not owner:
+            raise HTTPException(status_code=404, detail="Owner not found")
+        
+        return {
+            "id": str(owner.id),
+            "owner_name": owner.owner_name,
+            "email": owner.email,
+            "wallet_address": owner.wallet_address,
+            "subscription_tier": owner.subscription_tier,
+            "max_bots_allowed": owner.max_bots_allowed
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/api/info")
 async def api_info():
     """API information and available endpoints"""
@@ -438,16 +845,29 @@ async def api_info():
             "Multi-DEX Analysis", 
             "Pool-Level Metrics",
             "Arbitrage Detection",
-            "LLM Chat Interface"
+            "LLM Chat Interface",
+            "MetaMask Authentication",
+            "Bot Claiming",
+            "Strategy Management"
         ],
         "endpoints": {
             "chat_interface": "/",
+            "login_page": "/login",
             "api_docs": "/docs",
             "api_redoc": "/redoc",
             "health_check": "/api/v1/health",
             "tokens": "/api/v1/tokens",
             "add_token": "/api/v1/add_token",
-            "chat": "/api/v1/chat"
+            "chat": "/api/v1/chat",
+            "metamask_auth": "/api/v1/auth/metamask",
+            "create_owner": "/api/v1/owners",
+            "get_owner_by_wallet": "/api/v1/owners/wallet/{wallet_address}",
+            "unclaimed_bots": "/api/v1/bots/unclaimed",
+            "owner_bots": "/api/v1/bots/owner/{owner_id}",
+            "claim_bot": "/api/v1/bots/{bot_id}/claim",
+            "configure_bot": "/api/v1/bots/{bot_id}/configure",
+            "create_strategy": "/api/v1/strategies",
+            "owner_strategies": "/api/v1/strategies/owner/{owner_id}"
         }
     }
 

@@ -841,6 +841,25 @@
                     <i class="fas fa-clock me-2"></i>
                     <span id="current-time" class="fw-medium"></span>
                 </span>
+
+                <!-- MetaMask Login Section -->
+                <div id="metamask-login-btn" class="me-3" style="display: none;">
+                    <button class="btn btn-outline-warning btn-sm" onclick="metamaskLogin.connectWallet()">
+                        <i class="fab fa-ethereum me-1"></i>
+                        Connect MetaMask
+                    </button>
+                </div>
+
+                <div id="user-info" class="me-3" style="display: none;">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-wallet text-success me-2"></i>
+                        <span class="text-success fw-medium" id="connected-address"></span>
+                        <button class="btn btn-outline-danger btn-sm ms-2" onclick="metamaskLogin.disconnect()">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </div>
+                </div>
+
                 <div class="dropdown me-3">
                     <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button"
                         data-bs-toggle="dropdown">
@@ -862,6 +881,10 @@
                     title="Toggle theme">
                     <i class="fas fa-sun" id="theme-icon"></i>
                 </button>
+                <a href="/bot-management" class="btn btn-outline-primary btn-sm me-2">
+                    <i class="fas fa-robot me-1"></i>
+                    Bot Management
+                </a>
                 <a href="/chat" class="btn btn-primary btn-sm">
                     <i class="fas fa-comments me-1"></i>
                     Chat
@@ -1210,6 +1233,7 @@
             }
         });
     </script>
+    <script src="/static/js/metamask.js"></script>
     <script src="/static/js/dashboard.js"></script>
 </body>
 

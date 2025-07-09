@@ -24,12 +24,13 @@ async def get_bots(db: Session = Depends(get_db)):
                 bot_name=bot.bot_name,
                 account_address=bot.account_address,
                 chain=bot.chain,
-                strategy_type=bot.strategy_type,
+                strategy_type=bot.strategy.strategy_type if bot.strategy else "Not configured",
                 total_assets_usd=bot.total_assets_usd,
                 total_profit_usd=bot.total_profit_usd,
                 total_profit_percentage=bot.total_profit_usd / bot.initial_balance_usd * 100 if bot.initial_balance_usd > 0 else 0,
                 is_active=bot.is_active,
-                last_activity_at=bot.last_activity_at
+                last_activity_at=bot.last_activity_at,
+                owner_name=bot.owner.owner_name if bot.owner else None
             )
             for bot in bots
         ]
@@ -46,28 +47,24 @@ async def get_bot_details(bot_id: str, db: Session = Depends(get_db)):
         
         return TradingBotResponse(
             id=bot.id,
+            owner_id=bot.owner_id,
+            strategy_id=bot.strategy_id,
             bot_name=bot.bot_name,
             account_address=bot.account_address,
             chain=bot.chain,
             initial_balance_usd=bot.initial_balance_usd,
             current_balance_usd=bot.current_balance_usd,
             total_assets_usd=bot.total_assets_usd,
-            strategy_type=bot.strategy_type,
-            max_position_size=bot.max_position_size,
-            stop_loss_percentage=bot.stop_loss_percentage,
-            take_profit_percentage=bot.take_profit_percentage,
-            min_profit_threshold=bot.min_profit_threshold,
-            min_trade_amount_usd=bot.min_trade_amount_usd,
-            max_daily_trades=bot.max_daily_trades,
-            polling_interval_hours=bot.polling_interval_hours,
-            llm_confidence_threshold=bot.llm_confidence_threshold,
+            strategy_type=bot.strategy.strategy_type if bot.strategy else "Not configured",
             is_active=bot.is_active,
-            enable_stop_loss=bot.enable_stop_loss,
-            enable_take_profit=bot.enable_take_profit,
+            is_configured=bot.is_configured,
             total_trades=bot.total_trades,
             profitable_trades=bot.profitable_trades,
             total_profit_usd=bot.total_profit_usd,
             max_drawdown_percentage=bot.max_drawdown_percentage,
+            max_position_size=bot.strategy.max_position_size if bot.strategy else None,
+            stop_loss_percentage=bot.strategy.stop_loss_percentage if bot.strategy else None,
+            take_profit_percentage=bot.strategy.take_profit_percentage if bot.strategy else None,
             created_at=bot.created_at,
             updated_at=bot.updated_at,
             last_activity_at=bot.last_activity_at

@@ -89,13 +89,13 @@ class AIPTradingBot:
         print(f"   Name: {bot.bot_name}")
         print(f"   Account: {bot.account_address}")
         print(f"   Chain: {bot.chain.upper()}")
-        print(f"   Strategy: {bot.strategy_type}")
+        print(f"   Strategy: {bot.strategy.strategy_type if bot.strategy else 'Not configured'}")
         print(f"   Initial Balance: ${float(bot.initial_balance_usd):,.2f}")
-        print(f"   Max Position Size: {float(bot.max_position_size):.1f}%")
-        print(f"   Stop Loss: {float(bot.stop_loss_percentage):.1f}%")
-        print(f"   Take Profit: {float(bot.take_profit_percentage):.1f}%")
+        print(f"   Max Position Size: {float(bot.strategy.max_position_size) if bot.strategy else 10:.1f}%")
+        print(f"   Stop Loss: {float(bot.strategy.stop_loss_percentage) if bot.strategy else 5:.1f}%")
+        print(f"   Take Profit: {float(bot.strategy.take_profit_percentage) if bot.strategy else 15:.1f}%")
         # Display polling interval in a user-friendly format
-        interval_hours = float(bot.polling_interval_hours)
+        interval_hours = float(bot.strategy.polling_interval_hours) if bot.strategy else 1.0
         if interval_hours >= 1:
             if interval_hours == int(interval_hours):
                 print(f"   Polling Interval: {int(interval_hours)}h")
@@ -107,14 +107,32 @@ class AIPTradingBot:
                 print(f"   Polling Interval: {int(minutes)}m")
             else:
                 print(f"   Polling Interval: {minutes:.1f}m")
-        print(f"   Min Trade: ${float(bot.min_trade_amount_usd)}")
-        print(f"   Max Daily Trades: {bot.max_daily_trades}")
+        print(f"   Min Trade: ${float(bot.strategy.min_trade_amount_usd) if bot.strategy else 10.0}")
+        print(f"   Max Daily Trades: {bot.strategy.max_daily_trades if bot.strategy else 10}")
     
     async def run(self):
         """Main trading loop"""
         if not self.bot_id:
             print("❌ Bot not initialized")
             return
+        
+        # Check if bot is configured before starting trading
+        db = next(get_db())
+        try:
+            bot = db.query(TradingBot).filter(TradingBot.id == self.bot_id).first()
+            if not bot:
+                print("❌ Bot not found in database")
+                return
+            
+            if not bot.is_configured or not bot.owner_id or not bot.strategy_id:
+                print("❌ Bot is not configured with owner and strategy")
+                print(f"   Owner ID: {bot.owner_id or 'None'}")
+                print(f"   Strategy ID: {bot.strategy_id or 'None'}")
+                print(f"   Is Configured: {bot.is_configured}")
+                print("   Please configure the bot with owner and strategy before starting trading")
+                return
+        finally:
+            db.close()
         
         self.is_running = True
         print(f"\n🚀 Starting trading bot {self.bot_id}")
@@ -180,19 +198,41 @@ class AIPTradingBot:
                 print("❌ Bot not found in DB")
                 return
             bot_config = {
-                "strategy_type": bot.strategy_type,
-                "trading_fee_percentage": float(bot.trading_fee_percentage),
-                "max_position_size": float(bot.max_position_size),
-                "min_trade_amount_usd": float(bot.min_trade_amount_usd),
-                "llm_confidence_threshold": float(getattr(bot, "llm_confidence_threshold", 0)),
+                # 基础策略信息
+                "strategy_type": bot.strategy.strategy_type if bot.strategy else "conservative",
+                "risk_level": bot.strategy.risk_level if bot.strategy else "medium",
+                
+                # 仓位管理参数
+                "max_position_size": float(bot.strategy.max_position_size) if bot.strategy else 10.0,
+                "min_trade_amount_usd": float(bot.strategy.min_trade_amount_usd) if bot.strategy else 10.0,
+                "max_daily_trades": bot.strategy.max_daily_trades if bot.strategy else 10,
+                
+                # 风险管理参数
+                "stop_loss_percentage": float(bot.strategy.stop_loss_percentage) if bot.strategy else 5.0,
+                "take_profit_percentage": float(bot.strategy.take_profit_percentage) if bot.strategy else 15.0,
+                "min_profit_threshold": float(bot.strategy.min_profit_threshold) if bot.strategy else 3.0,
+                "enable_stop_loss": bot.strategy.enable_stop_loss if bot.strategy else True,
+                "enable_take_profit": bot.strategy.enable_take_profit if bot.strategy else True,
+                
+                # 交易费用设置
+                "trading_fee_percentage": float(bot.strategy.trading_fee_percentage) if bot.strategy else 0.1,
+                "gas_fee_native": float(bot.strategy.gas_fee_native) if bot.strategy else 0.00003,
+                "slippage_tolerance": float(bot.strategy.slippage_tolerance) if bot.strategy else 1.0,
+                
+                # LLM决策参数
+                "llm_confidence_threshold": float(bot.strategy.llm_confidence_threshold) if bot.strategy else 0.7,
+                "polling_interval_hours": float(bot.strategy.polling_interval_hours) if bot.strategy else 1.0,
+                
+                # 策略描述
+                "buy_strategy_description": bot.strategy.buy_strategy_description if bot.strategy else None,
+                "sell_strategy_description": bot.strategy.sell_strategy_description if bot.strategy else None,
+                "filter_strategy_description": bot.strategy.filter_strategy_description if bot.strategy else None,
+                "summary_strategy_description": bot.strategy.summary_strategy_description if bot.strategy else None,
+                
+                # 基础配置
                 "chain": bot.chain,
-                "gas_fee_native": float(getattr(bot, "gas_fee_native", 0)),
-                "stop_loss_percentage": float(bot.stop_loss_percentage),
-                "take_profit_percentage": float(bot.take_profit_percentage),
-                "min_profit_threshold": float(getattr(bot, "min_profit_threshold", 0)),
                 "initial_balance_usd": float(bot.initial_balance_usd),
                 "account_address": getattr(bot, "account_address", None),
-                # ...如有其他参数可补充
             }
             
             # 2. 获取gas_cost_usd

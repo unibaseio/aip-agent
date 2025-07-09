@@ -1,10 +1,28 @@
-# 📘 AIP DEX Signal Aggregator
+# 📘 AIP DEX Trading Bot
 
-A LLM-powered Web3 token signal aggregator providing real-time trading signals and chat interaction functionality.
+A comprehensive Web3 trading bot platform with Metamask authentication, bot claiming, and strategy management.
 
 ## 🎯 Features
 
-- **Enhanced Multi-source Data Aggregation**: Intelligent data fusion from CoinGecko, DEX Screener, Moralis, and BirdEye
+### 🔐 Authentication & User Management
+- **Metamask Login**: Secure wallet-based authentication
+- **Automatic Account Creation**: BotOwner accounts created on first login
+- **Session Management**: Persistent user sessions with wallet verification
+
+### 🤖 Bot Management
+- **Bot Claiming**: Users can claim unconfigured bots
+- **Flexible Configuration**: Support for immediate or delayed bot configuration
+- **Status Tracking**: Clear tracking of bot configuration status
+- **Permission Control**: Users can only manage their own bots
+
+### 📈 Strategy Management
+- **Default Strategies**: Pre-configured Conservative, Moderate, Aggressive strategies
+- **Custom Strategies**: User-defined strategies with detailed parameters
+- **Strategy Sharing**: Public strategies available to all users
+- **Performance Tracking**: Strategy usage and success rate monitoring
+
+### 🔄 Trading System
+- **Multi-source Data Aggregation**: Intelligent data fusion from CoinGecko, DEX Screener, Moralis, and BirdEye
 - **Smart Token Resolution**: Automatically determines best data source based on token type and availability
 - **Comprehensive Technical Analysis**: RSI, Moving Averages, Volume/Holder Analysis, Breakout Detection
 - **LLM-Enhanced Signals**: GPT-4 powered analysis with comprehensive metrics and reasoning
@@ -137,30 +155,153 @@ Or using uvicorn:
 uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
+### 6. Run Demo Scripts
+
+#### Metamask Login Demo
+```bash
+python examples/metamask_login_example.py
+```
+
+#### Owner & Strategy Demo
+```bash
+python examples/owner_strategy_example.py
+```
+
+#### Flexible Bot Configuration Demo
+```bash
+python examples/flexible_bot_example.py
+```
+
+### 7. View Web Demo
+
+Open `static/metamask_demo.html` in your browser to see the interactive Metamask login and bot claiming interface.
+
 ## 📡 API Endpoints
 
-### Basic Information
+### 🔐 Authentication
+
+- `POST /api/v1/auth/metamask` - Metamask wallet authentication
+
+### 🤖 Bot Management
+
+- `GET /api/v1/bots/unclaimed` - Get all unclaimed bots
+- `POST /api/v1/bots/{bot_id}/claim` - Claim an unclaimed bot
+- `POST /api/v1/bots/{bot_id}/configure` - Configure bot with owner and strategy
+
+### 📈 Strategy Management
+
+- `GET /api/v1/strategies/owner/{owner_id}` - Get user's strategies
+- `POST /api/v1/strategies` - Create new strategy
+- `PUT /api/v1/strategies/{strategy_id}` - Update strategy
+
+### 🔄 Trading System
+
+#### Basic Information
 
 - `GET /` - API information
 - `GET /api/v1/health` - Health check
 - `GET /docs` - Swagger documentation
 
-### Token Management
+#### Token Management
 
 - `GET /api/v1/tokens` - Get all tokens
 - `POST /api/v1/tokens` - Add new token
 
-### Trading Signals
+#### Trading Signals
 
 - `GET /api/v1/tokens/{token_id}/signal` - Get token trading signal
 
-### Chat Interaction
+#### Chat Interaction
 
 - `POST /api/v1/chat` - Send chat message
 
 ## 💬 Usage Examples
 
-### Bearer Token Authentication
+### 🔐 Metamask Authentication
+
+The system supports Metamask wallet authentication:
+
+```javascript
+// Frontend: Connect Metamask
+async function connectMetamask() {
+    if (typeof window.ethereum !== 'undefined') {
+        const accounts = await window.ethereum.request({
+            method: 'eth_requestAccounts'
+        });
+        
+        if (accounts.length > 0) {
+            await authenticateUser(accounts[0]);
+        }
+    }
+}
+
+// Backend: Authentication endpoint
+POST /api/v1/auth/metamask
+{
+    "wallet_address": "0x1234...",
+    "signature": "0xabcd...",
+    "message": "Login message..."
+}
+```
+
+### 🤖 Bot Claiming Workflow
+
+#### 1. View Unclaimed Bots
+```bash
+curl -X GET "http://localhost:8000/api/v1/bots/unclaimed" \
+  -H "Authorization: Bearer ${API_TOKEN}"
+```
+
+#### 2. Claim a Bot
+```bash
+curl -X POST "http://localhost:8000/api/v1/bots/{bot_id}/claim" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${API_TOKEN}" \
+  -d '{
+    "owner_id": "owner_123",
+    "wallet_address": "0x1234..."
+  }'
+```
+
+#### 3. Configure Bot with Strategy
+```bash
+curl -X POST "http://localhost:8000/api/v1/bots/{bot_id}/configure" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${API_TOKEN}" \
+  -d '{
+    "owner_id": "owner_123",
+    "strategy_id": "strategy_456"
+  }'
+```
+
+### 📈 Strategy Management
+
+#### Create Custom Strategy
+```bash
+curl -X POST "http://localhost:8000/api/v1/strategies" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${API_TOKEN}" \
+  -d '{
+    "strategy_name": "My Strategy",
+    "strategy_type": "user_defined",
+    "risk_level": "medium",
+    "max_position_size": 20.0,
+    "stop_loss_percentage": 10.0,
+    "take_profit_percentage": 25.0,
+    "buy_strategy_description": "Buy strategy description...",
+    "sell_strategy_description": "Sell strategy description..."
+  }'
+```
+
+#### Get User's Strategies
+```bash
+curl -X GET "http://localhost:8000/api/v1/strategies/owner/{owner_id}" \
+  -H "Authorization: Bearer ${API_TOKEN}"
+```
+
+### 🔄 Trading System Examples
+
+#### Bearer Token Authentication
 
 All API endpoints (except health check and root) require Bearer token authentication:
 
@@ -169,7 +310,7 @@ All API endpoints (except health check and root) require Bearer token authentica
 export API_TOKEN="your_secure_bearer_token_here"
 ```
 
-### Chat Query (with Authentication)
+#### Chat Query (with Authentication)
 
 ```bash
 curl -X POST "http://localhost:8000/api/v1/chat" \
@@ -178,19 +319,59 @@ curl -X POST "http://localhost:8000/api/v1/chat" \
   -d '{"message": "What is the outlook on DOGE?"}'
 ```
 
-### Get All Tokens (with Authentication)
+#### Get All Tokens (with Authentication)
 
 ```bash
 curl -X GET "http://localhost:8000/api/v1/tokens" \
   -H "Authorization: Bearer ${API_TOKEN}"
 ```
 
-### Add Token (with Authentication)
+#### Add Token (with Authentication)
 
 ```bash
 curl -X POST "http://localhost:8000/api/v1/add_token?symbol=PEPE&chain=eth" \
   -H "Authorization: Bearer ${API_TOKEN}"
 ```
+
+## 🚀 Complete User Workflow
+
+### Step 1: Metamask Login
+1. User visits the platform
+2. Clicks "Connect MetaMask" button
+3. Approves connection in Metamask
+4. System automatically creates BotOwner account
+5. User is authenticated and logged in
+
+### Step 2: View Unclaimed Bots
+1. User sees list of available unclaimed bots
+2. Each bot shows name, address, balance, and chain
+3. User can refresh the list to see latest bots
+
+### Step 3: Claim a Bot
+1. User selects a bot to claim
+2. Clicks "Claim Bot" button
+3. System verifies user permissions
+4. Bot is assigned to user (sets owner_id)
+5. Bot status changes to "Claimed"
+
+### Step 4: Create/Select Strategy
+1. User can use default strategies (Conservative, Moderate, Aggressive)
+2. Or create custom strategy with specific parameters
+3. Strategy includes risk level, position size, stop loss, take profit
+4. User can add detailed buy/sell strategy descriptions
+
+### Step 5: Configure Bot
+1. User selects strategy for claimed bot
+2. Clicks "Configure Bot" button
+3. System sets strategy_id for the bot
+4. Bot status changes to "Configured"
+5. Bot is ready for trading
+
+### Step 6: Start Trading
+1. Configured bots can start trading automatically
+2. Bots follow the assigned strategy parameters
+3. Users can monitor bot performance
+4. Users can update strategies as needed
 
 ## 🔧 Signal Levels
 
