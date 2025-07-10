@@ -459,8 +459,27 @@ class TradingBotDashboard {
             return;
         }
 
+        // Filter data to show only last 30 days
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+        const filteredData = revenueData.filter(item => {
+            if (!item.created_at) return false;
+            const itemDate = new Date(item.created_at);
+            return itemDate >= thirtyDaysAgo;
+        });
+
+        if (filteredData.length === 0) {
+            canvas.parentElement.innerHTML = '<div class="text-center text-secondary py-5">No revenue data in the last 30 days</div>';
+            return;
+        }
+
+        // Sample data to get approximately 20 points
+        const targetPoints = 20;
+        const sampledData = this.sampleDataEvenly(filteredData, targetPoints);
+
         // Prepare data with formatted labels - reverse order for newest on right
-        const labels = revenueData.map((item, index) => {
+        const labels = sampledData.map((item, index) => {
             try {
                 // Use created_at field for time labels
                 let date;
@@ -471,11 +490,11 @@ class TradingBotDashboard {
                     // Check if date is valid
                     if (isNaN(date.getTime())) {
                         // If invalid, use index as fallback
-                        return `Point ${revenueData.length - index}`;
+                        return `Point ${sampledData.length - index}`;
                     }
                 } else {
                     // If no timestamp, use index as fallback
-                    return `Point ${revenueData.length - index}`;
+                    return `Point ${sampledData.length - index}`;
                 }
 
                 // Format the date
@@ -487,10 +506,10 @@ class TradingBotDashboard {
                 });
             } catch (error) {
                 console.warn('Error formatting date:', error, item.created_at);
-                return `Point ${revenueData.length - index}`;
+                return `Point ${sampledData.length - index}`;
             }
         }).reverse(); // Reverse the labels array
-        const data = revenueData.map(item => parseFloat(item.total_profit_usd)).reverse(); // Reverse the data array too
+        const data = sampledData.map(item => parseFloat(item.total_profit_usd)).reverse(); // Reverse the data array too
 
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
 
@@ -745,6 +764,22 @@ class TradingBotDashboard {
         if (!dateString) return '-';
         const date = new Date(dateString);
         return date.toLocaleDateString('zh-CN');
+    }
+
+    sampleDataEvenly(data, targetCount) {
+        if (data.length <= targetCount) {
+            return data;
+        }
+
+        const step = data.length / targetCount;
+        const sampled = [];
+
+        for (let i = 0; i < targetCount; i++) {
+            const index = Math.floor(i * step);
+            sampled.push(data[index]);
+        }
+
+        return sampled;
     }
 }
 
