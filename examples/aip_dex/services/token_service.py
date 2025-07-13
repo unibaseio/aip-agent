@@ -1858,7 +1858,7 @@ class TokenService:
         except Exception as e:
             print(f"Warning: Error closing connections: {e}")
 
-    async def process_chat_message(self, db: Session, message: str, include_pools: bool = False) -> str:
+    async def process_chat_message(self, db: Session, message: str, include_pools: bool = False, cached_response: Dict[str, Any] = {}) -> str:
         """
         Process chat message and return response data for LLM analysis
         Enhanced version: Get token list → LLM token identification → Get decision data → LLM analysis
@@ -1901,6 +1901,19 @@ class TokenService:
             if not token:
                 return f"Sorry, I couldn't retrieve data for token {target_token_symbol} on {target_chain}."
 
+            # cache_key is token_id + time of hour
+            time_of_hour = datetime.now(timezone.utc).strftime("%Y%m%d%H")
+            cache_key = f"{str(token.id)}"
+            if cached_response.get(cache_key):
+                cached_value = cached_response.get(cache_key)
+                if cached_value.get("time_of_hour") == time_of_hour:
+                    print(f"Cached response found for token: {token.symbol} at {time_of_hour}")
+                    return cached_value.get("response")
+                else:
+                    print(f"Cached response found for token: {token.symbol} at {time_of_hour} but it is expired, will update the cache")
+                    # remove the expired cache
+                    del cached_response[cache_key]
+
             print(f"Analysing token: {token.symbol} on {token.chain}")                
             # Get comprehensive token analysis
             decision_data = await self.get_token_decision_data(db, str(token.id))
@@ -1915,6 +1928,11 @@ class TokenService:
 
             print(f"LLM analysis: {llm_analysis}")
             
+            cached_response[cache_key] = {
+                "time_of_hour": time_of_hour,
+                "response": llm_analysis
+            }
+
             return llm_analysis
             
         except Exception as e:

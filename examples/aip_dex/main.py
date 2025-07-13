@@ -35,6 +35,10 @@ token_analyzer = TokenDecisionAnalyzer()
 owner_service = OwnerService()
 trading_service = TradingService()
 
+# cache_key is token_id;
+# value is time of hour and the response of the token analysis;
+cached_response = {}
+
 async def analyze_token(message: str, include_pools: bool = False):
     """Analyze a token in a message with enhanced multi-DEX analysis
     
@@ -51,7 +55,7 @@ async def analyze_token(message: str, include_pools: bool = False):
     try:
         print(f"========== Analyzing token: {message}")
         response_data = await token_service.process_chat_message(
-                db, message, include_pools
+                db, message, include_pools, cached_response
         )  
         return response_data
     finally:
@@ -234,6 +238,19 @@ async def process_chat_message(db: Session, messsage: str, conversation_id: str,
         if not token:
             return f"Sorry, I couldn't retrieve data for token {target_token_symbol} on {target_chain}."
 
+        # cache_key is token_id + time of hour
+        time_of_hour = datetime.now(timezone.utc).strftime("%Y%m%d%H")
+        cache_key = f"{str(token.id)}"
+        if cached_response.get(cache_key):
+            cached_value = cached_response.get(cache_key)
+            if cached_value.get("time_of_hour") == time_of_hour:
+                print(f"Cached response found for token: {token.symbol} at {time_of_hour}")
+                return cached_value.get("response")
+            else:
+                print(f"Cached response found for token: {token.symbol} at {time_of_hour} but it is expired, will update the cache")
+                # remove the expired cache
+                del cached_response[cache_key]
+
         print(f"AIP DEX token analysis: {token.symbol} on {token.chain} {include_pools}")                
         # Get comprehensive token analysis
         decision_data = await token_service.get_token_decision_data(db, str(token.id))
@@ -256,7 +273,12 @@ async def process_chat_message(db: Session, messsage: str, conversation_id: str,
         llm_analysis = llm_analysis.replace("```markdown", "").replace("```", "")
 
         print(f"AIP DEX analysis: \n\n {llm_analysis}")
-            
+
+        cached_response[cache_key] = {
+            "time_of_hour": time_of_hour,
+            "response": llm_analysis
+        }
+
         return llm_analysis
             
     except Exception as e:
