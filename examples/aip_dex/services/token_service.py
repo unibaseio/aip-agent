@@ -298,7 +298,9 @@ class TokenService:
 
             # Calculate token metrics and signals
             if result["pools_updated"] or force_update:
-                await self._calculate_token_metrics(db, token_id)
+                token_metric = await self._calculate_token_metrics(db, token_id)
+                if token_metric:
+                    print(f"Token Metrics: {token.symbol}, {token.id}, {token_metric.avg_price_usd}, {token_metric.weighted_price_usd}, {token_metric.total_liquidity_usd}")
                 await self._calculate_token_signals(db, token_id)
 
             return result
@@ -798,7 +800,7 @@ class TokenService:
             volume_24h = float(metric.volume_24h or 0)
             
             # 过滤无效数据
-            if price > 0 and liquidity > 0:
+            if price > 0 and liquidity > 0 and volume_24h > 0:
                 price_liquidity_data.append({
                     'price': price,
                     'liquidity': liquidity,
@@ -880,6 +882,7 @@ class TokenService:
             # Get latest metrics for each pool
             pool_metrics = []
             for pool in pools:
+                print(f"Pool: {pool.base_token_id}, {pool.pair_address}, {pool.base_token.symbol}, {pool.quote_token.symbol}")
                 latest_metric = db.query(PoolMetric)\
                     .filter(PoolMetric.pool_id == pool.id)\
                     .order_by(desc(PoolMetric.updated_at))\
@@ -1562,6 +1565,7 @@ class TokenService:
                                             moralis_stats: Dict[str, Any]) -> bool:
         """Save Moralis stats directly to history table"""
         try:
+            print(f"Token Metrics: {token_id}, {moralis_stats.get('usd_price', 0)}")
             history = TokenMetricsHistory(
                 token_id=token_id,
                 
