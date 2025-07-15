@@ -263,6 +263,7 @@ class TokenDecisionAnalyzer:
         
         # 📈 Token Comprehensive Analysis Report: ${token_info.get('symbol', 'N/A')} ({token_info.get('chain', 'N/A').upper()})
            - Latest Data Update: {latest_update_time or 'N/A'}
+           - Token Address: {token_info.get('contract_address', 'N/A')}
 
         1. **🎯 Overall Conclusion**
            - {conclusion}  
