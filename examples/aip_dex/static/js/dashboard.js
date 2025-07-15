@@ -459,7 +459,7 @@ class TradingBotDashboard {
             return;
         }
 
-        // Filter data to show only last 30 days
+        // Filter data to show only last 30 days and sort by time
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
@@ -467,6 +467,11 @@ class TradingBotDashboard {
             if (!item.created_at) return false;
             const itemDate = new Date(item.created_at);
             return itemDate >= thirtyDaysAgo;
+        }).sort((a, b) => {
+            // Sort by created_at in ascending order (oldest first)
+            const dateA = new Date(a.created_at);
+            const dateB = new Date(b.created_at);
+            return dateA - dateB;
         });
 
         if (filteredData.length === 0) {
@@ -478,7 +483,7 @@ class TradingBotDashboard {
         const targetPoints = 20;
         const sampledData = this.sampleDataEvenly(filteredData, targetPoints);
 
-        // Prepare data with formatted labels - reverse order for newest on right
+        // Prepare data with formatted labels - time from old to new (left to right)
         const labels = sampledData.map((item, index) => {
             try {
                 // Use created_at field for time labels
@@ -490,11 +495,11 @@ class TradingBotDashboard {
                     // Check if date is valid
                     if (isNaN(date.getTime())) {
                         // If invalid, use index as fallback
-                        return `Point ${sampledData.length - index}`;
+                        return `Point ${index + 1}`;
                     }
                 } else {
                     // If no timestamp, use index as fallback
-                    return `Point ${sampledData.length - index}`;
+                    return `Point ${index + 1}`;
                 }
 
                 // Format the date
@@ -506,10 +511,10 @@ class TradingBotDashboard {
                 });
             } catch (error) {
                 console.warn('Error formatting date:', error, item.created_at);
-                return `Point ${sampledData.length - index}`;
+                return `Point ${index + 1}`;
             }
-        }).reverse(); // Reverse the labels array
-        const data = sampledData.map(item => parseFloat(item.total_profit_usd)).reverse(); // Reverse the data array too
+        });
+        const data = sampledData.map(item => parseFloat(item.total_profit_usd));
 
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
 
