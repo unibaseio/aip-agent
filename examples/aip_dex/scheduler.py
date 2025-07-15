@@ -10,7 +10,7 @@ from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Any, Optional
 from sqlalchemy.orm import Session
 
-from models.database import get_db, create_tables, create_indexes, Token, TokenPool, PoolMetric
+from models.database import TokenMetric, get_db, create_tables, create_indexes, Token, TokenPool, PoolMetric
 from services.token_service import TokenService
 from data_aggregator.birdeye import BirdEyeProvider
 from data_aggregator.dex_screener import DexScreenerProvider
@@ -82,6 +82,34 @@ class TokenDataScheduler:
                         )
                         
                         if token:
+                            # save into token metrics
+                            # Create or update token metric
+                            existing_metric = db.query(TokenMetric).filter(TokenMetric.token_id == token.id).first()
+                            if existing_metric:
+                                existing_metric.avg_price_usd = token_data.get("price_usd")
+                                existing_metric.weighted_price_usd = token_data.get("price_usd")
+                                existing_metric.total_liquidity_usd = token_data.get("liquidity")
+                                existing_metric.total_volume_24h = token_data.get("volume_24h")
+                                existing_metric.volume_change_24h = token_data.get("volume_change_24h")
+                                existing_metric.market_cap = token_data.get("market_cap")
+                                existing_metric.last_calculation_at = datetime.now(timezone.utc)
+                                token_metric = existing_metric
+                            else:
+                                token_metric = TokenMetric(
+                                    token_id=token.id,
+                                    avg_price_usd=token_data.get("price_usd"),
+                                    weighted_price_usd=token_data.get("price_usd"),
+                                    total_liquidity_usd=token_data.get("liquidity"),
+                                    total_volume_24h=token_data.get("volume_24h"),
+                                    volume_change_24h=token_data.get("volume_change_24h"),
+                                    market_cap=token_data.get("market_cap"),
+                                    trend_direction="sideways",
+                                    last_calculation_at=datetime.now(timezone.utc)
+                                )
+                                db.add(token_metric)
+                            db.commit()
+                            db.refresh(token_metric)
+
                             saved_tokens.append(token)
                             logger.debug(f"Added token {token.symbol}")
                         else:
