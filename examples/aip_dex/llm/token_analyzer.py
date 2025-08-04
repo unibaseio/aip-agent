@@ -383,7 +383,7 @@ class TokenDecisionAnalyzer:
             **TOKEN MATCHING RULES:**
             1. Token matching should be flexible and intelligent:
                - Exact match (case-insensitive): "PEPE" or "pepe" matches "PEPE"
-               - Special case on bsc: "BTC" or "btc" matches "BTCB"
+               - Special case on bsc: "BTC" or "btc" matches "BTCB", "BNB" or "bnb" matches "WBNB"
                - Common abbreviations on bsc: "Bitcoin" matches "BTCB", "Ethereum" matches "ETH", "Solana" matches "SOL"
                - Partial matches: "BEEPE" matches "BEEPER" (if no exact match found)
                - Common variations: "USDT" matches "USDC" (if no exact match found)
