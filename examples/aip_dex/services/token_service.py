@@ -1956,8 +1956,14 @@ class TokenService:
             token_list = []
             for token in tokens:
                 # Add null checks for token fields
-                if token and token.symbol:  # Only include tokens with valid symbols
-                    
+                if token and token.symbol:  # Only include tokens with valid symbols        
+                    # filter out tokens with no contract address
+                    if token.contract_address == None:
+                        continue
+                    contract_address = token.contract_address.strip()
+                    if contract_address == "" or contract_address == "0x0000000000000000000000000000000000000000":
+                        continue
+
                     token_info = {
                         "id": str(token.id) if token.id else "",
                         "symbol": token.symbol.strip() if token.symbol else "",
