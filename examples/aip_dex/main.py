@@ -244,14 +244,14 @@ async def process_chat_message(db: Session, messsage: str, conversation_id: str,
         if cached_response.get(cache_key):
             cached_value = cached_response.get(cache_key)
             if cached_value.get("time_of_hour") == time_of_hour:
-                print(f"Cached response found for token: {token.symbol} at {time_of_hour}")
+                print(f"Cached response found for token: {token.symbol or 'Unknown'} at {time_of_hour}")
                 return cached_value.get("response")
             else:
-                print(f"Cached response found for token: {token.symbol} at {time_of_hour} but it is expired, will update the cache")
+                print(f"Cached response found for token: {token.symbol or 'Unknown'} at {time_of_hour} but it is expired, will update the cache")
                 # remove the expired cache
                 del cached_response[cache_key]
 
-        print(f"AIP DEX token analysis: {token.symbol} on {token.chain} {include_pools}")                
+        print(f"AIP DEX token analysis: {token.symbol or 'Unknown'} on {token.chain or 'Unknown'} {include_pools}")                
         # Get comprehensive token analysis
         decision_data = await token_service.get_token_decision_data(db, str(token.id))
             
@@ -342,10 +342,10 @@ async def tokens_api(
     result = []
     for token in tokens:
         token_dict = {
-            "name": token.name,
-            "symbol": token.symbol,
-            "contract_address": token.contract_address,
-            "chain": token.chain,
+            "name": token.name or "",
+            "symbol": token.symbol or "",
+            "contract_address": token.contract_address or "",
+            "chain": token.chain or "",
         }
         result.append(TokenResponse(**token_dict))
     
@@ -380,10 +380,10 @@ async def add_token_api(
         token = db.query(Token).filter(Token.id == result["id"]).first()
         
         token_dict = {
-            "name": token.name,
-            "symbol": token.symbol,
-            "contract_address": token.contract_address,
-            "chain": token.chain,
+            "name": token.name or "",
+            "symbol": token.symbol or "",
+            "contract_address": token.contract_address or "",
+            "chain": token.chain or "",
         }
         
         return TokenResponse(**token_dict)

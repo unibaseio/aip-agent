@@ -145,17 +145,17 @@ class TokenDecisionAnalyzer:
         Contract Address: {token_info.get('contract_address', 'N/A')}
 
         ## Current Market Data
-        Current Price: ${current_metrics.get('weighted_price_usd', 0):.8f}
-        24h Trading Volume: ${current_metrics.get('total_volume_24h', 0):,.2f}
-        Market Cap: ${current_metrics.get('market_cap', 0):,.2f}
-        Total Liquidity: ${current_metrics.get('total_liquidity_usd', 0):,.2f}
+        Current Price: ${current_metrics.get('weighted_price_usd') or 0:.8f}
+        24h Trading Volume: ${current_metrics.get('total_volume_24h') or 0:,.2f}
+        Market Cap: ${current_metrics.get('market_cap') or 0:,.2f}
+        Total Liquidity: ${current_metrics.get('total_liquidity_usd') or 0:,.2f}
         Active Trading Pairs: {current_metrics.get('pools_count', 0)}
 
         ## Technical Indicators
         RSI (14-day): {technical_indicators.get('rsi_14d', 'N/A')}
-        7-day Moving Average: ${technical_indicators.get('ma_7d', 0):.8f}
-        30-day Moving Average: ${technical_indicators.get('ma_30d', 0):.8f}
-        24h Volatility: {technical_indicators.get('volatility_24h', 0):.2f}%
+        7-day Moving Average: ${technical_indicators.get('ma_7d') or 0:.8f}
+        30-day Moving Average: ${technical_indicators.get('ma_30d') or 0:.8f}
+        24h Volatility: {technical_indicators.get('volatility_24h') or 0:.2f}%
         Breakout Signal: {technical_indicators.get('breakout_signal', 'N/A')}
         Trend Direction: {technical_indicators.get('trend_direction', 'N/A')}
         Signal Strength: {technical_indicators.get('signal_strength', 'N/A')}
@@ -167,28 +167,28 @@ class TokenDecisionAnalyzer:
         24 hours: {float(moralis_data.get('price_changes', {}).get('24h', 0) or 0):.2f}%
 
         ## Trading Activity Analysis
-        24h Buy Volume: ${moralis_data.get('volume_analysis', {}).get('buy_volume_24h', 0):,.2f}
-        24h Sell Volume: ${moralis_data.get('volume_analysis', {}).get('sell_volume_24h', 0):,.2f}
-        Buy/Sell Ratio: {buy_sell_ratio:.2f}
-        Net Buy Volume: ${moralis_data.get('volume_analysis', {}).get('net_volume', 0):,.2f}
+        24h Buy Volume: ${moralis_data.get('volume_analysis', {}).get('buy_volume_24h') or 0:,.2f}
+        24h Sell Volume: ${moralis_data.get('volume_analysis', {}).get('sell_volume_24h') or 0:,.2f}
+        Buy/Sell Ratio: {buy_sell_ratio or 0:.2f}
+        Net Buy Volume: ${moralis_data.get('volume_analysis', {}).get('net_volume') or 0:,.2f}
 
         ## Trader Activity
         24h Buyers Count: {moralis_data.get('trader_activity', {}).get('total_buyers_24h', 0)}
         24h Sellers Count: {moralis_data.get('trader_activity', {}).get('total_sellers_24h', 0)}
-        Trader Ratio (Buyers/Sellers): {trader_ratio:.2f}
+        Trader Ratio (Buyers/Sellers): {trader_ratio or 0:.2f}
         24h Active Wallets: {moralis_data.get('trader_activity', {}).get('unique_wallets_24h', 0)}
 
         ## Holder Analysis
         Total Holders: {moralis_data.get('holder_analysis', {}).get('total_holders', 0)}
         24h Holder Change: {moralis_data.get('holder_analysis', {}).get('holder_change_24h', 0)}
-        24h Holder Change Percentage: {float(moralis_data.get('holder_analysis', {}).get('holder_change_24h_percent', 0) or 0):.2f}%
+        24h Holder Change Percentage: {float(moralis_data.get('holder_analysis', {}).get('holder_change_24h_percent') or 0):.2f}%
         7d Holder Change: {moralis_data.get('holder_analysis', {}).get('holder_change_7d', 0)}
-        7d Holder Change Percentage: {float(moralis_data.get('holder_analysis', {}).get('holder_change_7d_percent', 0) or 0):.2f}%
+        7d Holder Change Percentage: {float(moralis_data.get('holder_analysis', {}).get('holder_change_7d_percent') or 0):.2f}%
 
         ## Token Distribution Risk
         Whale Count: {moralis_data.get('distribution', {}).get('whales_count', 0)}
-        Top 10 Holders Supply Percentage: {float(moralis_data.get('distribution', {}).get('top10_supply_percent', 0) or 0):.2f}%
-        Top 25 Holders Supply Percentage: {float(moralis_data.get('distribution', {}).get('top25_supply_percent', 0) or 0):.2f}%
+        Top 10 Holders Supply Percentage: {float(moralis_data.get('distribution', {}).get('top10_supply_percent') or 0):.2f}%
+        Top 25 Holders Supply Percentage: {float(moralis_data.get('distribution', {}).get('top25_supply_percent') or 0):.2f}%
         Concentration Risk: {concentration_risk}
 
         ## Risk Factors
@@ -240,8 +240,8 @@ class TokenDecisionAnalyzer:
                 prompt += f"""
         **Pool ({pool.get('pair_address', 'N/A')})**:
         - DEX: {pool.get('dex', 'N/A')}
-        - 24h Volume: ${pool.get('volume_24h', 0):,.2f}
-        - Liquidity: ${pool.get('liquidity_usd', 0):,.2f}
+        - 24h Volume: ${pool.get('volume_24h') or 0:,.2f}
+        - Liquidity: ${pool.get('liquidity_usd') or 0:,.2f}
         - Fee Tier: {pool.get('fee_tier', 'N/A')}
         """
         

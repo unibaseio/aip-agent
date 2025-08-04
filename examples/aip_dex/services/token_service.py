@@ -1911,14 +1911,14 @@ class TokenService:
             if cached_response.get(cache_key):
                 cached_value = cached_response.get(cache_key)
                 if cached_value.get("time_of_hour") == time_of_hour:
-                    print(f"Cached response found for token: {token.symbol} at {time_of_hour}")
+                    print(f"Cached response found for token: {token.symbol or 'Unknown'} at {time_of_hour}")
                     return cached_value.get("response")
                 else:
-                    print(f"Cached response found for token: {token.symbol} at {time_of_hour} but it is expired, will update the cache")
+                    print(f"Cached response found for token: {token.symbol or 'Unknown'} at {time_of_hour} but it is expired, will update the cache")
                     # remove the expired cache
                     del cached_response[cache_key]
 
-            print(f"Analysing token: {token.symbol} on {token.chain}")                
+            print(f"Analysing token: {token.symbol or 'Unknown'} on {token.chain or 'Unknown'}")                
             # Get comprehensive token analysis
             decision_data = await self.get_token_decision_data(db, str(token.id))
             
