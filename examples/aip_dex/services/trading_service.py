@@ -839,15 +839,21 @@ class TradingService:
         """Create new position or update existing position for buy order"""
         try:
             print(f"🔍 Checking for existing position: bot_id={bot_id}, token_id={token_id}")
-            # Check if position already exists
+            # Check if position already exists (regardless of active status due to unique constraint)
             existing_position = db.query(Position).filter(
                 Position.bot_id == bot_id,
-                Position.token_id == token_id,
-                Position.is_active == True
+                Position.token_id == token_id
             ).first()
             
             if existing_position:
                 print(f"📝 Updating existing position: {existing_position.id}")
+                
+                # If position was inactive, reactivate it
+                if not existing_position.is_active:
+                    print(f"🔄 Reactivating inactive position: {existing_position.id}")
+                    existing_position.is_active = True
+                    existing_position.closed_at = None
+                
                 # Update existing position with new average cost
                 old_quantity = existing_position.quantity
                 old_total_cost = existing_position.total_cost_usd
