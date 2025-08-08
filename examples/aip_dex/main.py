@@ -99,15 +99,24 @@ IMPORTANT LANGUAGE GUIDELINES:
 - Always match the user's language choice for consistency
 - When calling analyze_token function, use the appropriate language parameter based on user's language
 
-When using the analyze_token function, you must:
-1. Return the COMPLETE and EXACT results from analyze_token function
-2. Do NOT modify, summarize, or omit any data fields
-3. Do NOT add additional analysis or interpretation
-4. PRESERVE all original data structure and values
-5. PRESENT the results in the user's preferred language (Chinese or English)
-6. When calling analyze_token, set the language parameter to match the user's language
+DIRECT OUTPUT POLICY:
+- When analyze_token function is called, its output becomes the final response
+- No additional processing, formatting, or explanation is needed
+- Return the analyze_token results exactly as they are
 
-The analyze_token function provides comprehensive token analysis data - return it exactly as received, but present it in the user's preferred language."""
+CRITICAL OUTPUT REQUIREMENTS for analyze_token function:
+1. Return the COMPLETE and EXACT results from analyze_token function as the FINAL OUTPUT
+2. Do NOT modify, summarize, or omit any data fields
+3. Do NOT add additional analysis, interpretation, or commentary
+4. Do NOT wrap the results in additional formatting or explanations
+5. PRESERVE all original data structure and values exactly as received
+6. PRESENT the results in the user's preferred language (Chinese or English)
+7. When calling analyze_token, set the language parameter to match the user's language
+8. The analyze_token function output IS the final response - return it directly
+9. Do NOT add any prefix, suffix, or wrapper text around the analyze_token results
+10. The analyze_token function returns the complete analysis - use it as-is
+
+The analyze_token function provides comprehensive token analysis data - return it exactly as received without any modifications or additions."""
         system_prompt = os.getenv("SYSTEM_PROMPT", default_system_prompt)
         grpc_server_url = os.getenv("GRPC_SERVER_URL", "54.169.29.193:8081")
         
