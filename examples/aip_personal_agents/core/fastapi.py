@@ -59,10 +59,16 @@ def detect_language(text: str) -> str:
     
     # Count Chinese characters
     chinese_chars = sum(1 for char in text if '\u4e00' <= char <= '\u9fff')
+    # If there are Chinese characters, prioritize Chinese
+    if chinese_chars > 0:
+        return "chinese"
     
     # Count English alphabetic characters
     english_chars = len([char for char in text if char.isalpha() and not ('\u4e00' <= char <= '\u9fff')])
     
+    
+    
+    # Only consider English if there are no Chinese characters
     total_chars = len([char for char in text if char.isalpha()])
     
     if total_chars == 0:
