@@ -1909,7 +1909,7 @@ class TokenService:
 
             # cache_key is token_id + time of hour
             time_of_hour = datetime.now(timezone.utc).strftime("%Y%m%d%H")
-            cache_key = f"{str(token.id)}"
+            cache_key = f"{str(token.id)}" + language.lower()
             if cached_response.get(cache_key):
                 cached_value = cached_response.get(cache_key)
                 if cached_value.get("time_of_hour") == time_of_hour:
