@@ -690,20 +690,21 @@ def _stream_chat_base(
     description: str,
     conversation_id: str,
     progress_config: dict = None,
-    chunking_config: dict = None
+    chunking_config: dict = None,
+    user_language: str = None
 ):
     """Base streaming chat function to reduce code duplication"""
     
-    # Detect language from user message
-    def detect_language(text):
-        # Simple language detection based on character types
-        chinese_chars = sum(1 for char in text if '\u4e00' <= char <= '\u9fff')
-        total_chars = len([char for char in text if char.isalpha()])
-        if total_chars > 0 and chinese_chars / total_chars > 0.3:
-            return "chinese"
-        return "english"
-    
-    user_language = detect_language(message)
+    # Use provided language or detect from user message
+    if user_language is None:
+        def detect_language(text):
+            # Simple language detection based on character types
+            chinese_chars = sum(1 for char in text if '\u4e00' <= char <= '\u9fff')
+            total_chars = len([char for char in text if char.isalpha()])
+            if total_chars > 0 and chinese_chars / total_chars > 0.3:
+                return "chinese"
+            return "english"
+        user_language = detect_language(message)
     
     # Default progress configuration based on language
     if progress_config is None:
@@ -755,7 +756,10 @@ def _stream_chat_base(
             yield f"data: {json.dumps({'success': True, 'data': '', 'status': 'connecting'}, ensure_ascii=False)}\n\n"
             
             # Send processing started message
-            initial_message = "正在处理您的请求..." if user_language == "chinese" else "Processing your request..."
+            if user_language == "chinese":
+                initial_message = "正在处理您的请求...预计需要1-2分钟"
+            else:
+                initial_message = "Processing your request...Estimated time: 1-2 minutes"
             yield f"data: {json.dumps({'success': True, 'data': '', 'status': 'processing', 'message': initial_message}, ensure_ascii=False)}\n\n"
             
             # Start processing in background
@@ -814,7 +818,8 @@ def _stream_chat_base(
             response = await processing_task
             
             # Send processing complete message
-            yield f"data: {json.dumps(({'success': True, 'data': '', 'status': 'processing_complete', 'progress': 100, 'message': '处理完成，正在发送回复...'}), ensure_ascii=False)}\n\n"
+            complete_message = "处理完成，正在发送回复..." if user_language == "chinese" else "Processing complete, sending response..."
+            yield f"data: {json.dumps(({'success': True, 'data': '', 'status': 'processing_complete', 'progress': 100, 'message': complete_message}), ensure_ascii=False)}\n\n"
             
             # Stream the response based on chunking configuration
             if chunking_config["type"] == "character":
@@ -1019,22 +1024,50 @@ async def stream_chat_smart_api(
             else:
                 description = description + "\n\n" + prompt
 
-        # Smart progress configuration
-        smart_progress_config = {
-            "messages": [
-                "正在分析用户请求...",
-                "正在检索相关信息...",
-                "正在生成回复内容...",
-                "正在优化回复质量...",
-                "正在完成最终处理...",
-                "正在处理中...",
-                "请稍候...",
-                "正在准备回复...",
-                "正在整理信息..."
-            ],
-            "interval": 2.0,  # Shorter interval for more responsive feel
-            "progress_calc": lambda elapsed: min(95, (elapsed / 150) * 95)  # More aggressive progress
-        }
+        # Detect language from user message
+        def detect_language(text):
+            # Simple language detection based on character types
+            chinese_chars = sum(1 for char in text if '\u4e00' <= char <= '\u9fff')
+            total_chars = len([char for char in text if char.isalpha()])
+            if total_chars > 0 and chinese_chars / total_chars > 0.3:
+                return "chinese"
+            return "english"
+        
+        user_language = detect_language(message)
+        
+        # Smart progress configuration based on language
+        if user_language == "chinese":
+            smart_progress_config = {
+                "messages": [
+                    "正在分析用户请求...",
+                    "正在检索相关信息...",
+                    "正在生成回复内容...",
+                    "正在优化回复质量...",
+                    "正在完成最终处理...",
+                    "正在处理中...",
+                    "请稍候...",
+                    "正在准备回复...",
+                    "正在整理信息..."
+                ],
+                "interval": 2.0,  # Shorter interval for more responsive feel
+                "progress_calc": lambda elapsed: min(95, (elapsed / 150) * 95)  # More aggressive progress
+            }
+        else:
+            smart_progress_config = {
+                "messages": [
+                    "Analyzing user request...",
+                    "Retrieving relevant information...",
+                    "Generating response content...",
+                    "Optimizing response quality...",
+                    "Completing final processing...",
+                    "Processing...",
+                    "Please wait...",
+                    "Preparing response...",
+                    "Organizing information..."
+                ],
+                "interval": 2.0,  # Shorter interval for more responsive feel
+                "progress_calc": lambda elapsed: min(95, (elapsed / 150) * 95)  # More aggressive progress
+            }
         
         # Smart chunking configuration
         smart_chunking_config = {
@@ -1051,7 +1084,8 @@ async def stream_chat_smart_api(
                 description,
                 conversation_id,
                 smart_progress_config,
-                smart_chunking_config
+                smart_chunking_config,
+                user_language
             ),
             media_type="text/plain",
             headers={
@@ -1114,22 +1148,50 @@ async def stream_chat_advanced_api(
             else:
                 description = description + "\n\n" + prompt
 
-        # Advanced progress configuration
-        advanced_progress_config = {
-            "messages": [
-                "正在分析用户请求...",
-                "正在检索相关信息...",
-                "正在生成回复内容...",
-                "正在优化回复质量...",
-                "正在完成最终处理...",
-                "正在处理中...",
-                "请稍候...",
-                "正在准备回复...",
-                "正在整理信息..."
-            ],
-            "interval": 2.0,
-            "progress_calc": lambda elapsed: min(90, (elapsed / 150) * 90)
-        }
+        # Detect language from user message
+        def detect_language(text):
+            # Simple language detection based on character types
+            chinese_chars = sum(1 for char in text if '\u4e00' <= char <= '\u9fff')
+            total_chars = len([char for char in text if char.isalpha()])
+            if total_chars > 0 and chinese_chars / total_chars > 0.3:
+                return "chinese"
+            return "english"
+        
+        user_language = detect_language(message)
+        
+        # Advanced progress configuration based on language
+        if user_language == "chinese":
+            advanced_progress_config = {
+                "messages": [
+                    "正在分析用户请求...",
+                    "正在检索相关信息...",
+                    "正在生成回复内容...",
+                    "正在优化回复质量...",
+                    "正在完成最终处理...",
+                    "正在处理中...",
+                    "请稍候...",
+                    "正在准备回复...",
+                    "正在整理信息..."
+                ],
+                "interval": 2.0,
+                "progress_calc": lambda elapsed: min(90, (elapsed / 150) * 90)
+            }
+        else:
+            advanced_progress_config = {
+                "messages": [
+                    "Analyzing user request...",
+                    "Retrieving relevant information...",
+                    "Generating response content...",
+                    "Optimizing response quality...",
+                    "Completing final processing...",
+                    "Processing...",
+                    "Please wait...",
+                    "Preparing response...",
+                    "Organizing information..."
+                ],
+                "interval": 2.0,
+                "progress_calc": lambda elapsed: min(90, (elapsed / 150) * 90)
+            }
         
         # Advanced chunking configuration
         advanced_chunking_config = {
@@ -1146,7 +1208,8 @@ async def stream_chat_advanced_api(
                 description,
                 conversation_id,
                 advanced_progress_config,
-                advanced_chunking_config
+                advanced_chunking_config,
+                user_language
             ),
             media_type="text/plain",
             headers={
