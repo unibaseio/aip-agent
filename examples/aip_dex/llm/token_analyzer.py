@@ -81,7 +81,7 @@ class TokenDecisionAnalyzer:
         if language.lower() == "chinese":
             prompt += """
             IMPORTANT: 
-            - Please respond in Chinese (中文) for all analysis and recommendations.
+            - 请用中文回复所有分析和建议。
             """
         else:
             prompt += """
@@ -91,7 +91,7 @@ class TokenDecisionAnalyzer:
         
         return prompt
     
-    def _create_comprehensive_analysis_prompt(self, decision_data: Dict[str, Any], user_intent: str = None, include_pools: bool = False) -> str:
+    def _create_comprehensive_analysis_prompt(self, decision_data: Dict[str, Any], user_intent: str = None, include_pools: bool = False, language: str = "chinese") -> str:
         """Create comprehensive analysis prompt"""
         token_info = decision_data.get("token_info", {})
         current_metrics = decision_data.get("current_metrics", {})
@@ -128,14 +128,24 @@ class TokenDecisionAnalyzer:
         # Format data sources string
         data_sources_str = ", ".join(data_sources) if data_sources else "Database Records"
         
-        if user_intent:
-            prompt = f"""
-            Please analyze the complete token data below and provide trading recommendations according to the user's intent: {user_intent}:
-            """
+        if language.lower() == "chinese":
+            if user_intent:
+                prompt = f"""
+                请分析以下完整的代币数据，并根据用户意图提供交易建议：{user_intent}：
+                """
+            else:
+                prompt = f"""
+                请分析以下完整的代币数据并提供交易建议：
+                """
         else:
-            prompt = f"""
-            Please analyze the complete token data below and provide trading recommendations:
-            """
+            if user_intent:
+                prompt = f"""
+                Please analyze the complete token data below and provide trading recommendations according to the user's intent: {user_intent}:
+                """
+            else:
+                prompt = f"""
+                Please analyze the complete token data below and provide trading recommendations:
+                """
 
         prompt += f"""
         ## Basic Information
@@ -249,12 +259,62 @@ class TokenDecisionAnalyzer:
             prompt += f"\n## Historical Data\nTotal of {len(historical_data)} historical data points covering the past 30 days performance.\n"
         
         conclusion = ""
-        if user_intent:
-            conclusion = f"Please provide a short conclusion according to the user's intent: {user_intent}."
+        if language.lower() == "chinese":
+            if user_intent:
+                conclusion = f"请根据用户意图提供简短结论：{user_intent}。"
+            else:
+                conclusion = "请为交易建议提供简短结论。"
         else:
-            conclusion = "Please provide a short conclusion for trading advice."
+            if user_intent:
+                conclusion = f"Please provide a short conclusion according to the user's intent: {user_intent}."
+            else:
+                conclusion = "Please provide a short conclusion for trading advice."
 
-        prompt += f"""
+
+        if language.lower() == "chinese":
+            prompt += f"""
+
+        ## 分析要求
+        请基于以上所有数据从以下方面进行深入分析：
+        
+        **重要：请使用markdown格式回复，并在每个章节标题前添加图标。**
+        
+        # 📈 代币综合分析报告：${token_info.get('symbol', 'N/A')} ({token_info.get('chain', 'N/A').upper()})
+           - 最新数据更新时间：{latest_update_time or 'N/A'}
+           - 代币地址：{token_info.get('contract_address', 'N/A')}
+
+        1. **🎯 总体结论**
+           - {conclusion}  
+           
+        2. **📊 技术分析总结**
+           - 当前价格、市值、交易量、流动性等
+           - RSI和移动平均线指标解读
+           - 价格趋势和突破信号分析
+           - 波动性和技术形态评估
+           
+        3. **🏛️ 基本面分析**
+           - 交易量和流动性健康状况
+           - 市场参与度和活跃度
+           - 持有者结构和稳定性
+
+        4. **🌡️ 市场情绪分析**
+           - 买卖压力对比
+           - 交易者行为模式
+           - 短期和中期情绪变化
+        
+        5. **⚠️ 风险评估**
+           - 主要风险因素识别
+           - 风险等级评级
+           - 风险管理建议
+
+        6. **💰 交易建议**
+           - 明确的交易信号（强烈买入/买入/观望/持有/卖出/强烈卖出）
+           - 建议的入场/出场价格水平
+           - 止损和止盈建议
+           - 仓位管理建议
+        """
+        else:
+            prompt += f"""
 
         ## Analysis Requirements
         Please conduct in-depth analysis based on all the above data from the following aspects:
@@ -297,7 +357,16 @@ class TokenDecisionAnalyzer:
         """
 
         if include_pools:
-            prompt += f"""
+            if language.lower() == "chinese":
+                prompt += f"""
+        7. **🏊 池分析**
+           - 包含详细信息的池列表：交易对/池地址、DEX、流动性、交易量等
+           - 不同DEX间的流动性分布
+           - 特定池的交易机会和风险
+           - 推荐用于交易的池
+        """
+            else:
+                prompt += f"""
         7. **🏊 Pool Analysis**
            - List of pools with detailed information: pair/pool address, dex, liquidity, volume etc.
            - Liquidity distribution across different DEXs
@@ -305,7 +374,18 @@ class TokenDecisionAnalyzer:
            - Recommendations for which pool to use for trading
         """
             
-        prompt += f"""
+        if language.lower() == "chinese":
+            prompt += f"""
+        8. **📝 总结**
+           - 总体评分（1-10分制）
+           - 投资时间框架建议
+           - 关键监控指标
+
+        9. **⚠️ 免责声明**
+           - 本报告仅供参考，不构成投资建议
+        """
+        else:
+            prompt += f"""
         8. **📝 Summary**
            - Overall score (1-10 scale)
            - Investment timeframe recommendations

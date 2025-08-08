@@ -694,22 +694,49 @@ def _stream_chat_base(
 ):
     """Base streaming chat function to reduce code duplication"""
     
-    # Default progress configuration for basic streaming
+    # Detect language from user message
+    def detect_language(text):
+        # Simple language detection based on character types
+        chinese_chars = sum(1 for char in text if '\u4e00' <= char <= '\u9fff')
+        total_chars = len([char for char in text if char.isalpha()])
+        if total_chars > 0 and chinese_chars / total_chars > 0.3:
+            return "chinese"
+        return "english"
+    
+    user_language = detect_language(message)
+    
+    # Default progress configuration based on language
     if progress_config is None:
-        progress_config = {
-            "messages": [
-                "正在分析您的请求...",
-                "正在生成回复内容...",
-                "正在优化回复质量...",
-                "即将完成...",
-                "正在处理中...",
-                "请稍候...",
-                "正在准备回复...",
-                "正在整理信息..."
-            ],
-            "interval": 3.0,
-            "progress_calc": lambda elapsed: min(90, (elapsed / 150) * 90)
-        }
+        if user_language == "chinese":
+            progress_config = {
+                "messages": [
+                    "正在分析您的请求...",
+                    "正在生成回复内容...",
+                    "正在优化回复质量...",
+                    "即将完成...",
+                    "正在处理中...",
+                    "请稍候...",
+                    "正在准备回复...",
+                    "正在整理信息..."
+                ],
+                "interval": 3.0,
+                "progress_calc": lambda elapsed: min(90, (elapsed / 150) * 90)
+            }
+        else:
+            progress_config = {
+                "messages": [
+                    "Analyzing your request...",
+                    "Generating response content...",
+                    "Optimizing response quality...",
+                    "Almost complete...",
+                    "Processing...",
+                    "Please wait...",
+                    "Preparing response...",
+                    "Organizing information..."
+                ],
+                "interval": 3.0,
+                "progress_calc": lambda elapsed: min(90, (elapsed / 150) * 90)
+            }
     
     # Default chunking configuration for basic streaming
     if chunking_config is None:
@@ -728,7 +755,8 @@ def _stream_chat_base(
             yield f"data: {json.dumps({'success': True, 'data': '', 'status': 'connecting'}, ensure_ascii=False)}\n\n"
             
             # Send processing started message
-            yield f"data: {json.dumps({'success': True, 'data': '', 'status': 'processing', 'message': '正在处理您的请求...'}, ensure_ascii=False)}\n\n"
+            initial_message = "正在处理您的请求..." if user_language == "chinese" else "Processing your request..."
+            yield f"data: {json.dumps({'success': True, 'data': '', 'status': 'processing', 'message': initial_message}, ensure_ascii=False)}\n\n"
             
             # Start processing in background
             if username in app.agents:
@@ -762,7 +790,8 @@ def _stream_chat_base(
                 if elapsed_time > 150:
                     # Force cancel the task
                     processing_task.cancel()
-                    yield f"data: {json.dumps(({'success': False, 'error': '处理超时，请稍后重试', 'status': 'timeout', 'is_complete': True, 'elapsed_time': round(elapsed_time, 1)}), ensure_ascii=False)}\n\n"
+                    timeout_message = "处理超时，请稍后重试" if user_language == "chinese" else "Processing timeout, please try again later"
+                    yield f"data: {json.dumps(({'success': False, 'error': timeout_message, 'status': 'timeout', 'is_complete': True, 'elapsed_time': round(elapsed_time, 1)}), ensure_ascii=False)}\n\n"
                     return
                 
                 # Get current message (cycle through the list)
@@ -1272,7 +1301,7 @@ async def get_status_api(
 @app.get("/api/get_report")
 async def get_report_api(
     date_str: Optional[str] = None,
-    language: Optional[str] = "Chinese",
+    language: Optional[str] = "chinese",
     type: Optional[str] = "news",
     format: Optional[str] = "markdown",
     token: str = Depends(validate_token)
@@ -1281,14 +1310,14 @@ async def get_report_api(
     
     Args:
         date_str: Optional date string in format 'YYYY-MM-DD'. If not specified, returns the latest report.
-        language: Optional language for the report (default: "Chinese", alternative: "English").
+        language: Optional language for the report (default: "chinese", alternative: "english").
         type: Optional type of the report (default: "news", alternative: "trading", "trading_short").
         format: Optional output format (default: "markdown", alternative: "json").
     """
     try:
         language = language.lower()
         if language not in ["chinese", "english"]:
-            raise HTTPException(status_code=400, detail="Unsupported language. Available options: Chinese, English")
+            raise HTTPException(status_code=400, detail="Unsupported language. Available options: chinese, english")
 
         if format not in ["markdown", "json"]:
             raise HTTPException(status_code=400, detail="Unsupported format. Available options: text, json")
@@ -1494,6 +1523,13 @@ async def initialize(port: int = 5001, bearer_token: str = None) -> None:
     You are a digital twin of the user, designed to mimic their personality, knowledge, and communication style. 
     Your responses should be natural and consistent with the user's characteristics.
     
+    IMPORTANT LANGUAGE GUIDELINES:
+    - Detect the language of the user's message
+    - If the user writes in Chinese (中文), respond in Chinese
+    - If the user writes in English, respond in English
+    - Always match the user's language choice for consistency
+    - When calling functions, use the appropriate language parameter based on user's language
+    
     You have access to the following functions to enhance your capabilities:
     
     1. search_similar_posts(query: str) -> str
@@ -1505,7 +1541,7 @@ async def initialize(port: int = 5001, bearer_token: str = None) -> None:
        - Purpose: Retrieve pre-generated daily reports summarizing KOL activities
        - Parameters:
          * date_str: "today", "yesterday", or "YYYY-MM-DD" format
-         * language: "chinese" or "english"
+         * language: "chinese" or "english" (set this based on user's language)
          * type: "news" (daily summary), "trading" (trading or market analysis), or "trading_short" (concise signals)
        - Use case: When user asks for daily summaries, market analysis, or trading information
        - Returns: Complete report content in specified language and format
@@ -1515,6 +1551,7 @@ async def initialize(port: int = 5001, bearer_token: str = None) -> None:
     - Use get_daily_report when user requests daily summaries, market activities, or trading information
     - Always provide context and explanation when sharing function results
     - Maintain the user's personality and communication style in your responses
+    - When calling get_daily_report, set the language parameter to match the user's language
     """
     system_prompt = os.getenv("SYSTEM_PROMPT", default_system_prompt)
     
