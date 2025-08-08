@@ -49,6 +49,34 @@ from core.utils import convert_to_json
 # Add global shutdown flag
 is_shutting_down = False
 
+def detect_language(text: str) -> str:
+    """
+    Simple language detection function for Chinese and English only
+    Defaults to Chinese, returns English only when English characters exceed 70%
+    """
+    if not text or not text.strip():
+        return "chinese"  # Default to Chinese for empty text
+    
+    # Count Chinese characters
+    chinese_chars = sum(1 for char in text if '\u4e00' <= char <= '\u9fff')
+    
+    # Count English alphabetic characters
+    english_chars = len([char for char in text if char.isalpha() and not ('\u4e00' <= char <= '\u9fff')])
+    
+    total_chars = len([char for char in text if char.isalpha()])
+    
+    if total_chars == 0:
+        return "chinese"  # Default for non-alphabetic text
+    
+    # Calculate English character ratio
+    english_ratio = english_chars / total_chars if total_chars > 0 else 0
+    
+    # Only return English if English characters exceed 70%
+    if english_ratio > 0.7:
+        return "english"
+    else:
+        return "chinese"  # Default to Chinese for all other cases
+
 def get_daily_report(date_str: str = "today", language: str = "chinese", type: str = "news") -> str:
     """Get daily report content for a specific date, language, and report type.
     
@@ -697,13 +725,6 @@ def _stream_chat_base(
     
     # Use provided language or detect from user message
     if user_language is None:
-        def detect_language(text):
-            # Simple language detection based on character types
-            chinese_chars = sum(1 for char in text if '\u4e00' <= char <= '\u9fff')
-            total_chars = len([char for char in text if char.isalpha()])
-            if total_chars > 0 and chinese_chars / total_chars > 0.3:
-                return "chinese"
-            return "english"
         user_language = detect_language(message)
     
     # Default progress configuration based on language
@@ -1025,14 +1046,6 @@ async def stream_chat_smart_api(
                 description = description + "\n\n" + prompt
 
         # Detect language from user message
-        def detect_language(text):
-            # Simple language detection based on character types
-            chinese_chars = sum(1 for char in text if '\u4e00' <= char <= '\u9fff')
-            total_chars = len([char for char in text if char.isalpha()])
-            if total_chars > 0 and chinese_chars / total_chars > 0.3:
-                return "chinese"
-            return "english"
-        
         user_language = detect_language(message)
         
         # Smart progress configuration based on language
@@ -1149,14 +1162,6 @@ async def stream_chat_advanced_api(
                 description = description + "\n\n" + prompt
 
         # Detect language from user message
-        def detect_language(text):
-            # Simple language detection based on character types
-            chinese_chars = sum(1 for char in text if '\u4e00' <= char <= '\u9fff')
-            total_chars = len([char for char in text if char.isalpha()])
-            if total_chars > 0 and chinese_chars / total_chars > 0.3:
-                return "chinese"
-            return "english"
-        
         user_language = detect_language(message)
         
         # Advanced progress configuration based on language
