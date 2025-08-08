@@ -39,8 +39,13 @@ trading_service = TradingService()
 # value is time of hour and the response of the token analysis;
 cached_response = {}
 
-async def analyze_token(message: str, include_pools: bool = False):
+async def analyze_token(message: str, include_pools: bool = False, language: str = "chinese"):
     """Analyze a token in a message with enhanced multi-DEX analysis
+    
+    Args:
+        message: User's query message
+        include_pools: Whether to include pool-level data
+        language: Language for analysis output ("chinese" or "english")
     
     Examples:
         - "BTC price trends" - Analyze Bitcoin price movements and trends
@@ -53,9 +58,9 @@ async def analyze_token(message: str, include_pools: bool = False):
     """
     db = SessionLocal()
     try:
-        print(f"========== Analyzing token: {message}")
+        print(f"========== Analyzing token: {message} (language: {language})")
         response_data = await token_service.process_chat_message(
-                db, message, include_pools, cached_response
+                db, message, include_pools, cached_response, language
         )  
         return response_data
     finally:
@@ -87,13 +92,22 @@ async def lifespan(app: FastAPI):
     try:
         default_system_prompt = f"""You are an AI assistant specialized in DEX token analysis and trading signals. 
 
+IMPORTANT LANGUAGE GUIDELINES:
+- Detect the language of the user's message
+- If the user writes in Chinese (中文), respond in Chinese
+- If the user writes in English, respond in English
+- Always match the user's language choice for consistency
+- When calling analyze_token function, use the appropriate language parameter based on user's language
+
 When using the analyze_token function, you must:
 1. Return the COMPLETE and EXACT results from analyze_token function
 2. Do NOT modify, summarize, or omit any data fields
 3. Do NOT add additional analysis or interpretation
-4. PRESERVE all original data structure and values in its original language
+4. PRESERVE all original data structure and values
+5. PRESENT the results in the user's preferred language (Chinese or English)
+6. When calling analyze_token, set the language parameter to match the user's language
 
-The analyze_token function provides comprehensive token analysis data - return it exactly as received without any modifications."""
+The analyze_token function provides comprehensive token analysis data - return it exactly as received, but present it in the user's preferred language."""
         system_prompt = os.getenv("SYSTEM_PROMPT", default_system_prompt)
         grpc_server_url = os.getenv("GRPC_SERVER_URL", "54.169.29.193:8081")
         
@@ -165,7 +179,7 @@ app.add_middleware(
 app.include_router(trading_bot_router)
 
 
-async def process_chat_message(db: Session, messsage: str, conversation_id: str, include_pools: bool = False) -> str:
+async def process_chat_message(db: Session, messsage: str, conversation_id: str, include_pools: bool = False, language: str = "chinese") -> str:
     """Process chat message with enhanced multi-DEX analysis
     
     This function provides comprehensive token analysis including:
@@ -258,8 +272,8 @@ async def process_chat_message(db: Session, messsage: str, conversation_id: str,
         if not decision_data:
             return f"I found {target_token_symbol} but couldn't retrieve current analysis data. The token might be new or have limited trading data."
             
-        system_prompt = token_analyzer._get_system_prompt(include_pools=include_pools)
-        user_message = token_analyzer._create_comprehensive_analysis_prompt(decision_data, user_intent, include_pools)
+        system_prompt = token_analyzer._get_system_prompt(include_pools=include_pools, language=language)
+        user_message = token_analyzer._create_comprehensive_analysis_prompt(decision_data, user_intent, include_pools, language)
 
         # Step 5: Use LLM to analyze the decision data and generate response
         llm_analysis = await app.agent.process_query(

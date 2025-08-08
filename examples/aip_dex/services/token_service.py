@@ -1862,7 +1862,7 @@ class TokenService:
         except Exception as e:
             print(f"Warning: Error closing connections: {e}")
 
-    async def process_chat_message(self, db: Session, message: str, include_pools: bool = False, cached_response: Dict[str, Any] = {}) -> str:
+    async def process_chat_message(self, db: Session, message: str, include_pools: bool = False, cached_response: Dict[str, Any] = {}, language: str = "chinese") -> str:
         """
         Process chat message and return response data for LLM analysis
         Enhanced version: Get token list → LLM token identification → Get decision data → LLM analysis
@@ -1871,6 +1871,8 @@ class TokenService:
             db: Database session
             message: User's chat message
             include_pools: Whether to include detailed pool analysis
+            cached_response: Cache for responses
+            language: Language for analysis output ("chinese" or "english")
             
         Returns:
             Dict containing response, signal_data, intent, and optional pool_analysis
@@ -1927,7 +1929,7 @@ class TokenService:
             
             # Step 5: Use LLM to analyze the decision data and generate response
             llm_analysis = await token_analyzer.analyze_token_data_for_user_intent(
-                decision_data, llm_token_analysis.get("user_intent", None)
+                decision_data, llm_token_analysis.get("user_intent", None), include_pools, language
             )
 
             print(f"LLM analysis: {llm_analysis}")

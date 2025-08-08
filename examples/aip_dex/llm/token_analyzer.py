@@ -556,9 +556,9 @@ Always be precise and only suggest tokens that actually exist in the provided li
             return {"token_found": False, "token_symbol": None, "intended_chain": "bsc", "similar_tokens": [], "user_intent": "general", "confidence": 0.0}
     
     
-    async def analyze_token_data_for_user_intent(self, decision_data: Dict[str, Any], user_intent: str, include_pools: bool = False) -> Dict[str, Any]:
-        system_prompt = self._get_system_prompt(include_pools=include_pools)
-        user_prompt = self._create_comprehensive_analysis_prompt(decision_data, user_intent, include_pools=include_pools)
+    async def analyze_token_data_for_user_intent(self, decision_data: Dict[str, Any], user_intent: str, include_pools: bool = False, language: str = "chinese") -> Dict[str, Any]:
+        system_prompt = self._get_system_prompt(include_pools=include_pools, language=language)
+        user_prompt = self._create_comprehensive_analysis_prompt(decision_data, user_intent, include_pools, language)
 
         response = await self.client.chat.completions.create(
             model="gpt-4.1-mini",
