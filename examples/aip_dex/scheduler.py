@@ -6,6 +6,7 @@ Periodically fetches top tokens and updates pool data with metrics and signals
 
 import asyncio
 import logging
+import random
 from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Any, Optional
 from sqlalchemy.orm import Session
@@ -251,6 +252,8 @@ class TokenDataScheduler:
             # Step 3: Retrieve Moralis stats, then calculate metrics and signals for all tokens in database
             from models.database import Token
             all_tokens = db.query(Token).filter(Token.chain == self.chain).all()
+            # disorder tokens randomly
+            random.shuffle(all_tokens)
             signal_stats = await self.calculate_and_save_signals(db, all_tokens)
             
             # Log summary
@@ -323,4 +326,4 @@ async def main():
         await scheduler.cleanup()
 
 if __name__ == "__main__":
-    asyncio.run(main())     
+    asyncio.run(main())

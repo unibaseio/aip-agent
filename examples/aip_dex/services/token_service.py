@@ -323,6 +323,25 @@ class TokenService:
                     "error": f"Token with id {token_id} not found"
                 }
 
+            # STEP 0: Check existing token metrics quality (if available)
+            existing_token_metric = db.query(TokenMetric).filter(TokenMetric.token_id == token_id).first()
+            if existing_token_metric and not force_update:
+                quality_check = self._is_low_quality_token(existing_token_metric)
+                if quality_check["is_low_quality"]:
+                    print(f"Skipping update for low-quality token {token.symbol}. Issues: {quality_check['quality_issues']}, Score: {quality_check['quality_score']}")
+                    return {
+                        "success": True,
+                        "token_id": token_id,
+                        "token_symbol": token.symbol,
+                        "skipped_low_quality": True,
+                        "quality_check": quality_check,
+                        "moralis_updated": False,
+                        "history_saved": False,
+                        "metrics_updated": False,
+                        "signals_updated": False,
+                        "moralis_stats": None
+                    }
+
             # Check if recently updated using token's metrics_updated_at field
             should_update = force_update
             
@@ -399,6 +418,21 @@ class TokenService:
                         token_metric.trend_direction = self._map_signal_to_trend_direction(signals.get("signal", "HOLD"))
                         db.commit()
                         db.refresh(token_metric)
+                
+                # STEP 5: Check token quality and filter low-quality tokens
+                if token_metric:
+                    quality_check = self._is_low_quality_token(token_metric)
+                    result["quality_check"] = quality_check
+                    
+                    # Log quality issues if any
+                    if quality_check["is_low_quality"]:
+                        print(f"Warning: Token {token.symbol} flagged as low quality. Issues: {quality_check['quality_issues']}, Score: {quality_check['quality_score']}")
+                        
+                        # Optionally, you can add logic here to:
+                        # - Skip further processing
+                        # - Mark token as inactive
+                        # - Set a flag in the database
+                        # For now, we just log the warning
                         
                 # Finally update metrics_updated_at field after successful update
                 if result.get("moralis_updated") or result.get("metrics_updated") or result.get("signals_updated"):
@@ -2011,6 +2045,122 @@ class TokenService:
             formatted_pools.append(formatted_pool)
         
         return formatted_pools
+
+    def _is_low_quality_token(self, token_metric: TokenMetric) -> Dict[str, Any]:
+        """检查token是否为低市值或垃圾token
+        
+        Args:
+            token_metric: TokenMetric对象
+            
+        Returns:
+            Dict包含is_low_quality标志和具体原因
+        """
+        quality_issues = []
+        is_low_quality = False
+        
+        # 市值过滤 - 低于$10,000认为是垃圾token
+        if token_metric.market_cap and float(token_metric.market_cap) < 10000:
+            quality_issues.append(f"市值过低: ${float(token_metric.market_cap):,.2f}")
+            is_low_quality = True
+        
+        # 流动性过滤 - 低于$5,000认为流动性不足
+        if token_metric.total_liquidity_usd and float(token_metric.total_liquidity_usd) < 5000:
+            quality_issues.append(f"流动性不足: ${float(token_metric.total_liquidity_usd):,.2f}")
+            is_low_quality = True
+        
+        # 交易量过滤 - 24小时交易量低于$1,000认为缺乏活跃度
+        if token_metric.total_volume_24h and float(token_metric.total_volume_24h) < 1000:
+            quality_issues.append(f"交易量过低: ${float(token_metric.total_volume_24h):,.2f}")
+            is_low_quality = True
+        
+        # 持有者数量过滤 - 少于100个持有者认为分布不够
+        if token_metric.holder_count and token_metric.holder_count < 100:
+            quality_issues.append(f"持有者过少: {token_metric.holder_count}")
+            is_low_quality = True
+        
+        # 交易池数量过滤 - 少于2个交易池认为流动性分布不够
+        if token_metric.pools_count and token_metric.pools_count < 2:
+            quality_issues.append(f"交易池过少: {token_metric.pools_count}")
+            is_low_quality = True
+        
+        # 价格异常检查 - 价格过低可能是垃圾token
+        if token_metric.weighted_price_usd and float(token_metric.weighted_price_usd) < 0.000001:
+            quality_issues.append(f"价格异常低: ${float(token_metric.weighted_price_usd):.10f}")
+            is_low_quality = True
+        
+        return {
+            "is_low_quality": is_low_quality,
+            "quality_issues": quality_issues,
+            "quality_score": self._calculate_quality_score(token_metric)
+        }
+    
+    def _calculate_quality_score(self, token_metric: TokenMetric) -> float:
+        """计算token质量评分 (0-100)
+        
+        Args:
+            token_metric: TokenMetric对象
+            
+        Returns:
+            质量评分，100为最高质量
+        """
+        score = 0.0
+        
+        # 市值评分 (0-25分)
+        if token_metric.market_cap:
+            market_cap = float(token_metric.market_cap)
+            if market_cap >= 1000000:  # $1M+
+                score += 25
+            elif market_cap >= 100000:  # $100K+
+                score += 20
+            elif market_cap >= 50000:   # $50K+
+                score += 15
+            elif market_cap >= 10000:   # $10K+
+                score += 10
+        
+        # 流动性评分 (0-25分)
+        if token_metric.total_liquidity_usd:
+            liquidity = float(token_metric.total_liquidity_usd)
+            if liquidity >= 500000:     # $500K+
+                score += 25
+            elif liquidity >= 100000:   # $100K+
+                score += 20
+            elif liquidity >= 50000:    # $50K+
+                score += 15
+            elif liquidity >= 5000:     # $5K+
+                score += 10
+        
+        # 交易量评分 (0-25分)
+        if token_metric.total_volume_24h:
+            volume = float(token_metric.total_volume_24h)
+            if volume >= 100000:        # $100K+
+                score += 25
+            elif volume >= 50000:       # $50K+
+                score += 20
+            elif volume >= 10000:       # $10K+
+                score += 15
+            elif volume >= 1000:        # $1K+
+                score += 10
+        
+        # 持有者和交易池评分 (0-25分)
+        holder_score = 0
+        if token_metric.holder_count:
+            if token_metric.holder_count >= 1000:
+                holder_score += 15
+            elif token_metric.holder_count >= 500:
+                holder_score += 12
+            elif token_metric.holder_count >= 100:
+                holder_score += 8
+        
+        pool_score = 0
+        if token_metric.pools_count:
+            if token_metric.pools_count >= 5:
+                pool_score += 10
+            elif token_metric.pools_count >= 2:
+                pool_score += 5
+        
+        score += holder_score + pool_score
+        
+        return min(score, 100.0)  # 确保不超过100分
 
     
 
