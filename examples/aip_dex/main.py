@@ -19,7 +19,9 @@ from models.database import create_tables, create_indexes, get_db, Token, Sessio
 from services.token_service import TokenService
 from llm.token_analyzer import TokenDecisionAnalyzer
 from api.schemas import (
-    TokenResponse, ChatRequest, ChatResponse, BotOwnerCreate, TradingStrategyCreate
+    TokenResponse, ChatRequest, ChatResponse, BotOwnerCreate, TradingStrategyCreate,
+    TokenDetailResponse, TokenPoolResponse, TokenHolderDistribution, TokenTechnicalIndicators,
+    TokenTradeActivity, TokenPriceHistory
 )
 from api.trading_bot_routes import router as trading_bot_router
 from services.owner_service import OwnerService
@@ -347,32 +349,72 @@ async def validate_token(credentials: HTTPAuthorizationCredentials = Security(se
 
 # ===== TOKEN ENDPOINTS =====
 
-@app.get("/api/v1/tokens", response_model=List[TokenResponse], dependencies=[Depends(validate_token)])
+@app.get("/api/v1/tokens", dependencies=[Depends(validate_token)])
 async def tokens_api(
-    limit: int = Query(50, ge=1, le=100),
+    limit: int = Query(50, ge=1, le=300),
     chain: Optional[str] = Query(None),
     db: Session = Depends(get_db)
 ):
-    """Get all tracked tokens with optional filtering"""
-    query = db.query(Token)
+    """Get all tracked tokens with their latest metrics, sorted by market cap"""
+    from models.database import TokenMetric
+    
+    # 使用子查询获取每个token的最新指标，然后按market cap排序
+    from sqlalchemy import func
+    
+    # 子查询：获取每个token的最新指标记录
+    latest_metrics_subquery = db.query(
+        TokenMetric.token_id,
+        func.max(TokenMetric.updated_at).label('max_updated_at')
+    ).group_by(TokenMetric.token_id).subquery()
+    
+    # 主查询：JOIN token和最新指标，按market cap排序
+    query = db.query(Token, TokenMetric).outerjoin(
+        TokenMetric, Token.id == TokenMetric.token_id
+    ).outerjoin(
+        latest_metrics_subquery,
+        (TokenMetric.token_id == latest_metrics_subquery.c.token_id) &
+        (TokenMetric.updated_at == latest_metrics_subquery.c.max_updated_at)
+    )
     
     if chain:
         query = query.filter(Token.chain == chain)
     
-    tokens = query.limit(limit).all()
+    # 按market cap降序排序，处理NULL值
+    query = query.order_by(
+        func.coalesce(TokenMetric.total_volume_24h, 0).desc()
+    ).limit(limit)
     
-    # Convert to response format
+    tokens_with_metrics = query.all()
+    
+    # 构建结果
     result = []
-    for token in tokens:
-        token_dict = {
+    for token, latest_metric in tokens_with_metrics:
+        token_data = {
+            "id": str(token.id),
             "name": token.name or "",
             "symbol": token.symbol or "",
             "contract_address": token.contract_address or "",
             "chain": token.chain or "",
+            "image_url": token.image_url or "",
+            "logo_uri": token.logo_uri or "",
+            "created_at": token.created_at.isoformat() if token.created_at else None,
+            "metrics_updated_at": token.metrics_updated_at.isoformat() if token.metrics_updated_at else None
         }
-        result.append(TokenResponse(**token_dict))
+        
+        if latest_metric:
+            token_data["market_cap"] = float(latest_metric.market_cap or 0)
+            token_data["price_usd"] = float(latest_metric.weighted_price_usd or latest_metric.avg_price_usd or 0)
+            token_data["price_change_24h"] = float(latest_metric.price_change_24h or 0)
+            token_data["total_volume_24h"] = float(latest_metric.total_volume_24h or 0)
+        else:
+            token_data["market_cap"] = 0
+            token_data["price_usd"] = 0
+            token_data["price_change_24h"] = 0
+            token_data["total_volume_24h"] = 0
+            
+        result.append(token_data)
     
-    return result
+    return {"tokens": result, "total": len(result)}
 
 @app.post("/api/v1/add_token", response_model=TokenResponse, dependencies=[Depends(validate_token)])
 async def add_token_api(
@@ -413,6 +455,217 @@ async def add_token_api(
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/v1/tokens/{token_id}/details", response_model=TokenDetailResponse, dependencies=[Depends(validate_token)])
+async def get_token_detail(
+    token_id: str,
+    db: Session = Depends(get_db)
+):
+    """Get detailed information for a specific token"""
+    try:
+        # 获取token基本信息
+        token = db.query(Token).filter(Token.id == token_id).first()
+        if not token:
+            raise HTTPException(status_code=404, detail="Token not found")
+            
+        # 获取token指标
+        from models.database import TokenMetric, TokenPool, PoolMetric, PoolMetricHistory
+        latest_metric = db.query(TokenMetric).filter(
+            TokenMetric.token_id == token.id
+        ).order_by(TokenMetric.updated_at.desc()).first()
+        
+        # 获取token交易池
+        pools_data = []
+        token_pools = db.query(TokenPool).filter(
+            TokenPool.base_token_id == token.id,
+            TokenPool.is_active == True
+        ).all()
+        
+        for pool in token_pools:
+            # 获取池子最新指标
+            pool_metric = db.query(PoolMetric).filter(
+                PoolMetric.pool_id == pool.id
+            ).order_by(PoolMetric.updated_at.desc()).first()
+            
+            if pool_metric:
+                # 获取quote token的symbol
+                quote_symbol = "UNKNOWN"
+                if pool.quote_token:
+                    quote_symbol = pool.quote_token.symbol
+                
+                pool_data = TokenPoolResponse(
+                    base_symbol=token.symbol,
+                    quote_symbol=quote_symbol,
+                    dex=pool.dex,
+                    chain=token.chain,
+                    price_usd=pool_metric.price_usd or Decimal(0),
+                    price_change_24h=pool_metric.price_change_24h or Decimal(0),
+                    volume_24h=pool_metric.volume_24h or Decimal(0),
+                    liquidity_usd=pool_metric.liquidity_usd or Decimal(0),
+                    pair_address=pool.pair_address,
+                    pair_created_at=pool.pair_created_at
+                )
+                pools_data.append(pool_data)
+        
+        # 获取价格历史数据
+        price_history_data = []
+        price_history = db.query(PoolMetricHistory).join(
+            TokenPool, PoolMetricHistory.pool_id == TokenPool.id
+        ).filter(
+            TokenPool.base_token_id == token.id
+        ).order_by(PoolMetricHistory.recorded_at.desc()).limit(30).all()
+        
+        for history in price_history:
+            price_data = TokenPriceHistory(
+                timestamp=history.recorded_at,
+                price=history.price_usd or Decimal(0)
+            )
+            price_history_data.append(price_data)
+        
+        # 构建响应
+        response = TokenDetailResponse(
+            id=str(token.id),
+            name=token.name or "",
+            symbol=token.symbol or "",
+            contract_address=token.contract_address or "",
+            chain=token.chain or "",
+            image_url=token.image_url,
+            logo_uri=token.logo_uri,
+            created_at=token.created_at,
+            metrics_updated_at=token.metrics_updated_at
+        )
+        
+        # 添加价格和市场数据
+        if latest_metric:
+            response.price_usd = latest_metric.weighted_price_usd or latest_metric.avg_price_usd
+            response.price_change_24h = latest_metric.price_change_24h
+            response.market_cap = latest_metric.market_cap
+            response.total_volume_24h = latest_metric.total_volume_24h
+            response.total_liquidity_usd = latest_metric.total_liquidity_usd
+            response.fdv = latest_metric.total_fdv
+            
+            # 添加技术指标
+            response.technical_indicators = TokenTechnicalIndicators(
+                rsi_14d=latest_metric.rsi_14d,
+                ma_7d=latest_metric.ma_7d,
+                ma_30d=latest_metric.ma_30d,
+                volatility_24h=latest_metric.volatility_24h,
+                breakout_signal=latest_metric.breakout_signal,
+                trend_direction=latest_metric.trend_direction,
+                signal_strength=latest_metric.signal_strength
+            )
+            
+            # 添加持有者分析
+            response.holder_distribution = TokenHolderDistribution(
+                holder_count=latest_metric.holder_count or 0,
+                whales_count=latest_metric.whales_count,
+                sharks_count=latest_metric.sharks_count,
+                holder_change_24h=latest_metric.holder_change_24h,
+                holder_change_7d=latest_metric.holder_change_7d,
+                holder_change_24h_percent=latest_metric.holder_change_24h_percent,
+                holder_change_7d_percent=latest_metric.holder_change_7d_percent,
+                top10_supply_percent=latest_metric.top10_supply_percent,
+                top50_supply_percent=latest_metric.top50_supply_percent,
+                top100_supply_percent=latest_metric.top100_supply_percent
+            )
+            
+            # 添加交易活动
+            response.trade_activity = TokenTradeActivity(
+                buy_volume_24h=latest_metric.buy_volume_24h,
+                sell_volume_24h=latest_metric.sell_volume_24h,
+                total_buyers_24h=latest_metric.total_buyers_24h,
+                total_sellers_24h=latest_metric.total_sellers_24h,
+                total_buys_24h=latest_metric.total_buys_24h,
+                total_sells_24h=latest_metric.total_sells_24h,
+                unique_wallets_24h=latest_metric.unique_wallets_24h
+            )
+        
+        # 添加交易池和价格历史
+        response.pools = pools_data
+        response.price_history = price_history_data
+                
+        return response
+        
+    except Exception as e:
+        print(f"Error getting token details: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/v1/tokens/metrics", dependencies=[Depends(validate_token)])
+async def get_tokens_with_metrics(
+    limit: int = Query(50, ge=1, le=100),
+    chain: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
+    """Get all tracked tokens with their latest metrics"""
+    from models.database import TokenMetric
+    
+    query = db.query(Token)
+    
+    if chain:
+        query = query.filter(Token.chain == chain)
+    
+    tokens = query.limit(limit).all()
+    
+    result = []
+    for token in tokens:
+        # Get latest metrics for this token
+        latest_metric = db.query(TokenMetric).filter(
+            TokenMetric.token_id == token.id
+        ).order_by(TokenMetric.updated_at.desc()).first()
+        
+        token_data = {
+            "id": str(token.id),
+            "name": token.name or "",
+            "symbol": token.symbol or "",
+            "contract_address": token.contract_address or "",
+            "chain": token.chain or "",
+            "image_url": token.image_url or "",
+            "logo_uri": token.logo_uri or "",
+            "created_at": token.created_at.isoformat() if token.created_at else None,
+            "metrics_updated_at": token.metrics_updated_at.isoformat() if token.metrics_updated_at else None
+        }
+        
+        if latest_metric:
+            token_data["metrics"] = {
+                "price_usd": float(latest_metric.weighted_price_usd or latest_metric.avg_price_usd or 0),
+                "price_change_24h": float(latest_metric.price_change_24h or 0),
+                "price_change_1h": float(latest_metric.price_change_1h or 0),
+                "price_change_5m": float(latest_metric.price_change_5m or 0),
+                "volume_24h": float(latest_metric.total_volume_24h or 0),
+                "market_cap": float(latest_metric.market_cap or 0),
+                "liquidity_usd": float(latest_metric.total_liquidity_usd or 0),
+                "holder_count": latest_metric.holder_count or 0,
+                "unique_traders_24h": latest_metric.unique_traders_24h or 0,
+                "buy_volume_24h": float(latest_metric.buy_volume_24h or 0),
+                "sell_volume_24h": float(latest_metric.sell_volume_24h or 0),
+                "total_buyers_24h": latest_metric.total_buyers_24h or 0,
+                "total_sellers_24h": latest_metric.total_sellers_24h or 0,
+                "total_buys_24h": latest_metric.total_buys_24h or 0,
+                "total_sells_24h": latest_metric.total_sells_24h or 0,
+                "rsi_14d": latest_metric.rsi_14d,
+                "ma_7d": latest_metric.ma_7d,
+                "ma_30d": latest_metric.ma_30d,
+                "volatility_24h": latest_metric.volatility_24h,
+                "trend_direction": latest_metric.trend_direction,
+                "signal_strength": latest_metric.signal_strength,
+                "breakout_signal": latest_metric.breakout_signal,
+                "whales_count": latest_metric.whales_count or 0,
+                "sharks_count": latest_metric.sharks_count or 0,
+                "dolphins_count": latest_metric.dolphins_count or 0,
+                "top10_supply_percent": float(latest_metric.top10_supply_percent or 0),
+                "top25_supply_percent": float(latest_metric.top25_supply_percent or 0),
+                "top50_supply_percent": float(latest_metric.top50_supply_percent or 0),
+                "holder_change_24h": latest_metric.holder_change_24h or 0,
+                "holder_change_24h_percent": float(latest_metric.holder_change_24h_percent or 0),
+                "pools_count": latest_metric.pools_count or 0,
+                "updated_at": latest_metric.updated_at.isoformat() if latest_metric.updated_at else None
+            }
+        else:
+            token_data["metrics"] = None
+            
+        result.append(token_data)
+    
+    return {"tokens": result, "total": len(result)}
 
 # ===== CHAT ENDPOINTS =====
 
@@ -500,6 +753,39 @@ async def bot_management_page():
         return HTMLResponse(content=html_content)
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail="Bot management page not found")
+
+@app.get("/tokens", response_class=HTMLResponse)
+async def tokens_page():
+    """Serve the token analytics page"""
+    try:
+        tokens_html_path = os.path.join(os.path.dirname(__file__), "static", "token-list.html")
+        with open(tokens_html_path, "r", encoding="utf-8") as f:
+            html_content = f.read()
+        return HTMLResponse(content=html_content)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Token analytics page not found")
+
+@app.get("/token/{token_id}", response_class=HTMLResponse)
+async def token_detail_page(token_id: str):
+    """Serve the token detail page"""
+    try:
+        token_detail_html_path = os.path.join(os.path.dirname(__file__), "static", "token-detail.html")
+        with open(token_detail_html_path, "r", encoding="utf-8") as f:
+            html_content = f.read()
+        return HTMLResponse(content=html_content)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Token detail page not found")
+
+@app.get("/token-detail.html", response_class=HTMLResponse)
+async def token_detail_html():
+    """Serve the token detail HTML page directly"""
+    try:
+        token_detail_html_path = os.path.join(os.path.dirname(__file__), "static", "token-detail.html")
+        with open(token_detail_html_path, "r", encoding="utf-8") as f:
+            html_content = f.read()
+        return HTMLResponse(content=html_content)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Token detail page not found")
 
 # ===== META MASK AUTHENTICATION ENDPOINTS =====
 
@@ -898,10 +1184,12 @@ async def api_info():
         "endpoints": {
             "chat_interface": "/",
             "login_page": "/login",
+            "tokens_page": "/tokens",
+            "bot_management": "/bot-management",
             "api_docs": "/docs",
             "api_redoc": "/redoc",
             "health_check": "/api/v1/health",
-            "tokens": "/api/v1/tokens",
+            "tokens_api": "/api/v1/tokens",
             "add_token": "/api/v1/add_token",
             "chat": "/api/v1/chat",
             "metamask_auth": "/api/v1/auth/metamask",
@@ -928,4 +1216,4 @@ if __name__ == "__main__":
         host="0.0.0.0", 
         port=args.port,
         log_level="info"
-    ) 
+    )

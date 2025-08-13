@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Token List - AIP DEX</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        :root {
+            /* Light theme (default) */
+            --primary-color: #3b82f6;
+            --secondary-color: #8b5cf6;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --card-bg: #ffffff;
+            --card-bg-hover: #f1f5f9;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --card-bg: #1e293b;
+            --card-bg-hover: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --border-color: #334155;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 50%, var(--bg-secondary) 100%);
+            min-height: 100vh;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+            z-index: 1040;
+        }
+
+        [data-theme="dark"] .navbar {
+            background: rgba(15, 23, 42, 0.95) !important;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(10px);
+        }
+
+        .token-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .token-table th {
+            background-color: var(--card-bg-hover);
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .token-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .token-table tr:hover {
+            background-color: var(--card-bg-hover);
+            cursor: pointer;
+        }
+
+        .token-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .price-up {
+            color: var(--success-color);
+        }
+
+        .price-down {
+            color: var(--danger-color);
+        }
+
+        .search-container {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-robot me-2"></i>
+                AIP DEX Trading Bot Dashboard
+            </a>
+            <div class="navbar-nav ms-auto align-items-center">
+                <a href="/" class="btn btn-outline-primary btn-sm me-2">
+                    <i class="fas fa-home me-1"></i>
+                    Dashboard
+                </a>
+                <a href="/bot-management" class="btn btn-outline-primary btn-sm me-2">
+                    <i class="fas fa-robot me-1"></i>
+                    Bot Management
+                </a>
+                <a href="/chat" class="btn btn-primary btn-sm">
+                    <i class="fas fa-comments me-1"></i>
+                    Chat
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-coins me-2"></i>
+                            Token List
+                        </h5>
+                        <div class="search-container">
+                            <div class="input-group">
+                                <input type="text" id="token-search" class="form-control"
+                                    placeholder="Search tokens...">
+                                <button class="btn btn-outline-secondary" type="button" id="search-button">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <table class="token-table">
+                            <thead>
+                                <tr>
+                                    <th>Token</th>
+                                    <th>Price</th>
+                                    <th>24h %</th>
+                                    <th>24h Volume</th>
+                                    <th>Market Cap</th>
+                                    <th>Chain</th>
+                                </tr>
+                            </thead>
+                            <tbody id="token-list-body">
+                                <!-- Token list will be populated by JavaScript -->
+                                <tr>
+                                    <td colspan="6" class="text-center">Loading tokens...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <!-- Pagination -->
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <div class="text-secondary">
+                                Showing <span id="showing-start">0</span> to <span id="showing-end">0</span> of <span id="total-tokens">0</span> tokens
+                            </div>
+                            <nav aria-label="Token list pagination">
+                                <ul class="pagination pagination-sm mb-0" id="pagination">
+                                    <!-- Pagination will be populated by JavaScript -->
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Token list functionality
+        let allTokens = [];
+        let filteredTokens = [];
+        let currentPage = 1;
+        const tokensPerPage = 25;
+        
+        // Get auth token function
+        function getAuthToken() {
+            return "aip-dex-default-token-2025";
+        }
+
+        async function fetchTokenList() {
+            try {
+                const response = await fetch('/api/v1/tokens?limit=200', {
+                    headers: {
+                        'Authorization': `Bearer ${getAuthToken()}`
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error('Failed to fetch tokens');
+                }
+                const tokens = await response.json();
+                allTokens = tokens.tokens || [];
+                filteredTokens = [...allTokens];
+                currentPage = 1;
+                renderTokenList();
+                renderPagination();
+            } catch (error) {
+                console.error('Error fetching tokens:', error);
+                document.getElementById('token-list-body').innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center text-danger">Error loading tokens. Please try again later.</td>
+                    </tr>
+                `;
+            }
+        }
+
+        function renderTokenList() {
+            const tokenListBody = document.getElementById('token-list-body');
+            if (!filteredTokens || filteredTokens.length === 0) {
+                tokenListBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center">No tokens found</td>
+                    </tr>
+                `;
+                updatePaginationInfo(0, 0, 0);
+                return;
+            }
+
+            // 计算当前页的数据
+            const startIndex = (currentPage - 1) * tokensPerPage;
+            const endIndex = Math.min(startIndex + tokensPerPage, filteredTokens.length);
+            const currentTokens = filteredTokens.slice(startIndex, endIndex);
+
+            // 格式化数字函数
+            function formatNumber(num, decimals = 2) {
+                if (num === null || num === undefined || isNaN(num)) return '$0.00';
+
+                // 确保 num 是数字类型
+                const numValue = typeof num === 'string' ? parseFloat(num) : Number(num);
+                if (isNaN(numValue)) return '$0.00';
+
+                // 处理非常小的数字，使用科学计数法
+                if (numValue < 0.000001 && numValue > 0) {
+                    return '$' + numValue.toExponential(6);
+                }
+
+                // 处理大数字，使用K, M, B后缀
+                if (numValue >= 1000000000) {
+                    return '$' + (numValue / 1000000000).toFixed(decimals) + 'B';
+                } else if (numValue >= 1000000) {
+                    return '$' + (numValue / 1000000).toFixed(decimals) + 'M';
+                } else if (numValue >= 1000) {
+                    return '$' + (numValue / 1000).toFixed(decimals) + 'K';
+                } else {
+                    return '$' + numValue.toFixed(decimals);
+                }
+            }
+
+            tokenListBody.innerHTML = currentTokens.map(token => {
+                // 处理价格变化的颜色
+                const priceChangeClass = token.price_change_24h > 0 ? 'text-success' :
+                    token.price_change_24h < 0 ? 'text-danger' : 'text-secondary';
+                const priceChangeSign = token.price_change_24h > 0 ? '+' : '';
+
+                return `
+                <tr data-token-id="${token.id}">
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <img src="${token.image_url || '/static/images/default-token.svg'}" 
+                                 alt="${token.symbol}" class="token-icon"
+                                 onerror="this.src='/static/images/default-token.svg'">
+                            <div>
+                                <strong>${token.symbol}</strong>
+                                <div class="text-secondary small">${token.name}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>${formatNumber(token.price_usd, 6)}</td>
+                    <td class="${priceChangeClass}">${priceChangeSign}${token.price_change_24h.toFixed(2)}%</td>
+                    <td>${formatNumber(token.total_volume_24h)}</td>
+                    <td>${formatNumber(token.market_cap)}</td>
+                    <td>${token.chain}</td>
+                </tr>
+                `;
+            }).join('');
+
+            // Add click event listeners
+            document.querySelectorAll('#token-list-body tr').forEach(row => {
+                row.addEventListener('click', () => {
+                    const tokenId = row.getAttribute('data-token-id');
+                    if (!tokenId) return;
+
+                    // 跳转到token详情页面
+                    window.location.href = `/token-detail.html?id=${tokenId}`;
+                });
+            });
+
+            // 更新分页信息
+            updatePaginationInfo(startIndex + 1, endIndex, filteredTokens.length);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchTokenList();
+
+            // Search functionality
+            document.getElementById('search-button').addEventListener('click', () => {
+                const searchTerm = document.getElementById('token-search').value.toLowerCase();
+                filterTokens(searchTerm);
+            });
+
+            document.getElementById('token-search').addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') {
+                    const searchTerm = document.getElementById('token-search').value.toLowerCase();
+                    filterTokens(searchTerm);
+                }
+            });
+        });
+
+        function renderPagination() {
+            const totalPages = Math.ceil(filteredTokens.length / tokensPerPage);
+            const pagination = document.getElementById('pagination');
+            
+            if (totalPages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+
+            let paginationHTML = '';
+            
+            // Previous button
+            paginationHTML += `
+                <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${currentPage - 1})" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+            `;
+            
+            // Page numbers
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, currentPage + 2);
+            
+            if (startPage > 1) {
+                paginationHTML += `<li class="page-item"><a class="page-link" href="#" onclick="changePage(1)">1</a></li>`;
+                if (startPage > 2) {
+                    paginationHTML += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+                }
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                paginationHTML += `
+                    <li class="page-item ${i === currentPage ? 'active' : ''}">
+                        <a class="page-link" href="#" onclick="changePage(${i})">${i}</a>
+                    </li>
+                `;
+            }
+            
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    paginationHTML += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+                }
+                paginationHTML += `<li class="page-item"><a class="page-link" href="#" onclick="changePage(${totalPages})">${totalPages}</a></li>`;
+            }
+            
+            // Next button
+            paginationHTML += `
+                <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${currentPage + 1})" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            `;
+            
+            pagination.innerHTML = paginationHTML;
+        }
+
+        function changePage(page) {
+            const totalPages = Math.ceil(filteredTokens.length / tokensPerPage);
+            if (page < 1 || page > totalPages) return;
+            
+            currentPage = page;
+            renderTokenList();
+            renderPagination();
+        }
+
+        function updatePaginationInfo(start, end, total) {
+            document.getElementById('showing-start').textContent = start;
+            document.getElementById('showing-end').textContent = end;
+            document.getElementById('total-tokens').textContent = total;
+        }
+
+        function filterTokens(searchTerm) {
+            if (!searchTerm) {
+                filteredTokens = [...allTokens];
+            } else {
+                filteredTokens = allTokens.filter(token => {
+                    const symbol = (token.symbol || '').toLowerCase();
+                    const name = (token.name || '').toLowerCase();
+                    const chain = (token.chain || '').toLowerCase();
+                    
+                    return symbol.includes(searchTerm) || name.includes(searchTerm) || chain.includes(searchTerm);
+                });
+            }
+            
+            currentPage = 1;
+            renderTokenList();
+            renderPagination();
+        }
+    </script>
+</body>
+
+</html>

@@ -509,6 +509,93 @@ class PaginatedResponse(BaseModel):
     has_next: bool
     has_prev: bool
 
+# Token Detail Schemas
+class TokenPoolResponse(BaseModel):
+    """代币交易池响应模型"""
+    base_symbol: str
+    quote_symbol: str
+    dex: str
+    chain: str
+    price_usd: Decimal
+    price_change_24h: Decimal
+    volume_24h: Decimal
+    liquidity_usd: Decimal
+    pair_address: Optional[str] = None
+    pair_created_at: Optional[datetime] = None
+
+class TokenHolderDistribution(BaseModel):
+    """代币持有者分布响应模型"""
+    holder_count: int
+    whales_count: Optional[int] = None
+    sharks_count: Optional[int] = None
+    holder_change_24h: Optional[int] = None
+    holder_change_7d: Optional[int] = None
+    holder_change_24h_percent: Optional[Decimal] = None
+    holder_change_7d_percent: Optional[Decimal] = None
+    top10_supply_percent: Optional[Decimal] = None
+    top50_supply_percent: Optional[Decimal] = None
+    top100_supply_percent: Optional[Decimal] = None
+
+class TokenTechnicalIndicators(BaseModel):
+    """代币技术指标响应模型"""
+    rsi_14d: Optional[float] = None
+    ma_7d: Optional[float] = None
+    ma_30d: Optional[float] = None
+    volatility_24h: Optional[float] = None
+    breakout_signal: Optional[bool] = None
+    trend_direction: Optional[str] = None
+    signal_strength: Optional[float] = None
+
+class TokenTradeActivity(BaseModel):
+    """代币交易活动响应模型"""
+    buy_volume_24h: Optional[Decimal] = None
+    sell_volume_24h: Optional[Decimal] = None
+    total_buyers_24h: Optional[int] = None
+    total_sellers_24h: Optional[int] = None
+    total_buys_24h: Optional[int] = None
+    total_sells_24h: Optional[int] = None
+    unique_wallets_24h: Optional[int] = None
+
+class TokenPriceHistory(BaseModel):
+    """代币价格历史响应模型"""
+    timestamp: datetime
+    price: Decimal
+
+class TokenDetailResponse(BaseModel):
+    """代币详情响应模型"""
+    id: str
+    name: str
+    symbol: str
+    contract_address: str
+    chain: str
+    image_url: Optional[str] = None
+    logo_uri: Optional[str] = None
+    created_at: Optional[datetime] = None
+    metrics_updated_at: Optional[datetime] = None
+    
+    # 价格和市场数据
+    price_usd: Optional[Decimal] = None
+    price_change_24h: Optional[Decimal] = None
+    market_cap: Optional[Decimal] = None
+    total_volume_24h: Optional[Decimal] = None
+    total_liquidity_usd: Optional[Decimal] = None
+    fdv: Optional[Decimal] = None
+    
+    # 技术指标
+    technical_indicators: Optional[TokenTechnicalIndicators] = None
+    
+    # 持有者分析
+    holder_distribution: Optional[TokenHolderDistribution] = None
+    
+    # 交易活动
+    trade_activity: Optional[TokenTradeActivity] = None
+    
+    # 交易池
+    pools: Optional[List[TokenPoolResponse]] = None
+    
+    # 价格历史
+    price_history: Optional[List[TokenPriceHistory]] = None
+
 # Error Schemas
 class ErrorResponse(BaseModel):
     """错误响应模型"""

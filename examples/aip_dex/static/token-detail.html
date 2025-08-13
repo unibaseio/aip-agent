@@ -1,0 +1,1956 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Token Details - AIP DEX</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --secondary-color: #8b5cf6;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --card-bg: #ffffff;
+            --card-bg-hover: #f1f5f9;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --card-bg: #1e293b;
+            --card-bg-hover: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --border-color: #334155;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 50%, var(--bg-secondary) 100%);
+            min-height: 100vh;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: all 0.3s ease;
+        }
+
+        [data-theme="dark"] body {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e1b4b 100%);
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+            z-index: 1040;
+        }
+
+        [data-theme="dark"] .navbar {
+            background: rgba(15, 23, 42, 0.95) !important;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            margin-bottom: 20px;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-color);
+        }
+
+        .btn {
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #1d4ed8 100%);
+            border: none;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-outline-primary {
+            border: 1.5px solid var(--primary-color);
+            color: var(--primary-color);
+            background: transparent;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-primary:hover {
+            background: var(--primary-color);
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success-color) 0%, #059669 100%);
+            border: none;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-success:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+        }
+
+        .token-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .token-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            margin-right: 20px;
+            border: 3px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .token-icon:hover {
+            border-color: var(--primary-color);
+            transform: scale(1.05);
+        }
+
+        .token-info h1 {
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .token-info .chain-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 25px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, var(--primary-color), #1d4ed8);
+            color: white;
+            margin-left: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+        }
+
+        .price-section {
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(139, 92, 246, 0.03) 100%);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .price-section:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+        }
+
+        .token-price {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .price-change {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0;
+            padding: 4px 12px;
+            border-radius: 8px;
+            display: inline-block;
+        }
+
+        .price-up {
+            color: var(--success-color);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .price-down {
+            color: var(--danger-color);
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .address-section {
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, rgba(59, 130, 246, 0.03) 100%);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .address-section:hover {
+            border-color: var(--secondary-color);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.1);
+        }
+
+        .address-section h6 {
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .metric-card {
+            padding: 20px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, var(--card-bg-hover) 0%, rgba(59, 130, 246, 0.05) 100%);
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+        }
+
+        .metric-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .metric-icon i {
+            color: white;
+            font-size: 20px;
+        }
+
+        .metric-content {
+            flex: 1;
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-color);
+        }
+
+        .metric-title {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .metric-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 350px;
+            margin-bottom: 30px;
+            border-radius: 12px;
+            background: var(--card-bg-hover);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .chart-container:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+        }
+
+        .signal-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-weight: 600;
+            margin-right: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-size: 0.875rem;
+            border: 2px solid;
+            transition: all 0.3s ease;
+        }
+
+        .signal-buy {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success-color);
+            border-color: var(--success-color);
+            box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.2);
+        }
+
+        .signal-sell {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--danger-color);
+            border-color: var(--danger-color);
+            box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.2);
+        }
+
+        .signal-hold {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--warning-color);
+            border-color: var(--warning-color);
+            box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.2);
+        }
+
+        .token-address {
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            background: linear-gradient(135deg, var(--card-bg-hover) 0%, rgba(59, 130, 246, 0.05) 100%);
+            padding: 12px 16px;
+            border-radius: 12px;
+            word-break: break-all;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .token-address:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+        }
+
+        .copy-icon {
+            cursor: pointer;
+            margin-left: 12px;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+            padding: 4px;
+            border-radius: 4px;
+        }
+
+        .copy-icon:hover {
+            color: var(--primary-color);
+            background: rgba(59, 130, 246, 0.1);
+            transform: scale(1.1);
+        }
+
+        .tab-content {
+            padding: 20px 0;
+        }
+
+        .nav-tabs {
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .nav-tabs .nav-link {
+            color: var(--text-secondary);
+            border: none;
+            padding: 12px 20px;
+            font-weight: 500;
+            border-radius: 8px 8px 0 0;
+            transition: all 0.3s ease;
+            margin-right: 4px;
+        }
+
+        .nav-tabs .nav-link:hover {
+            color: var(--primary-color);
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .nav-tabs .nav-link.active {
+            color: var(--primary-color);
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%);
+            border-bottom: 3px solid var(--primary-color);
+            font-weight: 600;
+        }
+
+        .holder-distribution {
+            height: 200px;
+        }
+
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+        }
+
+        /* 流动性分布样式 */
+        .liquidity-chart {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .liquidity-item {
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .pool-name {
+            font-weight: 600;
+            color: #2563eb;
+        }
+
+        .pool-pair {
+            font-size: 0.9em;
+            color: #6b7280;
+        }
+
+        .liquidity-amount {
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .liquidity-percentage {
+            font-size: 0.9em;
+            color: #6b7280;
+            text-align: right;
+        }
+
+        /* 交易深度样式 */
+        .order-book {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .order-book-section h4 {
+            margin-bottom: 12px;
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+
+        .order-book-header {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            padding: 8px 12px;
+            background: #f1f5f9;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.9em;
+            color: #475569;
+            margin-bottom: 8px;
+        }
+
+        .order-book-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            margin-bottom: 2px;
+        }
+
+        .order-book-row.bid {
+            background: rgba(34, 197, 94, 0.1);
+        }
+
+        .order-book-row.ask {
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .order-book-row .price {
+            font-weight: 600;
+        }
+
+        .order-book-row.bid .price {
+            color: #22c55e;
+        }
+
+        .order-book-row.ask .price {
+            color: #ef4444;
+        }
+
+        /* 交易池卡片样式 */
+        .pool-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pool-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .pool-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            border-color: #3b82f6;
+        }
+
+        .pool-card:hover::before {
+            opacity: 1;
+        }
+
+        .pool-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .pool-info h6 {
+            margin: 0;
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 1.1em;
+        }
+
+        .pool-info .pool-meta {
+            font-size: 0.85em;
+            color: #64748b;
+            margin-top: 2px;
+        }
+
+        .pool-price {
+            text-align: right;
+        }
+
+        .pool-price .price {
+            font-weight: 600;
+            font-size: 1.1em;
+            color: #1e293b;
+        }
+
+        .pool-price .price-change {
+            font-size: 0.9em;
+            font-weight: 500;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-top: 2px;
+            display: inline-block;
+        }
+
+        .pool-metrics {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        .pool-metric {
+            text-align: center;
+        }
+
+        .pool-metric .metric-label {
+            font-size: 0.8em;
+            color: #64748b;
+            margin-bottom: 2px;
+        }
+
+        .pool-metric .metric-value {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 0.9em;
+        }
+
+        .dex-badge {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: 500;
+            margin-left: 8px;
+        }
+
+        /* 分页样式 */
+        .pagination-sm .page-link {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+            border-radius: 6px;
+            margin: 0 2px;
+            border: 1px solid #e2e8f0;
+            color: #64748b;
+            transition: all 0.2s ease;
+        }
+
+        .pagination-sm .page-link:hover {
+            background-color: #f1f5f9;
+            border-color: #3b82f6;
+            color: #3b82f6;
+        }
+
+        .pagination-sm .page-item.active .page-link {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border-color: #3b82f6;
+            color: white;
+        }
+
+        .pagination-sm .page-item.disabled .page-link {
+            color: #cbd5e1;
+            background-color: #f8fafc;
+            border-color: #e2e8f0;
+        }
+
+        /* 空状态样式 */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #64748b;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            color: #cbd5e1;
+            margin-bottom: 16px;
+        }
+
+        .empty-state h6 {
+            color: #475569;
+            margin-bottom: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .order-book {
+                grid-template-columns: 1fr;
+            }
+            
+            .liquidity-item {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+            
+            .liquidity-amount,
+            .liquidity-percentage {
+                text-align: center;
+            }
+
+            .pool-metrics {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            .pool-header {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .pool-price {
+                text-align: left;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="fas fa-robot me-2"></i>
+                AIP DEX Trading Bot
+            </a>
+            <div class="navbar-nav me-auto">
+                <a href="/tokens" class="btn btn-outline-primary btn-sm me-2">
+                    <i class="fas fa-coins me-1"></i>
+                    Token List
+                </a>
+            </div>
+            <div class="navbar-nav ms-auto align-items-center">
+                <a href="/" class="btn btn-outline-primary btn-sm me-2">
+                    <i class="fas fa-home me-1"></i>
+                    Dashboard
+                </a>
+                <a href="/bot-management" class="btn btn-outline-primary btn-sm me-2">
+                    <i class="fas fa-robot me-1"></i>
+                    Bot Management
+                </a>
+                <a href="/chat" class="btn btn-primary btn-sm">
+                    <i class="fas fa-comments me-1"></i>
+                    Chat
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div id="token-header" class="token-header">
+                            <img id="token-icon" src="https://via.placeholder.com/48" alt="Token Icon" class="token-icon">
+                            <div class="token-info">
+                                <div class="d-flex align-items-center">
+                                    <h1 id="token-name">Loading...</h1>
+                                    <span id="token-chain" class="chain-badge">...</span>
+                                </div>
+                                <div class="text-secondary" id="token-symbol">...</div>
+                            </div>
+                        </div>
+
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <div class="price-section">
+                                    <div class="token-price" id="token-price">$0.00</div>
+                                    <div class="price-change" id="price-change">0.00%</div>
+                                </div>
+                                <div class="d-flex flex-wrap align-items-center mt-3">
+                                    <div class="signal-badge" id="signal-badge">分析中...</div>
+                                    <div class="text-secondary" id="signal-updated">更新于: --</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="address-section">
+                                    <div class="mb-3">
+                                        <h6 class="text-secondary mb-2">
+                                            <i class="fas fa-file-contract me-2"></i>
+                                            合约地址
+                                        </h6>
+                                        <div class="token-address">
+                                            <span id="token-address">Loading...</span>
+                                            <i class="fas fa-copy copy-icon" id="copy-address" title="复制地址"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-3">
+                            <i class="fas fa-chart-area me-2"></i>
+                            Token Analysis
+                        </h5>
+                        <ul class="nav nav-tabs card-header-tabs" id="tokenTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="overview-tab" data-bs-toggle="tab"
+                                    data-bs-target="#overview" type="button" role="tab" aria-controls="overview"
+                                    aria-selected="true">
+                                    <i class="fas fa-chart-pie me-1"></i>
+                                    概览
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="technical-tab" data-bs-toggle="tab"
+                                    data-bs-target="#technical" type="button" role="tab" aria-controls="technical"
+                                    aria-selected="false">
+                                    <i class="fas fa-chart-line me-1"></i>
+                                    技术指标
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="holders-tab" data-bs-toggle="tab"
+                                    data-bs-target="#holders" type="button" role="tab" aria-controls="holders"
+                                    aria-selected="false">
+                                    <i class="fas fa-shield-alt me-1"></i>
+                                    风险与持有者分析
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="card-body">
+                        <div class="tab-content" id="tokenTabContent">
+                            <div class="tab-pane fade show active" id="overview" role="tabpanel"
+                                aria-labelledby="overview-tab">
+                                <div class="chart-container" id="price-chart">
+                                    <div class="loading-spinner">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 合并的市场概览部分 -->
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h5><i class="fas fa-chart-bar me-2"></i>交易活动 & 市场数据</h5>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="metric-card">
+                                                    <div class="metric-icon">
+                                                        <i class="fas fa-chart-bar"></i>
+                                                    </div>
+                                                    <div class="metric-content">
+                                                        <div class="metric-title">24小时交易量</div>
+                                                        <div class="metric-value" id="volume-24h">$0.00</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="metric-card">
+                                                    <div class="metric-icon">
+                                                        <i class="fas fa-dollar-sign"></i>
+                                                    </div>
+                                                    <div class="metric-content">
+                                                        <div class="metric-title">市值</div>
+                                                        <div class="metric-value" id="market-cap">$0.00</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="metric-card">
+                                                    <div class="metric-icon">
+                                                        <i class="fas fa-exchange-alt"></i>
+                                                    </div>
+                                                    <div class="metric-content">
+                                                        <div class="metric-title">24小时交易次数</div>
+                                                        <div class="metric-value" id="txns-24h">0</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="metric-card">
+                                                    <div class="metric-icon">
+                                                        <i class="fas fa-expand-arrows-alt"></i>
+                                                    </div>
+                                                    <div class="metric-content">
+                                                        <div class="metric-title">完全稀释市值</div>
+                                                        <div class="metric-value" id="fdv">$0.00</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="metric-card">
+                                                    <div class="metric-icon">
+                                                        <i class="fas fa-users"></i>
+                                                    </div>
+                                                    <div class="metric-content">
+                                                        <div class="metric-title">24小时独立交易者</div>
+                                                        <div class="metric-value" id="unique-traders-24h">0</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="metric-card">
+                                                    <div class="metric-icon">
+                                                        <i class="fas fa-coins"></i>
+                                                    </div>
+                                                    <div class="metric-content">
+                                                        <div class="metric-title">流通供应量</div>
+                                                        <div class="metric-value" id="circulating-supply">0</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h5><i class="fas fa-tint me-2"></i>流动性 & 持有者分析</h5>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="metric-card">
+                                                    <div class="metric-icon">
+                                                        <i class="fas fa-tint"></i>
+                                                    </div>
+                                                    <div class="metric-content">
+                                                        <div class="metric-title">总流动性</div>
+                                                        <div class="metric-value" id="liquidity">$0.00</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="metric-card">
+                                                    <div class="metric-icon">
+                                                        <i class="fas fa-user-friends"></i>
+                                                    </div>
+                                                    <div class="metric-content">
+                                                        <div class="metric-title">持有者数量</div>
+                                                        <div class="metric-value" id="holder-count">0</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="metric-card">
+                                                    <div class="metric-icon">
+                                                        <i class="fas fa-percentage"></i>
+                                                    </div>
+                                                    <div class="metric-content">
+                                                        <div class="metric-title">流动性/市值比</div>
+                                                        <div class="metric-value" id="liquidity-ratio">0%</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="metric-card">
+                                                    <div class="metric-icon">
+                                                        <i class="fas fa-swimming-pool"></i>
+                                                    </div>
+                                                    <div class="metric-content">
+                                                        <div class="metric-title">活跃交易池数量</div>
+                                                        <div class="metric-value" id="active-pools">0</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="metric-card">
+                                                    <div class="metric-icon">
+                                                        <i class="fas fa-calculator"></i>
+                                                    </div>
+                                                    <div class="metric-content">
+                                                        <div class="metric-title">平均交易规模</div>
+                                                        <div class="metric-value" id="avg-trade-size">$0.00</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="metric-card">
+                                                    <div class="metric-icon">
+                                                        <i class="fas fa-layer-group"></i>
+                                                    </div>
+                                                    <div class="metric-content">
+                                                        <div class="metric-title">总供应量</div>
+                                                        <div class="metric-value" id="total-supply">0</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 新增价格统计部分 -->
+                                <div class="row mt-4">
+                                    <div class="col-12">
+                                        <h5>价格统计</h5>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="metric-card">
+                                            <div class="metric-icon">
+                                                <i class="fas fa-arrow-up"></i>
+                                            </div>
+                                            <div class="metric-content">
+                                                <div class="metric-title">24小时最高价</div>
+                                                <div class="metric-value" id="high-24h">$0.00</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="metric-card">
+                                            <div class="metric-icon">
+                                                <i class="fas fa-arrow-down"></i>
+                                            </div>
+                                            <div class="metric-content">
+                                                <div class="metric-title">24小时最低价</div>
+                                                <div class="metric-value" id="low-24h">$0.00</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="metric-card">
+                                            <div class="metric-icon">
+                                                <i class="fas fa-crown"></i>
+                                            </div>
+                                            <div class="metric-content">
+                                                <div class="metric-title">历史最高价</div>
+                                                <div class="metric-value" id="ath">$0.00</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="metric-card">
+                                            <div class="metric-icon">
+                                                <i class="fas fa-chart-line-down"></i>
+                                            </div>
+                                            <div class="metric-content">
+                                                <div class="metric-title">距ATH跌幅</div>
+                                                <div class="metric-value" id="ath-change">0%</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="tab-pane fade" id="technical" role="tabpanel" aria-labelledby="technical-tab">
+                                <!-- 合并的技术分析部分 -->
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h5><i class="fas fa-chart-line me-2"></i>技术指标 & 波动率</h5>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="metric-card">
+                                                    <div class="metric-title">RSI (14天)</div>
+                                                    <div class="metric-value" id="rsi-14d">0</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="metric-card">
+                                                    <div class="metric-title">24小时波动率</div>
+                                                    <div class="metric-value" id="volatility-24h">0%</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="metric-card">
+                                                    <div class="metric-title">MACD信号</div>
+                                                    <div class="metric-value" id="macd-signal">N/A</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="metric-card">
+                                                    <div class="metric-title">7日波动率</div>
+                                                    <div class="metric-value" id="volatility-7d">0%</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-12">
+                                                <div class="metric-card">
+                                                    <div class="metric-title">布林带位置</div>
+                                                    <div class="metric-value" id="bollinger-position">N/A</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h5><i class="fas fa-chart-area me-2"></i>移动平均线 & 买卖压力</h5>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="metric-card">
+                                                    <div class="metric-title">7日移动平均线</div>
+                                                    <div class="metric-value" id="ma-7d">$0.00</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="metric-card">
+                                                    <div class="metric-title">24小时买入量</div>
+                                                    <div class="metric-value" id="buy-volume-24h">$0.00</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="metric-card">
+                                                    <div class="metric-title">30日移动平均线</div>
+                                                    <div class="metric-value" id="ma-30d">$0.00</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="metric-card">
+                                                    <div class="metric-title">24小时卖出量</div>
+                                                    <div class="metric-value" id="sell-volume-24h">$0.00</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="metric-card">
+                                                    <div class="metric-title">50日移动平均线</div>
+                                                    <div class="metric-value" id="ma-50d">$0.00</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="metric-card">
+                                                    <div class="metric-title">买卖比率</div>
+                                                    <div class="metric-value" id="buy-sell-ratio">1:1</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 补充技术指标 -->
+                                <div class="row mt-3">
+                                    <div class="col-md-3">
+                                        <div class="metric-card">
+                                            <div class="metric-title">200日移动平均线</div>
+                                            <div class="metric-value" id="ma-200d">$0.00</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="metric-card">
+                                            <div class="metric-title">MA趋势强度</div>
+                                            <div class="metric-value" id="ma-trend-strength">N/A</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="metric-card">
+                                            <div class="metric-title">24小时买家数量</div>
+                                            <div class="metric-value" id="buyers-24h">0</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="metric-card">
+                                            <div class="metric-title">24小时卖家数量</div>
+                                            <div class="metric-value" id="sellers-24h">0</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                            </div>
+
+                            <div class="tab-pane fade" id="holders" role="tabpanel" aria-labelledby="holders-tab">
+                                <!-- 合并的风险指标与持有者分析 -->
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <h5><i class="fas fa-shield-alt me-2"></i>风险指标</h5>
+                                        <div class="metric-card">
+                                            <div class="metric-title">流动性风险</div>
+                                            <div class="metric-value" id="liquidity-risk">低</div>
+                                        </div>
+                                        <div class="metric-card">
+                                            <div class="metric-title">价格冲击</div>
+                                            <div class="metric-value" id="price-impact">0%</div>
+                                        </div>
+                                        <div class="metric-card">
+                                            <div class="metric-title">集中度风险</div>
+                                            <div class="metric-value" id="concentration-risk">中</div>
+                                        </div>
+                                        <div class="metric-card">
+                                            <div class="metric-title">市场深度</div>
+                                            <div class="metric-value" id="market-depth">$0.00</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <h5><i class="fas fa-chart-pie me-2"></i>持有者分布</h5>
+                                        <div class="holder-distribution" id="holder-distribution">
+                                            <div class="loading-spinner">
+                                                <div class="spinner-border text-primary" role="status">
+                                                    <span class="visually-hidden">Loading...</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <h5><i class="fas fa-users me-2"></i>持有者统计</h5>
+                                        <div class="metric-card">
+                                            <div class="metric-title">鲸鱼持有者 (>1%)</div>
+                                            <div class="metric-value" id="whales-count">0</div>
+                                        </div>
+                                        <div class="metric-card">
+                                            <div class="metric-title">大户持有者 (0.1%-1%)</div>
+                                            <div class="metric-value" id="sharks-count">0</div>
+                                        </div>
+                                        <div class="metric-card">
+                                            <div class="metric-title">前10持有者占比</div>
+                                            <div class="metric-value" id="top10-percent">0%</div>
+                                        </div>
+                                        <div class="metric-card">
+                                            <div class="metric-title">24小时持有者变化</div>
+                                            <div class="metric-value" id="holder-change-24h">0</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">交易信号</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="signal-analysis">
+                            <div class="loading-spinner">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="fas fa-swimming-pool me-2"></i>
+                                交易池详情
+                            </h5>
+                            <div class="d-flex gap-2">
+                                <select id="pool-sort" class="form-select form-select-sm" style="width: auto;">
+                                    <option value="liquidity">按流动性排序</option>
+                                    <option value="volume">按交易量排序</option>
+                                    <option value="price_change">按价格变化排序</option>
+                                </select>
+                                <select id="pool-filter" class="form-select form-select-sm" style="width: auto;">
+                                    <option value="all">所有DEX</option>
+                                    <option value="uniswap">Uniswap</option>
+                                    <option value="pancakeswap">PancakeSwap</option>
+                                    <option value="sushiswap">SushiSwap</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="token-pools">
+                            <div class="loading-spinner">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+                        <nav id="pools-pagination" class="mt-3" style="display: none;">
+                            <ul class="pagination pagination-sm justify-content-center">
+                                <!-- 分页内容将通过JavaScript动态生成 -->
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <script>
+        // 获取token ID从URL参数
+        function getTokenIdFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('id');
+        }
+        
+        const tokenId = getTokenIdFromUrl();
+        let tokenData = null;
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // 检查是否有token ID
+                if (!tokenId) {
+                    showError('未提供Token ID。请从Token列表页面选择一个Token。');
+                    return;
+                }
+                
+                // 获取token详情
+                await fetchTokenDetails();
+                
+                // 复制地址功能
+                document.getElementById('copy-address').addEventListener('click', () => {
+                    const address = document.getElementById('token-address').textContent;
+                    navigator.clipboard.writeText(address)
+                        .then(() => {
+                            alert('地址已复制到剪贴板');
+                        })
+                        .catch(err => {
+                            console.error('复制失败:', err);
+                        });
+                });
+            } catch (error) {
+                console.error('初始化错误:', error);
+                showError('加载token详情时出错。请稍后再试。');
+            }
+        });
+
+        // 获取认证token
+        function getAuthToken() {
+            return "aip-dex-default-token-2025";
+        }
+        
+        async function fetchTokenDetails() {
+            try {
+                const response = await fetch(`/api/v1/tokens/${tokenId}/details`, {
+                    headers: {
+                        'Authorization': `Bearer ${getAuthToken()}`
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error('获取token详情失败');
+                }
+                tokenData = await response.json();
+                renderTokenDetails(tokenData);
+            } catch (error) {
+                console.error('获取token详情错误:', error);
+                showError('无法加载token详情。请稍后再试。');
+            }
+        }
+
+        function renderTokenDetails(data) {
+            // 基本信息
+            document.getElementById('token-name').textContent = data.name;
+            document.getElementById('token-symbol').textContent = data.symbol;
+            document.getElementById('token-chain').textContent = data.chain;
+            document.getElementById('token-address').textContent = data.contract_address;
+            document.getElementById('token-icon').src = data.image_url || '/static/images/default-token.svg';
+            document.getElementById('token-icon').onerror = function() { this.src = '/static/images/default-token.svg'; };
+            document.title = `${data.symbol} - Token Details - AIP DEX`;
+
+            // 价格信息
+            document.getElementById('token-price').textContent = `$${formatNumber(data.price_usd)}`;
+            
+            const priceChange = data.price_change_24h || 0;
+            const priceChangeElement = document.getElementById('price-change');
+            priceChangeElement.textContent = `${priceChange > 0 ? '+' : ''}${(typeof priceChange === 'number' ? priceChange : 0).toFixed(2)}%`;
+            priceChangeElement.className = `price-change ${priceChange >= 0 ? 'price-up' : 'price-down'}`;
+
+            // 市场数据
+            document.getElementById('market-cap').textContent = `$${formatNumber(data.market_cap)}`;
+            document.getElementById('fdv').textContent = `$${formatNumber(data.fdv || data.market_cap)}`;
+            document.getElementById('circulating-supply').textContent = formatNumber(data.circulating_supply);
+            document.getElementById('total-supply').textContent = formatNumber(data.total_supply);
+            document.getElementById('volume-24h').textContent = `$${formatNumber(data.total_volume_24h)}`;
+            document.getElementById('liquidity').textContent = `$${formatNumber(data.total_liquidity_usd)}`;
+            document.getElementById('liquidity-ratio').textContent = (data.market_cap > 0 && data.total_liquidity_usd && typeof data.total_liquidity_usd === 'number' && typeof data.market_cap === 'number') ? `${((data.total_liquidity_usd / data.market_cap) * 100).toFixed(2)}%` : '0%';
+            document.getElementById('holder-count').textContent = formatNumber(data.holder_count);
+            document.getElementById('active-pools').textContent = formatNumber(data.pools ? data.pools.length : 0);
+            document.getElementById('txns-24h').textContent = formatNumber(data.total_buys_24h + data.total_sells_24h);
+            document.getElementById('unique-traders-24h').textContent = formatNumber(data.unique_wallets_24h);
+            document.getElementById('avg-trade-size').textContent = data.total_buys_24h + data.total_sells_24h > 0 ? `$${formatNumber(data.total_volume_24h / (data.total_buys_24h + data.total_sells_24h))}` : '$0.00';
+
+            // 价格统计
+            document.getElementById('high-24h').textContent = `$${formatNumber(data.high_24h)}`;
+            document.getElementById('low-24h').textContent = `$${formatNumber(data.low_24h)}`;
+            document.getElementById('ath').textContent = `$${formatNumber(data.ath)}`;
+            const athChange = (data.ath > 0 && data.price_usd && typeof data.ath === 'number' && typeof data.price_usd === 'number') ? (((data.price_usd / data.ath) - 1) * 100) : 0;
+            document.getElementById('ath-change').textContent = `${(typeof athChange === 'number' ? athChange.toFixed(2) : '0.00')}%`;
+            document.getElementById('ath-change').className = `metric-value ${athChange >= 0 ? 'price-up' : 'price-down'}`;
+
+            // 技术指标
+            document.getElementById('rsi-14d').textContent = (data.rsi_14d && typeof data.rsi_14d === 'number') ? data.rsi_14d.toFixed(2) : 'N/A';
+            document.getElementById('macd-signal').textContent = getMACDSignal(data.macd_signal);
+            document.getElementById('bollinger-position').textContent = getBollingerPosition(data.bollinger_position);
+            document.getElementById('volatility-24h').textContent = (data.volatility_24h && typeof data.volatility_24h === 'number') ? `${data.volatility_24h.toFixed(2)}%` : 'N/A';
+            document.getElementById('volatility-7d').textContent = (data.volatility_7d && typeof data.volatility_7d === 'number') ? `${data.volatility_7d.toFixed(2)}%` : 'N/A';
+
+            // 移动平均线
+            document.getElementById('ma-7d').textContent = data.ma_7d ? `$${formatNumber(data.ma_7d)}` : 'N/A';
+            document.getElementById('ma-30d').textContent = data.ma_30d ? `$${formatNumber(data.ma_30d)}` : 'N/A';
+            document.getElementById('ma-50d').textContent = data.ma_50d ? `$${formatNumber(data.ma_50d)}` : 'N/A';
+            document.getElementById('ma-200d').textContent = data.ma_200d ? `$${formatNumber(data.ma_200d)}` : 'N/A';
+            document.getElementById('ma-trend-strength').textContent = getMATrendStrength(data.price_usd, data.ma_7d, data.ma_30d, data.ma_50d);
+
+            // 买卖压力
+            document.getElementById('buy-volume-24h').textContent = `$${formatNumber(data.buy_volume_24h)}`;
+            document.getElementById('sell-volume-24h').textContent = `$${formatNumber(data.sell_volume_24h)}`;
+            document.getElementById('buy-sell-ratio').textContent = getBuySellRatio(data.buy_volume_24h, data.sell_volume_24h);
+            document.getElementById('buyers-24h').textContent = formatNumber(data.total_buyers_24h);
+            document.getElementById('sellers-24h').textContent = formatNumber(data.total_sellers_24h);
+
+            // 风险指标
+            document.getElementById('liquidity-risk').textContent = getLiquidityRisk(data.total_liquidity_usd, data.total_volume_24h);
+            document.getElementById('price-impact').textContent = getPriceImpact(data.total_liquidity_usd, data.total_volume_24h);
+            document.getElementById('concentration-risk').textContent = getConcentrationRisk(data.top10_supply_percent);
+            document.getElementById('market-depth').textContent = `$${formatNumber(data.market_depth || data.total_liquidity_usd * 0.1)}`;
+
+            // 持有者统计
+            document.getElementById('whales-count').textContent = formatNumber(data.whales_count);
+            document.getElementById('sharks-count').textContent = formatNumber(data.sharks_count);
+            document.getElementById('top10-percent').textContent = `${(data.top10_supply_percent && typeof data.top10_supply_percent === 'number') ? data.top10_supply_percent.toFixed(2) : 0}%`;
+            document.getElementById('holder-change-24h').textContent = formatNumber(data.holder_change_24h);
+
+            // 交易信号
+            const signalBadge = document.getElementById('signal-badge');
+            const signalText = data.breakout_signal || 'HOLD';
+            signalBadge.textContent = getSignalText(signalText);
+            signalBadge.className = `signal-badge signal-${signalText.toLowerCase()}`;
+            document.getElementById('signal-updated').textContent = `更新于: ${formatDate(data.updated_at)}`;
+
+            // 渲染信号分析
+            renderSignalAnalysis(data);
+
+            // 渲染交易池
+            renderTokenPools(data.pools);
+
+            // 渲染价格图表
+            renderPriceChart(data.price_history);
+
+            // 渲染持有者分布
+            renderHolderDistribution(data);
+        }
+
+        function renderSignalAnalysis(data) {
+            const signalAnalysisElement = document.getElementById('signal-analysis');
+            const signal = data.breakout_signal || 'HOLD';
+            const signalStrength = data.signal_strength || 0.5;
+            const trendDirection = data.trend_direction || 'sideways';
+            
+            let analysisHTML = `
+                <div class="mb-3">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="signal-badge signal-${signal.toLowerCase()}">${getSignalText(signal)}</div>
+                        <div class="ms-2">信号强度: ${(signalStrength * 100).toFixed(0)}%</div>
+                    </div>
+                    <div>趋势方向: <strong>${getTrendText(trendDirection)}</strong></div>
+                </div>
+                <div class="mb-3">
+                    <h6>技术分析</h6>
+                    <p>RSI(14): ${data.rsi_14d ? data.rsi_14d.toFixed(2) : 'N/A'} - ${getRSIAnalysis(data.rsi_14d)}</p>
+                    <p>价格相对于MA7: ${getMAComparison(data.price_usd, data.ma_7d)}</p>
+                    <p>价格相对于MA30: ${getMAComparison(data.price_usd, data.ma_30d)}</p>
+                </div>
+                <div>
+                    <h6>市场情绪</h6>
+                    <p>买卖比率: ${getBuySellRatio(data.buy_volume_24h, data.sell_volume_24h)}</p>
+                    <p>交易活跃度: ${getActivityLevel(data.unique_wallets_24h, data.holder_count)}</p>
+                    <p>持有者变化: ${getHolderChangeAnalysis(data.holder_change_24h)}</p>
+                </div>
+            `;
+            
+            signalAnalysisElement.innerHTML = analysisHTML;
+        }
+
+        // 交易池分页和筛选变量
+        let allPools = [];
+        let filteredPools = [];
+        let currentPoolPage = 1;
+        const poolsPerPage = 6;
+
+        function renderTokenPools(pools) {
+            allPools = pools || [];
+            filteredPools = [...allPools];
+            currentPoolPage = 1;
+            
+            // 设置事件监听器
+            setupPoolControls();
+            
+            // 应用初始排序和筛选
+            applyPoolFilters();
+        }
+
+        function setupPoolControls() {
+            const sortSelect = document.getElementById('pool-sort');
+            const filterSelect = document.getElementById('pool-filter');
+            
+            sortSelect.addEventListener('change', applyPoolFilters);
+            filterSelect.addEventListener('change', applyPoolFilters);
+        }
+
+        function applyPoolFilters() {
+            const sortBy = document.getElementById('pool-sort').value;
+            const filterBy = document.getElementById('pool-filter').value;
+            
+            // 筛选
+            filteredPools = allPools.filter(pool => {
+                if (filterBy === 'all') return true;
+                return pool.dex && pool.dex.toLowerCase().includes(filterBy.toLowerCase());
+            });
+            
+            // 排序
+            filteredPools.sort((a, b) => {
+                switch (sortBy) {
+                    case 'liquidity':
+                        return (b.liquidity_usd || 0) - (a.liquidity_usd || 0);
+                    case 'volume':
+                        return (b.volume_24h || 0) - (a.volume_24h || 0);
+                    case 'price_change':
+                        return (b.price_change_24h || 0) - (a.price_change_24h || 0);
+                    default:
+                        return 0;
+                }
+            });
+            
+            currentPoolPage = 1;
+            renderPoolsPage();
+            renderPoolsPagination();
+        }
+
+        function renderPoolsPage() {
+            const poolsElement = document.getElementById('token-pools');
+            
+            if (!filteredPools || filteredPools.length === 0) {
+                poolsElement.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-swimming-pool"></i>
+                        <h6>暂无交易池数据</h6>
+                        <p>当前筛选条件下没有找到交易池</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const startIndex = (currentPoolPage - 1) * poolsPerPage;
+            const endIndex = startIndex + poolsPerPage;
+            const poolsToShow = filteredPools.slice(startIndex, endIndex);
+            
+            let poolsHTML = '<div class="pools-container">';
+            
+            poolsToShow.forEach(pool => {
+                const priceChange = pool.price_change_24h || 0;
+                const priceChangeClass = priceChange >= 0 ? 'price-up' : 'price-down';
+                const priceChangeText = priceChange > 0 ? '+' : '';
+                
+                poolsHTML += `
+                    <div class="pool-card">
+                        <div class="pool-header">
+                            <div class="pool-info">
+                                <h6>${pool.base_symbol}/${pool.quote_symbol}</h6>
+                                <div class="pool-meta">
+                                    ${pool.dex}<span class="dex-badge">${pool.chain}</span>
+                                </div>
+                            </div>
+                            <div class="pool-price">
+                                <div class="price">$${formatNumber(pool.price_usd)}</div>
+                                <div class="price-change ${priceChangeClass}">
+                                    ${priceChangeText}${(typeof priceChange === 'number' ? priceChange.toFixed(2) : '0.00')}%
+                                </div>
+                            </div>
+                        </div>
+                        <div class="pool-metrics">
+                            <div class="pool-metric">
+                                <div class="metric-label">流动性</div>
+                                <div class="metric-value">$${formatNumber(pool.liquidity_usd)}</div>
+                            </div>
+                            <div class="pool-metric">
+                                <div class="metric-label">24h成交量</div>
+                                <div class="metric-value">$${formatNumber(pool.volume_24h)}</div>
+                            </div>
+                            <div class="pool-metric">
+                                <div class="metric-label">交易对地址</div>
+                                <div class="metric-value" style="font-size: 0.75em; word-break: break-all;">
+                                    ${pool.pair_address ? pool.pair_address.substring(0, 8) + '...' + pool.pair_address.substring(pool.pair_address.length - 6) : 'N/A'}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            poolsHTML += '</div>';
+            poolsElement.innerHTML = poolsHTML;
+        }
+
+        function renderPoolsPagination() {
+            const paginationElement = document.getElementById('pools-pagination');
+            const totalPages = Math.ceil(filteredPools.length / poolsPerPage);
+            
+            if (totalPages <= 1) {
+                paginationElement.style.display = 'none';
+                return;
+            }
+            
+            paginationElement.style.display = 'block';
+            const paginationList = paginationElement.querySelector('.pagination');
+            
+            let paginationHTML = '';
+            
+            // 上一页按钮
+            paginationHTML += `
+                <li class="page-item ${currentPoolPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changePoolPage(${currentPoolPage - 1})">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+            `;
+            
+            // 页码按钮
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= currentPoolPage - 1 && i <= currentPoolPage + 1)) {
+                    paginationHTML += `
+                        <li class="page-item ${i === currentPoolPage ? 'active' : ''}">
+                            <a class="page-link" href="#" onclick="changePoolPage(${i})">${i}</a>
+                        </li>
+                    `;
+                } else if (i === currentPoolPage - 2 || i === currentPoolPage + 2) {
+                    paginationHTML += `
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    `;
+                }
+            }
+            
+            // 下一页按钮
+            paginationHTML += `
+                <li class="page-item ${currentPoolPage === totalPages ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changePoolPage(${currentPoolPage + 1})">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+            `;
+            
+            paginationList.innerHTML = paginationHTML;
+        }
+
+        function changePoolPage(page) {
+            const totalPages = Math.ceil(filteredPools.length / poolsPerPage);
+            if (page < 1 || page > totalPages) return;
+            
+            currentPoolPage = page;
+            renderPoolsPage();
+            renderPoolsPagination();
+            
+            // 滚动到交易池部分
+            document.getElementById('token-pools').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function renderPriceChart(priceHistory) {
+            const chartElement = document.getElementById('price-chart');
+            chartElement.innerHTML = '<canvas id="chart"></canvas>';
+            
+            // 如果没有价格历史数据，显示提示信息
+            if (!priceHistory || priceHistory.length === 0) {
+                chartElement.innerHTML = '<div class="text-center">没有可用的价格历史数据</div>';
+                return;
+            }
+            
+            const ctx = document.getElementById('chart').getContext('2d');
+            
+            // 准备数据
+            const labels = priceHistory.map(item => new Date(item.timestamp));
+            const prices = priceHistory.map(item => item.price);
+            
+            // 创建图表
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '价格 (USD)',
+                        data: prices,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        fill: true,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: function(context) {
+                                    const value = typeof context.raw === 'number' ? context.raw : 0;
+                                    return `价格: $${value.toFixed(8)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'day',
+                                displayFormats: {
+                                    day: 'MM/dd'
+                                }
+                            },
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    const numValue = typeof value === 'number' ? value : 0;
+                                    return '$' + numValue.toFixed(6);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderHolderDistribution(data) {
+            const distributionElement = document.getElementById('holder-distribution');
+            
+            // 如果没有持有者分布数据，显示提示信息
+            if (!data.whales_count && !data.sharks_count) {
+                distributionElement.innerHTML = '<div class="text-center">没有可用的持有者分布数据</div>';
+                return;
+            }
+            
+            distributionElement.innerHTML = '<canvas id="distribution-chart"></canvas>';
+            const ctx = document.getElementById('distribution-chart').getContext('2d');
+            
+            // 准备数据
+            const whales = data.whales_count || 0;
+            const sharks = data.sharks_count || 0;
+            const others = data.holder_count - whales - sharks;
+            
+            // 创建图表
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['鲸鱼 (>1%)', '大户 (0.1%-1%)', '其他持有者'],
+                    datasets: [{
+                        data: [whales, sharks, others],
+                        backgroundColor: ['#3b82f6', '#8b5cf6', '#e2e8f0'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw;
+                                    const percentage = (value / data.holder_count * 100).toFixed(1);
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 辅助函数
+        function formatNumber(num) {
+            if (num === undefined || num === null || isNaN(num)) return '0';
+            
+            // 确保 num 是数字类型
+            const numValue = typeof num === 'string' ? parseFloat(num) : Number(num);
+            if (isNaN(numValue)) return '0';
+            
+            if (numValue === 0) return '0';
+            
+            if (numValue < 0.000001) {
+                return numValue.toExponential(4);
+            }
+            
+            if (numValue < 0.01) {
+                return numValue.toFixed(8);
+            }
+            
+            if (numValue < 1) {
+                return numValue.toFixed(4);
+            }
+            
+            if (numValue < 1000) {
+                return numValue.toFixed(2);
+            }
+            
+            if (numValue < 1000000) {
+                return (numValue / 1000).toFixed(2) + 'K';
+            }
+            
+            if (numValue < 1000000000) {
+                return (numValue / 1000000).toFixed(2) + 'M';
+            }
+            
+            return (numValue / 1000000000).toFixed(2) + 'B';
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            
+            const date = new Date(dateString);
+            return date.toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function getSignalText(signal) {
+            const signalMap = {
+                'BUY': '买入信号',
+                'SELL': '卖出信号',
+                'HOLD': '持有信号',
+                'STRONG_BUY': '强烈买入',
+                'STRONG_SELL': '强烈卖出'
+            };
+            
+            return signalMap[signal] || '持有信号';
+        }
+
+        function getTrendText(trend) {
+            const trendMap = {
+                'bullish': '上涨趋势',
+                'bearish': '下跌趋势',
+                'sideways': '横盘整理'
+            };
+            
+            return trendMap[trend] || '横盘整理';
+        }
+
+        function getRSIAnalysis(rsi) {
+            if (!rsi) return 'N/A';
+            
+            if (rsi < 30) return '超卖';
+            if (rsi > 70) return '超买';
+            if (rsi < 45) return '偏弱';
+            if (rsi > 55) return '偏强';
+            return '中性';
+        }
+
+        function getMAComparison(price, ma) {
+            if (!price || !ma || typeof price !== 'number' || typeof ma !== 'number') return 'N/A';
+            
+            const diff = ((price / ma) - 1) * 100;
+            
+            if (diff > 20) return `高于均线 ${diff.toFixed(2)}% (大幅偏离)`;
+            if (diff > 5) return `高于均线 ${diff.toFixed(2)}% (偏强)`;
+            if (diff < -20) return `低于均线 ${Math.abs(diff).toFixed(2)}% (大幅偏离)`;
+            if (diff < -5) return `低于均线 ${Math.abs(diff).toFixed(2)}% (偏弱)`;
+            return `接近均线 (${diff > 0 ? '+' : ''}${diff.toFixed(2)}%)`;
+        }
+
+        function getBuySellRatio(buyVolume, sellVolume) {
+            if (!buyVolume || !sellVolume || typeof buyVolume !== 'number' || typeof sellVolume !== 'number') return 'N/A';
+            
+            const ratio = buyVolume / sellVolume;
+            
+            if (ratio > 2) return `${ratio.toFixed(2)}:1 (强烈买入压力)`;
+            if (ratio > 1.2) return `${ratio.toFixed(2)}:1 (买入压力占优)`;
+            if (ratio < 0.5) return `1:${(1/ratio).toFixed(2)} (强烈卖出压力)`;
+            if (ratio < 0.8) return `1:${(1/ratio).toFixed(2)} (卖出压力占优)`;
+            return `${ratio.toFixed(2)}:1 (买卖压力平衡)`;
+        }
+
+        function getActivityLevel(uniqueTraders, holderCount) {
+            if (!uniqueTraders || !holderCount || typeof uniqueTraders !== 'number' || typeof holderCount !== 'number') return 'N/A';
+            
+            const ratio = (uniqueTraders / holderCount) * 100;
+            
+            if (ratio > 20) return '非常活跃';
+            if (ratio > 10) return '活跃';
+            if (ratio > 5) return '中等活跃';
+            if (ratio > 2) return '低活跃度';
+            return '非常低活跃度';
+        }
+
+        function getHolderChangeAnalysis(holderChange) {
+            if (!holderChange) return 'N/A';
+            
+            if (holderChange > 100) return `+${holderChange} (大幅增长)`;
+            if (holderChange > 20) return `+${holderChange} (显著增长)`;
+            if (holderChange > 0) return `+${holderChange} (小幅增长)`;
+            if (holderChange < -100) return `${holderChange} (大幅减少)`;
+            if (holderChange < -20) return `${holderChange} (显著减少)`;
+            if (holderChange < 0) return `${holderChange} (小幅减少)`;
+            return '0 (无变化)';
+        }
+
+        // 新增的辅助函数
+        function getMACDSignal(macdSignal) {
+            if (!macdSignal) return 'N/A';
+            if (macdSignal > 0) return '看涨';
+            if (macdSignal < 0) return '看跌';
+            return '中性';
+        }
+
+        function getBollingerPosition(position) {
+            if (!position && position !== 0) return 'N/A';
+            if (position > 0.8) return '超买区';
+            if (position < 0.2) return '超卖区';
+            return '正常区间';
+        }
+
+        function getMATrendStrength(currentPrice, ma7, ma30, ma50) {
+            if (!currentPrice || !ma7 || !ma30 || !ma50) return 'N/A';
+            
+            let strength = 0;
+            if (currentPrice > ma7) strength++;
+            if (ma7 > ma30) strength++;
+            if (ma30 > ma50) strength++;
+            
+            if (strength === 3) return '强势上涨';
+            if (strength === 2) return '温和上涨';
+            if (strength === 1) return '震荡';
+            return '下跌趋势';
+        }
+
+        function getLiquidityRisk(liquidity, volume24h) {
+            if (!liquidity || !volume24h) return 'N/A';
+            const ratio = volume24h / liquidity;
+            if (ratio > 2) return '高风险';
+            if (ratio > 1) return '中等风险';
+            return '低风险';
+        }
+
+        function getPriceImpact(liquidity, volume24h) {
+            if (!liquidity || !volume24h || typeof liquidity !== 'number' || typeof volume24h !== 'number') return 'N/A';
+            const impact = (volume24h / liquidity) * 100;
+            return `${(typeof impact === 'number' ? impact.toFixed(2) : '0.00')}%`;
+        }
+
+        function getConcentrationRisk(top10Percent) {
+            if (!top10Percent && top10Percent !== 0) return 'N/A';
+            if (top10Percent > 80) return '极高风险';
+            if (top10Percent > 60) return '高风险';
+            if (top10Percent > 40) return '中等风险';
+            return '低风险';
+        }
+
+
+
+        function showError(message) {
+            const container = document.querySelector('.container-fluid');
+            container.innerHTML = `
+                <div class="alert alert-danger mt-4" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    ${message}
+                </div>
+                <div class="text-center mt-3">
+                    <a href="/tokens" class="btn btn-primary">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        返回Token列表
+                    </a>
+                </div>
+            `;
+        }
+    </script>
+</body>
+
+</html>
