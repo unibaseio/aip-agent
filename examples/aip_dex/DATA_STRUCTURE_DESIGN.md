@@ -91,7 +91,7 @@ token_metrics:
 trading_bots:
 - id (UUID, PK)
 - bot_name (String) - 机器人名称
-- account_address (String, UNIQUE) - 钱包地址
+- account_address (String) - 钱包地址
 - chain (String) - 交易链 ['bsc', 'solana']
 
 # 资金配置 (USD计价，内部精度10^18)
@@ -921,4 +921,4 @@ ALTER TABLE transactions ADD CONSTRAINT check_amount_positive
 - 异常交易检测
 - 风险管理规则
 
-这个数据结构设计提供了完整的交易机器人系统数据基础，支持复杂的交易策略、详细的收益分析和灵活的扩展需求。 
+这个数据结构设计提供了完整的交易机器人系统数据基础，支持复杂的交易策略、详细的收益分析和灵活的扩展需求。

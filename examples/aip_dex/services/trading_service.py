@@ -443,10 +443,10 @@ class TradingService:
                     "is_active": bot.is_active
                 },
                 "financial_status": {
-                    "initial_balance_usd": float(bot.initial_balance_usd),
-                    "current_balance_usd": float(bot.current_balance_usd),
-                    "total_assets_usd": float(bot.total_assets_usd),
-                    "total_profit_usd": float(bot.total_profit_usd),
+                    "initial_balance_usd": float(bot.initial_balance_usd or 0),
+                    "current_balance_usd": float(bot.current_balance_usd or 0),
+                    "total_assets_usd": float(bot.total_assets_usd or 0),
+                    "total_profit_usd": float(bot.total_profit_usd or 0),
                     "max_drawdown_percentage": max_drawdown_percentage
                 },
                 "trading_stats": {
@@ -1040,4 +1040,4 @@ class TradingService:
         except Exception as e:
             print(f"Error creating revenue snapshot: {e}")
             # Don't rollback here - let the calling method handle rollback
-            return False 
+            return False

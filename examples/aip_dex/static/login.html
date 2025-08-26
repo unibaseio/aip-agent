@@ -248,6 +248,136 @@
             margin-bottom: 1rem;
             backdrop-filter: blur(10px);
         }
+        
+        /* 响应式设计优化 */
+        @media (max-width: 575px) {
+            .container {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+            
+            .login-container {
+                padding: 1.5rem;
+                margin: 1rem;
+                border-radius: 12px;
+            }
+            
+            .login-container h1 {
+                font-size: 1.75rem;
+                margin-bottom: 1rem;
+            }
+            
+            .login-container p {
+                font-size: 0.875rem;
+                margin-bottom: 1.5rem;
+            }
+            
+            .btn {
+                font-size: 0.875rem;
+                padding: 0.75rem 1.5rem;
+            }
+            
+            .btn i {
+                font-size: 1rem;
+            }
+            
+            .wallet-address {
+                font-size: 0.8rem;
+                padding: 0.5rem 0.75rem;
+            }
+            
+            .user-details {
+                margin-top: 1rem;
+            }
+            
+            .user-detail-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.25rem;
+                margin-bottom: 0.75rem;
+            }
+            
+            .user-detail-label {
+                font-size: 0.875rem;
+            }
+            
+            .user-detail-value {
+                font-size: 0.875rem;
+            }
+            
+            .notification-container {
+                left: 1rem;
+                right: 1rem;
+                max-width: none;
+            }
+        }
+        
+        @media (max-width: 767px) {
+            .login-container {
+                text-align: center;
+            }
+            
+            .user-details {
+                text-align: left;
+            }
+            
+            .btn {
+                width: 100%;
+                margin-bottom: 0.75rem;
+            }
+            
+            .wallet-address {
+                word-break: break-all;
+                text-align: center;
+            }
+        }
+        
+        /* 横屏模式优化 */
+        @media (max-height: 600px) and (orientation: landscape) {
+            .login-container {
+                padding: 1rem;
+                margin: 0.5rem;
+            }
+            
+            .login-container h1 {
+                font-size: 1.5rem;
+                margin-bottom: 0.75rem;
+            }
+            
+            .login-container p {
+                margin-bottom: 1rem;
+            }
+            
+            .user-details {
+                margin-top: 0.75rem;
+            }
+            
+            .user-detail-item {
+                margin-bottom: 0.5rem;
+            }
+        }
+        
+        /* 超小屏幕优化 */
+        @media (max-width: 360px) {
+            .container {
+                padding-left: 0.5rem;
+                padding-right: 0.5rem;
+            }
+            
+            .login-container {
+                padding: 1rem;
+                margin: 0.5rem;
+            }
+            
+            .login-container h1 {
+                font-size: 1.5rem;
+            }
+            
+            .btn {
+                font-size: 0.8rem;
+                padding: 0.625rem 1.25rem;
+            }
+        }
     </style>
 </head>
 

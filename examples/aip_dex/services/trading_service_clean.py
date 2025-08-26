@@ -195,8 +195,12 @@ class TradingService:
     async def get_bot_positions(self, db: Session, bot_id: str) -> List[Dict[str, Any]]:
         """Get all active positions for a trading bot"""
         try:
+            # Convert string ID to UUID
+            import uuid
+            bot_uuid = uuid.UUID(bot_id)
+            
             positions = db.query(Position).filter(
-                Position.bot_id == bot_id,
+                Position.bot_id == bot_uuid,
                 Position.is_active == True
             ).all()
             
@@ -225,7 +229,12 @@ class TradingService:
                                amount_usd: float, current_price: float) -> Optional[Transaction]:
         """Execute virtual buy order"""
         try:
-            bot = db.query(TradingBot).filter(TradingBot.id == bot_id).first()
+            # Convert string IDs to UUID
+            import uuid
+            bot_uuid = uuid.UUID(bot_id)
+            token_uuid = uuid.UUID(token_id)
+            
+            bot = db.query(TradingBot).filter(TradingBot.id == bot_uuid).first()
             if not bot:
                 return None
             
@@ -250,8 +259,8 @@ class TradingService:
             
             # Create transaction record
             transaction = Transaction(
-                bot_id=bot_id,
-                token_id=token_id,
+                bot_id=bot_uuid,
+                token_id=token_uuid,
                 transaction_type="buy",
                 status="executed",
                 amount_usd=amount_usd_decimal,
@@ -272,7 +281,7 @@ class TradingService:
             
             # Create or update position
             position = await self._create_or_update_position_buy(
-                db, bot_id, token_id, token_quantity, price_decimal, total_cost_usd
+                db, bot_uuid, token_uuid, token_quantity, price_decimal, total_cost_usd
             )
             
             if position:
@@ -294,9 +303,14 @@ class TradingService:
                                 sell_percentage: float, current_price: float) -> Optional[Transaction]:
         """Execute virtual sell order"""
         try:
+            # Convert string IDs to UUID
+            import uuid
+            bot_uuid = uuid.UUID(bot_id)
+            position_uuid = uuid.UUID(position_id)
+            
             position = db.query(Position).filter(
-                Position.id == position_id,
-                Position.bot_id == bot_id,
+                Position.id == position_uuid,
+                Position.bot_id == bot_uuid,
                 Position.is_active == True
             ).first()
             
@@ -381,7 +395,7 @@ class TradingService:
             db.rollback()
             return None
     
-    async def _create_or_update_position_buy(self, db: Session, bot_id: str, token_id: str, 
+    async def _create_or_update_position_buy(self, db: Session, bot_id, token_id, 
                                            quantity: Decimal, price: Decimal, 
                                            cost: Decimal) -> Optional[Position]:
         """Create new position or update existing position for buy order"""
@@ -430,4 +444,4 @@ class TradingService:
                 
         except Exception as e:
             print(f"Error creating/updating position: {e}")
-            return None 
+            return None

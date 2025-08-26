@@ -844,172 +844,13 @@ async def metamask_auth(
         raise HTTPException(status_code=500, detail=str(e))
 
 # ===== BOT MANAGEMENT ENDPOINTS =====
+# Bot management endpoints have been moved to api/trading_bot_routes.py
 
-@app.get("/api/v1/bots/unclaimed", dependencies=[Depends(validate_token)])
-async def get_unclaimed_bots(db: Session = Depends(get_db)):
-    """Get all unclaimed bots (bots without owner)"""
-    try:
-        unclaimed_bots = db.query(TradingBot).filter(
-            TradingBot.owner_id.is_(None)
-        ).all()
-        
-        result = []
-        for bot in unclaimed_bots:
-            result.append({
-                "id": str(bot.id),
-                "bot_name": bot.bot_name,
-                "account_address": bot.account_address,
-                "chain": bot.chain,
-                "initial_balance_usd": float(bot.initial_balance_usd),
-                "current_balance_usd": float(bot.current_balance_usd),
-                "is_active": bot.is_active,
-                "created_at": bot.created_at.isoformat() if bot.created_at else None
-            })
-        
-        return result
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/api/v1/bots/{bot_id}/claim", dependencies=[Depends(validate_token)])
-async def claim_bot(
-    bot_id: str,
-    request: dict,
-    db: Session = Depends(get_db)
-):
-    """Claim an unclaimed bot with subscription tier validation"""
-    try:
-        owner_id = request.get("owner_id")
-        wallet_address = request.get("wallet_address")
-        
-        if not owner_id or not wallet_address:
-            raise HTTPException(status_code=400, detail="Missing owner_id or wallet_address")
-        
-        # Get bot
-        bot = db.query(TradingBot).filter(TradingBot.id == bot_id).first()
-        if not bot:
-            raise HTTPException(status_code=404, detail="Bot not found")
-        
-        if bot.owner_id:
-            raise HTTPException(status_code=400, detail="Bot is already claimed")
-        
-        # Verify owner
-        owner = db.query(BotOwner).filter(BotOwner.id == owner_id).first()
-        if not owner:
-            raise HTTPException(status_code=404, detail="Owner not found")
-        
-        if owner.wallet_address != wallet_address:
-            raise HTTPException(status_code=403, detail="Wallet address mismatch")
-        
-        # Check subscription tier limits
-        current_bots_count = db.query(TradingBot).filter(
-            TradingBot.owner_id == owner_id
-        ).count()
-        
-        # Define limits based on subscription tier
-        tier_limits = {
-            "basic": 1,
-            "premium": 5,
-            "enterprise": 20
-        }
-        
-        max_allowed = tier_limits.get(owner.subscription_tier, 1)
-        
-        if current_bots_count >= max_allowed:
-            tier_name = owner.subscription_tier.capitalize()
-            raise HTTPException(
-                status_code=403, 
-                detail=f"{tier_name} users can only claim {max_allowed} bot(s). You have already claimed {current_bots_count} bot(s). Upgrade to claim more bots."
-            )
-        
-        # Claim the bot
-        bot.owner_id = owner_id
-        bot.updated_at = datetime.now(timezone.utc)
-        db.commit()
-        
-        return {
-            "success": True,
-            "message": f"Bot claimed successfully. You have {current_bots_count + 1}/{max_allowed} bots claimed.",
-            "bot_id": str(bot.id),
-            "owner_id": str(owner_id),
-            "subscription_tier": owner.subscription_tier,
-            "bots_claimed": current_bots_count + 1,
-            "max_bots_allowed": max_allowed
-        }
-        
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/api/v1/bots/{bot_id}/configure", dependencies=[Depends(validate_token)])
-async def configure_bot(
-    bot_id: str,
-    request: dict,
-    db: Session = Depends(get_db)
-):
-    """Configure a bot with owner and strategy"""
-    try:
-        owner_id = request.get("owner_id")
-        strategy_id = request.get("strategy_id")
-        
-        if not owner_id or not strategy_id:
-            raise HTTPException(status_code=400, detail="Missing owner_id or strategy_id")
-        
-        # Configure bot using trading service
-        configured_bot = await trading_service.configure_bot(db, bot_id, owner_id, strategy_id)
-        
-        if not configured_bot:
-            raise HTTPException(status_code=500, detail="Failed to configure bot")
-        
-        return {
-            "success": True,
-            "message": "Bot configured successfully",
-            "bot_id": str(bot_id),
-            "owner_id": str(owner_id),
-            "strategy_id": str(strategy_id)
-        }
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/api/v1/bots/owner/{owner_id}", dependencies=[Depends(validate_token)])
-async def get_owner_bots(
-    owner_id: str,
-    db: Session = Depends(get_db)
-):
-    """Get all bots claimed by an owner"""
-    try:
-        # Convert string ID to UUID
-        try:
-            owner_uuid = uuid.UUID(owner_id)
-        except ValueError:
-            # Return empty list for invalid UUID
-            return []
-        
-        bots = db.query(TradingBot).filter(
-            TradingBot.owner_id == owner_uuid
-        ).all()
-        
-        result = []
-        for bot in bots:
-            result.append({
-                "id": str(bot.id),
-                "bot_name": bot.bot_name,
-                "account_address": bot.account_address,
-                "chain": bot.chain,
-                "initial_balance_usd": float(bot.initial_balance_usd),
-                "current_balance_usd": float(bot.current_balance_usd),
-                "is_active": bot.is_active,
-                "is_configured": bot.is_configured,
-                "strategy_id": str(bot.strategy_id) if bot.strategy_id else None,
-                "created_at": bot.created_at.isoformat() if bot.created_at else None,
-                "updated_at": bot.updated_at.isoformat() if bot.updated_at else None
-            })
-        
-        return result
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+
+
 
 # ===== STRATEGY MANAGEMENT ENDPOINTS =====
 
@@ -1165,6 +1006,8 @@ async def get_owner_by_wallet(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+# All bots endpoint moved to api/trading_bot_routes.py
+
 @app.get("/api/info")
 async def api_info():
     """API information and available endpoints"""
@@ -1188,6 +1031,9 @@ async def api_info():
             "bot_management": "/bot-management",
             "api_docs": "/docs",
             "api_redoc": "/redoc",
+            "bots_overview": "/api/v1/bots/overview",
+            "all_bots": "/api/v1/bots",
+            "create_bot_frontend": "/api/v1/bots/create",
             "health_check": "/api/v1/health",
             "tokens_api": "/api/v1/tokens",
             "add_token": "/api/v1/add_token",
@@ -1195,10 +1041,8 @@ async def api_info():
             "metamask_auth": "/api/v1/auth/metamask",
             "create_owner": "/api/v1/owners",
             "get_owner_by_wallet": "/api/v1/owners/wallet/{wallet_address}",
-            "unclaimed_bots": "/api/v1/bots/unclaimed",
             "owner_bots": "/api/v1/bots/owner/{owner_id}",
-            "claim_bot": "/api/v1/bots/{bot_id}/claim",
-            "configure_bot": "/api/v1/bots/{bot_id}/configure",
+            "configure_bot": "/api/v1/bots/configure/{bot_id}",
             "create_strategy": "/api/v1/strategies",
             "owner_strategies": "/api/v1/strategies/owner/{owner_id}"
         }

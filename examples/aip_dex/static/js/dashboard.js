@@ -29,7 +29,7 @@ class TradingBotDashboard {
 
     async loadSystemOverview() {
         try {
-            const response = await fetch('/api/system/overview');
+            const response = await fetch('/api/v1/bots/overview');
             if (!response.ok) throw new Error('Failed to load system overview');
 
             const data = await response.json();
@@ -61,7 +61,7 @@ class TradingBotDashboard {
 
     async loadBots() {
         try {
-            const response = await fetch('/api/bots');
+            const response = await fetch('/api/v1/bots');
             if (!response.ok) throw new Error('Failed to load bots');
 
             const bots = await response.json();
@@ -173,11 +173,13 @@ class TradingBotDashboard {
 
     async loadRecentTransactions() {
         try {
-            const response = await fetch('/api/transactions/recent');
+            // Use the dedicated recent transactions API endpoint
+            const response = await fetch('/api/v1/transactions/recent?hours=24&limit=10');
             if (!response.ok) throw new Error('Failed to load recent transactions');
 
             const transactions = await response.json();
-            this.renderRecentTransactions(transactions);
+            // The API returns an array directly, not wrapped in an object
+            this.renderRecentTransactions(Array.isArray(transactions) ? transactions : []);
         } catch (error) {
             console.error('Error loading recent transactions:', error);
             this.showError('Failed to load recent transactions');
@@ -191,7 +193,7 @@ class TradingBotDashboard {
         if (transactions.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="8" class="text-center text-secondary">No recent transactions</td>
+                    <td colspan="9" class="text-center text-secondary">No recent transactions</td>
                 </tr>
             `;
             return;
@@ -239,11 +241,11 @@ class TradingBotDashboard {
 
         try {
             const [botDetails, positions, transactions, llmDecisions, revenue] = await Promise.all([
-                fetch(`/api/bots/${botId}`).then(r => r.json()),
-                fetch(`/api/bots/${botId}/positions`).then(r => r.json()),
-                fetch(`/api/bots/${botId}/transactions`).then(r => r.json()),
-                fetch(`/api/bots/${botId}/llm-decisions`).then(r => r.json()),
-                fetch(`/api/bots/${botId}/revenue`).then(r => r.json())
+                fetch(`/api/v1/bots/details/${botId}`).then(r => r.json()),
+                fetch(`/api/v1/bots/positions/${botId}`).then(r => r.json()),
+                fetch(`/api/v1/bots/transactions/${botId}`).then(r => r.json()),
+                fetch(`/api/v1/bots/llm-decisions/${botId}`).then(r => r.json()),
+                fetch(`/api/v1/bots/revenue/${botId}`).then(r => r.json())
             ]);
 
             this.renderBotDetails(botDetails, positions, transactions, llmDecisions, revenue);
@@ -831,4 +833,4 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }, 1000);
     }
-}); 
+});

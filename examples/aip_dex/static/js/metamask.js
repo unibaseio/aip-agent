@@ -5,6 +5,9 @@ class MetaMaskLogin {
         this.currentAccount = null;
         this.ownerId = null;
         this.provider = null;
+        this.isConnecting = false;
+        this.connectionRetries = 0;
+        this.maxRetries = 3;
         this.init();
     }
 
@@ -38,12 +41,15 @@ class MetaMaskLogin {
     }
 
     async checkConnection() {
+        this.updateConnectionStatus('checking');
+        
         if (typeof window.ethereum !== 'undefined') {
             try {
                 // Check if MetaMask is installed and accessible
                 const isMetaMask = window.ethereum.isMetaMask;
                 if (!isMetaMask) {
                     console.warn('MetaMask not detected');
+                    this.updateConnectionStatus('not_installed');
                     return;
                 }
 
@@ -53,13 +59,19 @@ class MetaMaskLogin {
                     await this.handleAccountsChanged(accounts);
                 } else {
                     // Check if user has previously connected and try to restore session
-                    await this.tryRestoreSession();
+                    const restored = await this.tryRestoreSession();
+                    if (!restored) {
+                        this.updateConnectionStatus('disconnected');
+                    }
                 }
             } catch (error) {
                 console.error('Error checking MetaMask connection:', error);
+                this.updateConnectionStatus('error');
+                this.showError('Failed to check MetaMask connection: ' + error.message);
             }
         } else {
             console.warn('MetaMask not installed');
+            this.updateConnectionStatus('not_installed');
         }
     }
 
@@ -101,16 +113,26 @@ class MetaMaskLogin {
     }
 
     async connectWallet() {
-        if (typeof window.ethereum === 'undefined') {
-            this.showError('MetaMask is not installed. Please install MetaMask to continue.');
+        if (this.isConnecting) {
+            this.showError('Connection already in progress. Please wait.');
             return false;
         }
+
+        if (typeof window.ethereum === 'undefined') {
+            this.showError('MetaMask is not installed. Please install MetaMask to continue.');
+            this.updateConnectionStatus('not_installed');
+            return false;
+        }
+
+        this.isConnecting = true;
+        this.updateConnectionStatus('connecting');
 
         try {
             // Check if MetaMask is installed
             const isMetaMask = window.ethereum.isMetaMask;
             if (!isMetaMask) {
                 this.showError('MetaMask is not installed. Please install MetaMask to continue.');
+                this.updateConnectionStatus('not_installed');
                 return false;
             }
 
@@ -121,18 +143,36 @@ class MetaMaskLogin {
 
             if (accounts.length > 0) {
                 await this.handleAccountsChanged(accounts);
+                this.connectionRetries = 0; // Reset retry count on success
                 return true;
             } else {
                 this.showError('No accounts found. Please unlock MetaMask.');
+                this.updateConnectionStatus('error');
                 return false;
             }
         } catch (error) {
+            this.connectionRetries++;
+            
             if (error.code === 4001) {
                 this.showError('User rejected the connection request.');
+                this.updateConnectionStatus('rejected');
+            } else if (error.code === -32002) {
+                this.showError('MetaMask is already processing a request. Please check MetaMask.');
+                this.updateConnectionStatus('pending');
             } else {
                 this.showError('Error connecting to MetaMask: ' + error.message);
+                this.updateConnectionStatus('error');
+                
+                // Offer retry if under max retries
+                if (this.connectionRetries < this.maxRetries) {
+                    setTimeout(() => {
+                        this.showRetryOption();
+                    }, 2000);
+                }
             }
             return false;
+        } finally {
+            this.isConnecting = false;
         }
     }
 
@@ -233,12 +273,104 @@ class MetaMaskLogin {
         return localStorage.getItem('auth_token') || 'aip-dex-default-token-2025';
     }
 
+    updateConnectionStatus(status) {
+        const statusElement = document.getElementById('connection-status');
+        const loginBtn = document.getElementById('metamask-login-btn');
+        
+        if (statusElement) {
+            let statusText = '';
+            let statusClass = '';
+            let iconClass = '';
+            
+            switch (status) {
+                case 'checking':
+                    statusText = 'Checking connection...';
+                    statusClass = 'text-info';
+                    iconClass = 'fas fa-spinner fa-spin';
+                    break;
+                case 'connecting':
+                    statusText = 'Connecting to MetaMask...';
+                    statusClass = 'text-warning';
+                    iconClass = 'fas fa-spinner fa-spin';
+                    break;
+                case 'connected':
+                    statusText = 'Connected';
+                    statusClass = 'text-success';
+                    iconClass = 'fas fa-check-circle';
+                    break;
+                case 'disconnected':
+                    statusText = 'Not connected';
+                    statusClass = 'text-secondary';
+                    iconClass = 'fas fa-times-circle';
+                    break;
+                case 'error':
+                    statusText = 'Connection error';
+                    statusClass = 'text-danger';
+                    iconClass = 'fas fa-exclamation-triangle';
+                    break;
+                case 'not_installed':
+                    statusText = 'MetaMask not installed';
+                    statusClass = 'text-danger';
+                    iconClass = 'fas fa-exclamation-triangle';
+                    break;
+                case 'rejected':
+                    statusText = 'Connection rejected';
+                    statusClass = 'text-warning';
+                    iconClass = 'fas fa-times-circle';
+                    break;
+                case 'pending':
+                    statusText = 'Pending in MetaMask';
+                    statusClass = 'text-info';
+                    iconClass = 'fas fa-clock';
+                    break;
+            }
+            
+            statusElement.innerHTML = `<i class="${iconClass} me-1"></i>${statusText}`;
+            statusElement.className = `small ${statusClass}`;
+        }
+        
+        // Update login button state
+        if (loginBtn) {
+            if (status === 'connecting' || status === 'checking') {
+                loginBtn.disabled = true;
+                loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Connecting...';
+            } else if (status === 'not_installed') {
+                loginBtn.disabled = true;
+                loginBtn.innerHTML = '<i class="fas fa-download me-1"></i>Install MetaMask';
+                loginBtn.onclick = () => window.open('https://metamask.io/download/', '_blank');
+            } else if (!this.isConnected) {
+                loginBtn.disabled = false;
+                loginBtn.innerHTML = '<i class="fas fa-wallet me-1"></i>Connect MetaMask';
+                loginBtn.onclick = () => this.connectWallet();
+            }
+        }
+    }
+    
+    showRetryOption() {
+        const retryHtml = `
+            <div class="alert alert-warning alert-dismissible fade show mt-2" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Connection failed. Would you like to try again? (Attempt ${this.connectionRetries}/${this.maxRetries})
+                <button type="button" class="btn btn-sm btn-outline-warning ms-2" onclick="metamaskLogin.connectWallet()">
+                    <i class="fas fa-redo me-1"></i>Retry
+                </button>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+        
+        const container = document.getElementById('notification-container') || document.body;
+        const retryDiv = document.createElement('div');
+        retryDiv.innerHTML = retryHtml;
+        container.appendChild(retryDiv);
+    }
+
     updateUI() {
         const loginBtn = document.getElementById('metamask-login-btn');
         const userInfo = document.getElementById('user-info');
         const claimBotBtn = document.getElementById('claim-bot-btn');
 
         if (this.isConnected && this.currentAccount) {
+            this.updateConnectionStatus('connected');
             // Show user info
             if (loginBtn) loginBtn.style.display = 'none';
             if (userInfo) {
@@ -305,42 +437,6 @@ class MetaMaskLogin {
         }, 5000);
     }
 
-    // Bot claiming functionality
-    async claimUnclaimedBot(botId) {
-        if (!this.isConnected || !this.ownerId) {
-            this.showError('Please connect MetaMask first');
-            return false;
-        }
-
-        try {
-            const response = await fetch(`/api/v1/bots/${botId}/claim`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.getAuthToken()}`
-                },
-                body: JSON.stringify({
-                    owner_id: this.ownerId,
-                    wallet_address: this.currentAccount
-                })
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                this.showSuccess('Successfully claimed bot!');
-                return true;
-            } else {
-                const error = await response.json();
-                this.showError('Failed to claim bot: ' + error.detail);
-                return false;
-            }
-        } catch (error) {
-            console.error('Error claiming bot:', error);
-            this.showError('Error claiming bot: ' + error.message);
-            return false;
-        }
-    }
-
     // Strategy management
     async createStrategy(strategyData) {
         if (!this.isConnected || !this.ownerId) {
@@ -384,7 +480,7 @@ class MetaMaskLogin {
         }
 
         try {
-            const response = await fetch(`/api/v1/bots/${botId}/configure`, {
+            const response = await fetch(`/api/v1/bots/configure/${botId}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -409,26 +505,6 @@ class MetaMaskLogin {
             console.error('Error configuring bot:', error);
             this.showError('Error configuring bot: ' + error.message);
             return false;
-        }
-    }
-
-    async getUnclaimedBots() {
-        try {
-            const response = await fetch('/api/v1/bots/unclaimed', {
-                headers: {
-                    'Authorization': `Bearer ${this.getAuthToken()}`
-                }
-            });
-
-            if (response.ok) {
-                return await response.json();
-            } else {
-                console.error('Failed to get unclaimed bots');
-                return [];
-            }
-        } catch (error) {
-            console.error('Error getting unclaimed bots:', error);
-            return [];
         }
     }
 
@@ -502,4 +578,4 @@ document.addEventListener('DOMContentLoaded', function () {
 // Export for use in other scripts
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = MetaMaskLogin;
-} 
+}

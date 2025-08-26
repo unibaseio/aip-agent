@@ -579,7 +579,7 @@ class TradingBot(Base):
     
     # 基础配置
     bot_name = Column(String(100), nullable=False)
-    account_address = Column(String(100), nullable=False, unique=True)
+    account_address = Column(String(100), nullable=False, unique=False) # from BotOwner wallet_address
     chain = Column(String(20), nullable=False)  # 'bsc' or 'solana'
     
     # 资金配置 (USD计价，内部精度10^18)

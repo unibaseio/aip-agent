@@ -196,10 +196,7 @@ if (window.ethereum) {
 ## 支持的网络
 
 当前支持的网络：
-- Ethereum Mainnet (0x1)
-- Polygon Mainnet (0x89)
 - BSC Mainnet (0x38)
-- Avalanche C-Chain (0xa86a)
 - 各种测试网络
 
 ## 联系支持

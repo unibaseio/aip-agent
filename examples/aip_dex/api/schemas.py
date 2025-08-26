@@ -229,6 +229,8 @@ class TradingBotSummary(BaseSchema):
     total_profit_usd: Decimal
     total_profit_percentage: Decimal
     is_active: bool
+    is_configured: bool
+    status: str  # 'running', 'configured', 'inactive'
     last_activity_at: Optional[datetime]
     owner_name: Optional[str] = None
 

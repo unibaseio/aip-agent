@@ -227,8 +227,12 @@ class TokenService:
                                 force_update: bool = False) -> Dict[str, Any]:
         """Update token pools, pool metrics and signals. Uses metrics_updated_at field to check if update is needed (> 1 hour)"""
         try:
+            # Convert string ID to UUID
+            import uuid
+            token_uuid = uuid.UUID(token_id)
+            
             # Get token
-            token = db.query(Token).filter(Token.id == token_id).first()
+            token = db.query(Token).filter(Token.id == token_uuid).first()
             if not token:
                 return {
                     "success": False,
@@ -245,7 +249,7 @@ class TokenService:
                 should_update = True
 
             # Get existing pools count for result
-            existing_pools = db.query(TokenPool).filter(TokenPool.base_token_id == token_id).all()
+            existing_pools = db.query(TokenPool).filter(TokenPool.base_token_id == token_uuid).all()
             
             result = {
                 "success": True,
@@ -315,8 +319,12 @@ class TokenService:
                           force_update: bool = False) -> Dict[str, Any]:
         """Update token stats from Moralis, save to history, calculate signals and update metrics. Uses metrics_updated_at field to check if update is needed (> 1 hour)"""
         try:
+            # Convert string ID to UUID
+            import uuid
+            token_uuid = uuid.UUID(token_id)
+            
             # Get token
-            token = db.query(Token).filter(Token.id == token_id).first()
+            token = db.query(Token).filter(Token.id == token_uuid).first()
             if not token:
                 return {
                     "success": False,
@@ -324,7 +332,7 @@ class TokenService:
                 }
 
             # STEP 0: Check existing token metrics quality (if available)
-            existing_token_metric = db.query(TokenMetric).filter(TokenMetric.token_id == token_id).first()
+            existing_token_metric = db.query(TokenMetric).filter(TokenMetric.token_id == token_uuid).first()
             if existing_token_metric and not force_update:
                 quality_check = self._is_low_quality_token(existing_token_metric)
                 if quality_check["is_low_quality"]:
@@ -1748,20 +1756,24 @@ class TokenService:
     async def get_token_decision_data(self, db: Session, token_id: str) -> Optional[Dict[str, Any]]:
         """Get comprehensive token data for LLM decision making from database"""
         try:
+            # Convert string ID to UUID
+            import uuid
+            token_uuid = uuid.UUID(token_id)
+            
             # Get token basic info
-            token = db.query(Token).filter(Token.id == token_id).first()
+            token = db.query(Token).filter(Token.id == token_uuid).first()
             if not token:
                 return None
                 
             # Get latest token metrics with technical indicators
-            token_metric = db.query(TokenMetric).filter(TokenMetric.token_id == token_id).first()
+            token_metric = db.query(TokenMetric).filter(TokenMetric.token_id == token_uuid).first()
             
             # Get historical metrics for trend analysis (last 30 days)
             historical_metrics = await self._get_historical_token_metrics(db, token_id, days=30, daily_sample=True)
             
             # Get active pools
             pools = db.query(TokenPool).filter(
-                TokenPool.base_token_id == token_id,
+                TokenPool.base_token_id == token_uuid,
                 TokenPool.is_active == True
             ).all()
             
