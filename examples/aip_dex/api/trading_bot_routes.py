@@ -102,8 +102,8 @@ async def get_system_overview(db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/bots/create", response_model=ApiResponse)
-async def create_bot_frontend(bot_data: TradingBotCreate, db: Session = Depends(get_db)):
-    """Create a new trading bot for frontend interface"""
+async def create_bot(bot_data: TradingBotCreate, db: Session = Depends(get_db)):
+    """Create a new trading bot"""
     try:
         # Note: Multiple bots can now use the same account_address
         # No need to check for duplicates since unique constraint was removed
@@ -583,70 +583,6 @@ async def health_check():
     }
 
 # ===== BOT MANAGEMENT ENDPOINTS =====
-
-@router.post("/bots", response_model=ApiResponse)
-async def create_bot(bot_data: TradingBotCreate, db: Session = Depends(get_db)):
-    """Create a new trading bot"""
-    try:
-        # Note: Multiple bots can now use the same account_address
-        # No need to check for duplicates since unique constraint was removed
-        
-        # Validate owner exists if provided
-        if bot_data.owner_id:
-            owner = db.query(BotOwner).filter(BotOwner.id == bot_data.owner_id).first()
-            if not owner:
-                raise HTTPException(status_code=404, detail="Owner not found")
-        
-        # Validate strategy exists if provided
-        if bot_data.strategy_id:
-            strategy = db.query(TradingStrategy).filter(TradingStrategy.id == bot_data.strategy_id).first()
-            if not strategy:
-                raise HTTPException(status_code=404, detail="Strategy not found")
-        
-        # Create new bot
-        new_bot = TradingBot(
-            id=uuid.uuid4(),
-            bot_name=bot_data.bot_name,
-            account_address=bot_data.account_address,
-            chain=bot_data.chain,
-            initial_balance_usd=bot_data.initial_balance_usd,
-            current_balance_usd=bot_data.initial_balance_usd,
-            total_assets_usd=bot_data.initial_balance_usd,
-            owner_id=bot_data.owner_id,
-            strategy_id=bot_data.strategy_id,
-            is_active=False,  # Default to inactive
-            is_configured=bool(bot_data.owner_id and bot_data.strategy_id),
-            total_trades=0,
-            profitable_trades=0,
-            total_profit_usd=0,
-            max_drawdown_percentage=0,
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
-        )
-        
-        db.add(new_bot)
-        db.commit()
-        db.refresh(new_bot)
-        
-        return ApiResponse(
-            success=True,
-            message="Bot created successfully",
-            data={"bot_id": str(new_bot.id)}
-        )
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        db.rollback()
-        # Handle database errors
-        if "duplicate key value violates unique constraint" in str(e):
-            # Handle other potential unique constraint violations
-            raise HTTPException(
-                status_code=409, 
-                detail=f"Duplicate data detected: {str(e)}"
-            )
-        raise HTTPException(status_code=500, detail=f"Failed to create bot: {str(e)}")
-
 
 @router.put("/bots/status/{bot_id}", response_model=ApiResponse)
 async def update_bot_status(bot_id: str, status_data: dict, db: Session = Depends(get_db)):
