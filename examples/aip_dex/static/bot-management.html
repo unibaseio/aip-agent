@@ -900,7 +900,22 @@
             </div>
         </div>
 
-
+        <!-- Upgrade Notice Section -->
+        <div class="row mb-4" id="upgrade-notice" style="display: none;">
+            <div class="col-12">
+                <div class="alert alert-warning d-flex align-items-center" role="alert">
+                    <i class="fas fa-exclamation-triangle me-3"></i>
+                    <div>
+                        <h6 class="alert-heading mb-1">Bot Limit Reached</h6>
+                        <p class="mb-2">You've reached the maximum number of bots for your Basic subscription (1 bot).</p>
+                        <button class="btn btn-warning btn-sm" onclick="showUpgradeModal()">
+                            <i class="fas fa-arrow-up me-1"></i>
+                            Upgrade to Premium
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- My Strategies Section -->
         <div class="row mb-4">
@@ -930,8 +945,6 @@
                 </div>
             </div>
         </div>
-
-
 
         <!-- My Bots Section -->
         <div class="row mb-4">
@@ -1355,7 +1368,10 @@
                 // Show user dropdown, hide login button
                 if (userDropdown) {
                     userDropdown.style.display = 'block';
-                    document.getElementById('user-wallet').textContent = formatAddress(currentUser.walletAddress);
+                    const userWalletEl = document.getElementById('user-wallet');
+                    if (userWalletEl) {
+                        userWalletEl.textContent = formatAddress(currentUser.walletAddress);
+                    }
                 }
                 if (loginBtn) {
                     loginBtn.style.display = 'none';
@@ -2517,21 +2533,40 @@
 
         // Stats
         function updateStats() {
-            document.getElementById('total-bots').textContent = myBots.length;
-            document.getElementById('configured-bots').textContent = myBots.filter(bot => bot.is_configured).length;
-            document.getElementById('total-strategies').textContent = myStrategies.length;
+            const totalBotsEl = document.getElementById('total-bots');
+            const configuredBotsEl = document.getElementById('configured-bots');
+            const totalStrategiesEl = document.getElementById('total-strategies');
+            const upgradeNoticeEl = document.getElementById('upgrade-notice');
+
+            if (totalBotsEl) {
+                totalBotsEl.textContent = myBots.length;
+            }
+            if (configuredBotsEl) {
+                configuredBotsEl.textContent = myBots.filter(bot => bot.is_configured).length;
+            }
+            if (totalStrategiesEl) {
+                totalStrategiesEl.textContent = myStrategies.length;
+            }
 
             // Show upgrade notice for basic users who have reached their limit
-            if (currentUser && currentUser.subscriptionTier === 'Basic' && myBots.length >= 1) {
-                document.getElementById('upgrade-notice').style.display = 'block';
-            } else {
-                document.getElementById('upgrade-notice').style.display = 'none';
+            if (upgradeNoticeEl) {
+                if (currentUser && currentUser.subscriptionTier === 'Basic' && myBots.length >= 1) {
+                    upgradeNoticeEl.style.display = 'block';
+                } else {
+                    upgradeNoticeEl.style.display = 'none';
+                }
             }
         }
 
         function showUpgradeModal() {
-            const modal = new bootstrap.Modal(document.getElementById('upgradeModal'));
-            modal.show();
+            const upgradeModalEl = document.getElementById('upgradeModal');
+            if (upgradeModalEl) {
+                const modal = new bootstrap.Modal(upgradeModalEl);
+                modal.show();
+            } else {
+                console.error('Upgrade modal element not found');
+                showNotification('Upgrade modal not available. Please refresh the page.', 'error');
+            }
         }
 
         function updateSessionStatus() {
