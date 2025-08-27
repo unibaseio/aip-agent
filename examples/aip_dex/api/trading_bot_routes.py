@@ -112,7 +112,11 @@ async def create_bot_frontend(bot_data: TradingBotCreate, db: Session = Depends(
         owner_uuid = None
         if bot_data.owner_id:
             try:
-                owner_uuid = uuid.UUID(bot_data.owner_id)
+                # Check if already a UUID object, if so use directly
+                if isinstance(bot_data.owner_id, uuid.UUID):
+                    owner_uuid = bot_data.owner_id
+                else:
+                    owner_uuid = uuid.UUID(bot_data.owner_id)
             except ValueError as ve:
                 raise HTTPException(status_code=400, detail=f"Invalid owner UUID format: {str(ve)}")
             
@@ -124,7 +128,11 @@ async def create_bot_frontend(bot_data: TradingBotCreate, db: Session = Depends(
         strategy_uuid = None
         if bot_data.strategy_id:
             try:
-                strategy_uuid = uuid.UUID(bot_data.strategy_id)
+                # Check if already a UUID object, if so use directly
+                if isinstance(bot_data.strategy_id, uuid.UUID):
+                    strategy_uuid = bot_data.strategy_id
+                else:
+                    strategy_uuid = uuid.UUID(bot_data.strategy_id)
             except ValueError as ve:
                 raise HTTPException(status_code=400, detail=f"Invalid strategy UUID format: {str(ve)}")
             
