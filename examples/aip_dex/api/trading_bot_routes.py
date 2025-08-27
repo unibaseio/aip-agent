@@ -23,7 +23,7 @@ security = HTTPBearer()
 
 def validate_token(credentials: HTTPAuthorizationCredentials = Security(security)):
     """Validate bearer token"""
-    expected_token = os.getenv("API_TOKEN", "aip-dex-default-token-2025")
+    expected_token = os.getenv("DEX_BEARER_TOKEN", "aip-dex-default-token-2025")
     if credentials.credentials != expected_token:
         raise HTTPException(status_code=401, detail="Invalid token")
     return credentials

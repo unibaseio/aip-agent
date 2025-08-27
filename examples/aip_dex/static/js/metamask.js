@@ -239,7 +239,7 @@ class MetaMaskLogin {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.getAuthToken()}`
+                    'Authorization': `Bearer ${AuthUtils.getAuthToken()}`
                 },
                 body: JSON.stringify({
                     wallet_address: this.currentAccount,
@@ -267,10 +267,6 @@ class MetaMaskLogin {
             console.error('Authentication error:', error);
             this.showError('Authentication failed: ' + error.message);
         }
-    }
-
-    getAuthToken() {
-        return localStorage.getItem('auth_token') || 'aip-dex-default-token-2025';
     }
 
     updateConnectionStatus(status) {

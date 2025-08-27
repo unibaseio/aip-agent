@@ -342,16 +342,11 @@
         let currentPage = 1;
         const tokensPerPage = 25;
         
-        // Get auth token function
-        function getAuthToken() {
-            return "aip-dex-default-token-2025";
-        }
-
         async function fetchTokenList() {
             try {
                 const response = await fetch('/api/v1/tokens?limit=200', {
                     headers: {
-                        'Authorization': `Bearer ${getAuthToken()}`
+                        'Authorization': `Bearer ${AuthUtils.getAuthToken()}`
                     }
                 });
                 if (!response.ok) {
@@ -567,6 +562,7 @@
             renderPagination();
         }
     </script>
+    <script src="/static/js/auth-utils.js"></script>
 </body>
 
 </html>

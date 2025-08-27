@@ -1469,16 +1469,11 @@
             }
         });
 
-        // 获取认证token
-        function getAuthToken() {
-            return "aip-dex-default-token-2025";
-        }
-        
         async function fetchTokenDetails() {
             try {
                 const response = await fetch(`/api/v1/tokens/${tokenId}/details`, {
                     headers: {
-                        'Authorization': `Bearer ${getAuthToken()}`
+                        'Authorization': `Bearer ${AuthUtils.getAuthToken()}`
                     }
                 });
                 if (!response.ok) {
@@ -2128,6 +2123,7 @@
             `;
         }
     </script>
+    <script src="/static/js/auth-utils.js"></script>
 </body>
 
 </html>
