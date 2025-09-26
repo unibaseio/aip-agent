@@ -37,7 +37,7 @@ import requests
 import os
 from datetime import datetime, timedelta
 
-from core.common import load_user_profile
+from core.common import load_user_profile,load_report
 try:
     from fastapi import HTTPException
 except ImportError:
@@ -497,13 +497,6 @@ class LLMChatService:
         
         return prompt
 
-
-
-# 辅助函数定义
-def load_report(date_str: str, language: str, report_type: str) -> str:
-    """加载报告"""
-    # 这里应该实现实际的报告加载逻辑
-    return f"Daily {report_type} report for {date_str} in {language} - Content not available"
 
 # Function call schemas for agentic chat
 FUNCTION_SCHEMAS = [
