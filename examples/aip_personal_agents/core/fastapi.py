@@ -45,6 +45,7 @@ from core.common import (
 from core.rag import search_similar_posts, switch_user
 from core.save import save_tweets
 from core.utils import convert_to_json
+from core.function_call import search_latest_tweets, search_local_knowledge, get_daily_report
 
 # Add global shutdown flag
 is_shutting_down = False
@@ -66,8 +67,6 @@ def detect_language(text: str) -> str:
     # Count English alphabetic characters
     english_chars = len([char for char in text if char.isalpha() and not ('\u4e00' <= char <= '\u9fff')])
     
-    
-    
     # Only consider English if there are no Chinese characters
     total_chars = len([char for char in text if char.isalpha()])
     
@@ -82,50 +81,6 @@ def detect_language(text: str) -> str:
         return "english"
     else:
         return "chinese"  # Default to Chinese for all other cases
-
-def get_daily_report(date_str: str = "today", language: str = "chinese", type: str = "news") -> str:
-    """Get daily report content for a specific date, language, and report type.
-    
-    This function retrieves pre-generated daily reports that summarize KOL (Key Opinion Leader) 
-    posts and activities. The reports are categorized by type and available in multiple languages.
-    
-    Args:
-        date_str (str): Date for the report. Accepts:
-            - "today" or "latest": Current date (default)
-            - "yesterday": Previous day
-            - "YYYY-MM-DD": Specific date format (e.g., "2025-01-15")
-        language (str): Report language. Options:
-            - "chinese": Chinese language report (default)
-            - "english": English language report
-        type (str): Report category. Options:
-            - "news": Daily web3 and crypto news summary of latest KOL posts and activities (default)
-            - "trading": Comprehensive daily web3 and crypto trading and market analysis from KOL posts
-            - "trading_short": Concise web3 and crypto trading signals from KOL posts
-    
-    Returns:
-        str: The complete report content in the specified language and format
-        
-    Examples:
-        - get_daily_report() -> Latest Chinese news report
-        - get_daily_report("2025-01-15", "english", "trading") -> English trading report for Jan 15, 2025
-        - get_daily_report("yesterday", "chinese", "trading_short") -> Chinese trading signals for yesterday
-    """
-    
-    print(f"Getting daily report for {date_str}, {language}, {type}")
-    
-    # check if date_str is valid date
-    try:
-        datetime.strptime(date_str, "%Y-%m-%d")
-    except ValueError:
-        if date_str is None or date_str == "" or date_str.lower() == "today" or date_str.lower() == "latest":
-            date_str = datetime.now().strftime("%Y-%m-%d")
-        elif date_str.lower() == "yesterday":
-            date_str = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
-        else:
-            return f"Invalid date format: {date_str}"
-    
-    report = load_report(date_str, language, type)
-    return report
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -226,7 +181,7 @@ async def load_user_agents():
             name=app.agent_prefix + username,
             description=get_description(username, profile),
             host_address=app.grpc_server_url,
-            functions=[search_similar_posts, get_daily_report]
+            functions=[search_local_knowledge, search_latest_tweets, get_daily_report]
         )
     
         try:
@@ -696,7 +651,7 @@ async def chat_api(
             uagent = app.agents[username]
             response = await uagent.process_query(
                 message,
-                use_history=False,
+                use_history=True,
                 system_prompt=description,
                 conversation_id=conversation_id
             )
@@ -707,7 +662,7 @@ async def chat_api(
         print(f"Using main agent")
         response = await app.agent.process_query(
             message,
-            use_history=False,
+            use_history=True,
             system_prompt=description,
             conversation_id=conversation_id
         )
@@ -796,7 +751,7 @@ def _stream_chat_base(
                 processing_task = asyncio.create_task(
                     uagent.process_query(
                         message,
-                        use_history=False,
+                        use_history=True,
                         system_prompt=description,
                         conversation_id=conversation_id
                     )
@@ -806,7 +761,7 @@ def _stream_chat_base(
                 processing_task = asyncio.create_task(
                     app.agent.process_query(
                         message,
-                        use_history=False,
+                        use_history=True,
                         system_prompt=description,
                         conversation_id=conversation_id
                     )
@@ -1606,12 +1561,17 @@ async def initialize(port: int = 5001, bearer_token: str = None) -> None:
     
     You have access to the following functions to enhance your capabilities:
     
-    1. search_similar_posts(query: str) -> str
-       - Purpose: Search for similar posts and content related to given query
-       - Use case: When user asks about specific news or topics, find relevant historical posts
-       - Returns: Relevant posts and content that match the query
+    1. search_local_knowledge(query: str) -> str
+       - Purpose: Search for relevant information from local knowledge base and content
+       - Use case: When user asks about specific topics, find relevant information from stored knowledge
+       - Returns: Relevant information and content that match the query
     
-    2. get_daily_report(date_str: str = "today", language: str = "chinese", type: str = "news") -> str
+    2. search_latest_tweets(query: str) -> str
+       - Purpose: Search for the latest tweets and social media content related to given query
+       - Use case: When user asks about recent news, trending topics, latest social media discussions, or when local knowledge is insufficient and more information is needed
+       - Returns: Recent tweets and social media content that match the query
+    
+    3. get_daily_report(date_str: str = "today", language: str = "chinese", type: str = "news") -> str
        - Purpose: Retrieve pre-generated daily reports summarizing KOL activities
        - Parameters:
          * date_str: "today", "yesterday", or "YYYY-MM-DD" format
@@ -1621,8 +1581,10 @@ async def initialize(port: int = 5001, bearer_token: str = None) -> None:
        - Returns: Complete report content in specified language and format
     
     Guidelines for using these functions:
-    - Use search_similar_posts when user asks about specific news, events, or topics
+    - Use search_local_knowledge when user asks about specific topics, events, or needs information from the knowledge base
+    - Use search_latest_tweets when user asks about recent news, trending topics, latest social media discussions, or when local knowledge search results are insufficient and more comprehensive information is needed
     - Use get_daily_report when user requests daily summaries, market activities, or trading information
+    - When information from one source is insufficient, try using search_latest_tweets to gather additional real-time information
     - Always provide context and explanation when sharing function results
     - Maintain the user's personality and communication style in your responses
     - When calling get_daily_report, set the language parameter to match the user's language
@@ -1652,7 +1614,7 @@ async def initialize(port: int = 5001, bearer_token: str = None) -> None:
         name=membase_id,
         description=system_prompt,
         host_address=app.grpc_server_url,
-        functions=[search_similar_posts, get_daily_report]
+        functions=[search_local_knowledge, search_latest_tweets, get_daily_report]
     )
     
     try:

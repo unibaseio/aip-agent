@@ -7,7 +7,6 @@ from openai import OpenAI
 
 from core.common import load_user_profile
 
-
 def generate_system_prompt(user_name: str) -> str:
     profile = load_user_profile(user_name)
     """Generate a system prompt based on the profile characteristics"""
