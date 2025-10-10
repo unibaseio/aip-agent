@@ -524,6 +524,7 @@ async def get_conversation_api(
 
         uagent = app.agent
         if username in app.agents:
+            print(f"using agent {username}")
             uagent = app.agents[username]
         user_memory = uagent._memory.get_memory(conversation_id)
         if not user_memory:
