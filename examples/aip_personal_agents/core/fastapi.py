@@ -522,6 +522,7 @@ async def get_conversation_api(
         if conversation_id is None or conversation_id == "":
             conversation_id = membase_id + "_" + username
 
+        print(f"get conversation {username} {conversation_id}")
         uagent = app.agent
         if username in app.agents:
             print(f"using agent {username}")
