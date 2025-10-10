@@ -526,10 +526,10 @@ async def get_conversation_api(
         uagent = app.agent
         if username in app.agents:
             print(f"using agent {username}")
-            uagent = app.agents[username]
+            #uagent = app.agents[username]
         user_memory = uagent._memory.get_memory(conversation_id)
         if not user_memory:
-            raise HTTPException(status_code=404, detail="memory not found")
+            raise HTTPException(status_code=400, detail="memory not found")
         uagent._memory.load_from_hub(conversation_id)
 
         messages = user_memory.get(recent_n=recent_n_messages)
