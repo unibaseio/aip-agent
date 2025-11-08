@@ -26,12 +26,12 @@ def clean_trading_bots():
             count_query = text("""
                 SELECT COUNT(*) 
                 FROM trading_bots 
-                WHERE initial_balance_usd = 1000
+                WHERE initial_balance_usd <= 1000
             """)
             result = connection.execute(count_query)
             count = result.scalar()
             
-            print(f"找到 {count} 个initial_balance_usd为1000的trading_bots记录")
+            print(f"找到 {count} 个initial_balance_usd小于等于1000的trading_bots记录")
 
             if count > 0:
                 # 更新符合条件的记录，设置 is_active 和 is_configured 为 false
@@ -40,7 +40,7 @@ def clean_trading_bots():
                     SET is_active = false, 
                         is_configured = false,
                         updated_at = NOW()
-                    WHERE initial_balance_usd = 1000
+                    WHERE initial_balance_usd <= 1000
                 """)
                 result = connection.execute(update_query)
                 connection.commit()
@@ -53,6 +53,6 @@ def clean_trading_bots():
         raise
 
 if __name__ == "__main__":
-    print("开始清理initial_balance_usd为1000的trading_bot记录...")
+    print("开始清理initial_balance_usd小于等于1000的trading_bots记录...")
     clean_trading_bots()
     print("清理完成")
