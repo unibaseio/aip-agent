@@ -34,14 +34,17 @@ def clean_trading_bots():
             print(f"找到 {count} 个initial_balance_usd为1000的trading_bots记录")
 
             if count > 0:
-                # 删除符合条件的记录
-                delete_query = text("""
-                    DELETE FROM trading_bots 
+                # 更新符合条件的记录，设置 is_active 和 is_configured 为 false
+                update_query = text("""
+                    UPDATE trading_bots 
+                    SET is_active = false, 
+                        is_configured = false,
+                        updated_at = NOW()
                     WHERE initial_balance_usd = 1000
                 """)
-                result = connection.execute(delete_query)
+                result = connection.execute(update_query)
                 connection.commit()
-                print(f"已成功删除 {result.rowcount} 条记录")
+                print(f"已成功更新 {result.rowcount} 条记录的状态为未激活")
             else:
                 print("没有找到需要清理的记录")
 
