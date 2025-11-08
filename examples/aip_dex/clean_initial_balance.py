@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine, text
 from dotenv import load_dotenv
 import os
+from models.database import init_database
 
 def clean_trading_bots():
     # 加载环境变量
@@ -11,27 +12,31 @@ def clean_trading_bots():
     if not DATABASE_URL:
         raise ValueError("未设置DATABASE_URL环境变量")
 
+    print("正在确保数据库表已创建...")
+    if not init_database():
+        raise Exception("初始化数据库表失败")
+
     # 创建数据库引擎
     engine = create_engine(DATABASE_URL)
 
     try:
         # 连接数据库
         with engine.connect() as connection:
-            # 首先获取符合条件的trading_bot记录数量
+            # 首先获取符合条件的trading_bots记录数量
             count_query = text("""
                 SELECT COUNT(*) 
-                FROM trading_bot 
+                FROM trading_bots 
                 WHERE initial_balance_usd = 1000
             """)
             result = connection.execute(count_query)
             count = result.scalar()
             
-            print(f"找到 {count} 个initial_balance_usd为1000的trading_bot记录")
+            print(f"找到 {count} 个initial_balance_usd为1000的trading_bots记录")
 
             if count > 0:
                 # 删除符合条件的记录
                 delete_query = text("""
-                    DELETE FROM trading_bot 
+                    DELETE FROM trading_bots 
                     WHERE initial_balance_usd = 1000
                 """)
                 result = connection.execute(delete_query)
