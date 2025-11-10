@@ -34,7 +34,10 @@ class AIPTradingBot:
     
     def __init__(self, config: Dict[str, Any]):
         self.config = config
-        self.bot_id = None
+        if config.get("bot_id"):
+            self.bot_id = config["bot_id"]
+        else:   
+            self.bot_id = None
         self.is_running = False
         self.trading_service = TradingService()
         self.token_service = TokenService()
@@ -51,6 +54,10 @@ class AIPTradingBot:
     
     async def initialize(self) -> bool:
         """Initialize the trading bot and database"""
+        if self.bot_id:
+            print(f"🤖 Bot ID already set: {self.bot_id}, skipping initialization")
+            return True
+        
         try:
             print("🤖 Initializing AIP DEX Trading Bot...")
             

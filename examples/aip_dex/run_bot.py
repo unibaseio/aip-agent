@@ -430,6 +430,7 @@ async def run_bot_polling(polling_interval_minutes: int = 5):
                             
                             # Create bot config from database
                             bot_config = {
+                                "bot_id": str(bot.id),
                                 "bot_name": bot.bot_name,
                                 "account_address": bot.account_address,
                                 "chain": bot.chain,
