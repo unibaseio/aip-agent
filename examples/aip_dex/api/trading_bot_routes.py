@@ -101,8 +101,11 @@ async def get_system_overview(db: Session = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/bots/create", response_model=ApiResponse)
-async def create_bot(bot_data: TradingBotCreate, db: Session = Depends(get_db)):
+@router.post("/bots/create", response_model=ApiResponse, dependencies=[Depends(validate_token)])
+async def create_bot(
+    bot_data: TradingBotCreate, 
+    db: Session = Depends(get_db)
+):
     """Create a new trading bot"""
     try:
         # Note: Multiple bots can now use the same account_address
