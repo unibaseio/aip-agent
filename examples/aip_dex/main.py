@@ -20,6 +20,7 @@ from services.token_service import TokenService
 from llm.token_analyzer import TokenDecisionAnalyzer
 from api.schemas import (
     TokenResponse, ChatRequest, ChatResponse, BotOwnerCreate, TradingStrategyCreate,
+    TradingStrategyUpdate,
     TokenDetailResponse, TokenPoolResponse, TokenHolderDistribution, TokenTechnicalIndicators,
     TokenTradeActivity, TokenPriceHistory
 )
@@ -861,16 +862,61 @@ async def create_strategy(
 ):
     """Create a new trading strategy"""
     try:
+        # Accept optional strategy_id to perform update instead of create
+        strategy_id = request.get("strategy_id")
         owner_id = request.get("owner_id")
+
+        # If strategy_id present -> update
+        if strategy_id:
+            try:
+                strategy_uuid = uuid.UUID(strategy_id)
+            except ValueError:
+                raise HTTPException(status_code=400, detail="Invalid strategy_id format")
+
+            # Validate update payload by selecting allowed fields and assigning one-by-one
+            try:
+                # Collect allowed field names from the Pydantic model (v2)
+                allowed_fields = set(getattr(TradingStrategyUpdate, 'model_fields', {}).keys())
+
+                # Build payload only with fields that belong to the update model
+                payload = {}
+                for k, v in request.items():
+                    # skip control fields
+                    if k in ("strategy_id", "owner_id"):
+                        continue
+                    if k in allowed_fields:
+                        payload[k] = v
+
+                if not payload:
+                    raise HTTPException(status_code=400, detail="No updatable fields provided")
+
+                # Instantiate model with the filtered payload
+                update_data = TradingStrategyUpdate(**payload)
+            except HTTPException:
+                raise
+            except Exception as e:
+                raise HTTPException(status_code=400, detail=f"Invalid update data: {e}")
+
+            updated = await owner_service.update_trading_strategy(db, strategy_uuid, update_data)
+            if not updated:
+                raise HTTPException(status_code=404, detail="Strategy not found or could not be updated")
+
+            return {
+                "success": True,
+                "strategy_id": str(updated.id),
+                "strategy_name": updated.strategy_name,
+                "message": "Strategy updated successfully"
+            }
+
+        # Otherwise create new strategy (owner_id required)
         if not owner_id:
-            raise HTTPException(status_code=400, detail="Missing owner_id")
-        
-        # Convert string ID to UUID
+            raise HTTPException(status_code=400, detail="Missing owner_id for strategy creation")
+
         try:
             owner_uuid = uuid.UUID(owner_id)
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid owner_id format")
-        
+
         # Create strategy data with default values for missing fields
         strategy_data = TradingStrategyCreate(
             strategy_name=request.get("strategy_name", "Custom Strategy"),
@@ -896,12 +942,12 @@ async def create_strategy(
             summary_strategy_description=request.get("summary_strategy_description", "Custom strategy summary"),
             is_public=request.get("is_public", False)
         )
-        
+
         strategy = await owner_service.create_trading_strategy(db, owner_uuid, strategy_data)
-        
+
         if not strategy:
             raise HTTPException(status_code=500, detail="Failed to create strategy")
-        
+
         return {
             "success": True,
             "strategy_id": str(strategy.id),
