@@ -166,3 +166,4 @@ MIT License. See [LICENSE](./LICENSE) file for details.
 - Website: [https://www.unibase.com](https://www.unibase.com)
 - Support: <support@unibase.com>
 - Telegram: [@unibase_ai](https://t.me/unibase_ai)
+- X/Twitter: [https://x.com/Unibase_AI](https://x.com/Unibase_AI)
