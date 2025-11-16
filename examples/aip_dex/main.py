@@ -977,15 +977,54 @@ async def get_owner_strategies(
         result = []
         for strategy in strategies:
             result.append({
+                # 基本信息
                 "id": str(strategy.id),
+                "owner_id": str(strategy.owner_id),
                 "strategy_name": strategy.strategy_name,
+                "strategy_description": strategy.strategy_description,
                 "strategy_type": strategy.strategy_type,
                 "risk_level": strategy.risk_level,
+                
+                # 数值参数设置
                 "max_position_size": float(strategy.max_position_size),
                 "stop_loss_percentage": float(strategy.stop_loss_percentage),
                 "take_profit_percentage": float(strategy.take_profit_percentage),
+                "min_profit_threshold": float(strategy.min_profit_threshold),
+                "max_daily_trades": strategy.max_daily_trades,
+                "llm_confidence_threshold": float(strategy.llm_confidence_threshold),
+                
+                # 交易费用设置
+                "gas_fee_native": float(strategy.gas_fee_native) if strategy.gas_fee_native else 0.00003,
+                "trading_fee_percentage": float(strategy.trading_fee_percentage) if strategy.trading_fee_percentage else 0.1,
+                "slippage_tolerance": float(strategy.slippage_tolerance) if strategy.slippage_tolerance else 1.0,
+                
+                # 运行控制参数
+                "min_trade_amount_usd": float(strategy.min_trade_amount_usd) if strategy.min_trade_amount_usd else 10.0,
+                "polling_interval_hours": float(strategy.polling_interval_hours) if strategy.polling_interval_hours else 1.0,
+                
+                # 功能开关
+                "enable_stop_loss": strategy.enable_stop_loss,
+                "enable_take_profit": strategy.enable_take_profit,
+                
+                # 策略描述性配置
+                "buy_strategy_description": strategy.buy_strategy_description,
+                "sell_strategy_description": strategy.sell_strategy_description,
+                "filter_strategy_description": strategy.filter_strategy_description,
+                "summary_strategy_description": strategy.summary_strategy_description,
+                
+                # 状态字段
+                "is_active": strategy.is_active,
+                "is_public": strategy.is_public,
+                "is_default": strategy.is_default,
+                
+                # 使用统计
                 "usage_count": strategy.usage_count,
-                "success_rate": float(strategy.success_rate) if strategy.success_rate else None
+                "success_rate": float(strategy.success_rate) if strategy.success_rate else None,
+                "average_profit_percentage": float(strategy.average_profit_percentage) if strategy.average_profit_percentage else None,
+                
+                # 时间戳
+                "created_at": strategy.created_at.isoformat() if strategy.created_at else None,
+                "updated_at": strategy.updated_at.isoformat() if strategy.updated_at else None
             })
         
         return result
