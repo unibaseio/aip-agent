@@ -133,6 +133,20 @@ uv run grpc_full_agent_gradio.py
 
 Find demos in `/examples` folder.
 
+For the Personal Social Agent demo,
+[TweetClaw](https://github.com/Xquik-dev/tweetclaw) can supply reviewed
+X/Twitter inputs through the `@xquik/tweetclaw` OpenClaw plugin:
+
+```bash
+openclaw plugins install @xquik/tweetclaw
+```
+
+Use it to search tweets, search tweet replies, export followers, look up users,
+monitor tweets, route webhooks, and prepare media or giveaway draw data before
+an AIP agent stores selected facts in Membase. Keep post tweets, post tweet
+replies, direct messages, and media upload behind explicit review before the
+agent commits results to memory or shares them with another agent.
+
 ---
 
 # 🛡 Security and Best Practices
