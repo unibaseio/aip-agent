@@ -2,7 +2,7 @@
 
 ### What is AIP?
 
-**AIP (Agent Interoperability Protocol)** is the first **Web3-native multi-agent communication standard**, built by Unibase.  
+**AIP (Agent Internet Protocol)** is the first **Web3-native multi-agent communication standard**, built by Unibase.  
 It enables agents to easily connect, share memory, and collaborate across platforms, with secure on-chain identity and access control.
 
 > AIP = MCP + gRPC + On-chain Identity + Decentralized Memory
