@@ -44,7 +44,7 @@ requires = [ "hatchling",]
 build-backend = "hatchling.build"
 
 [tool.uv.sources]
-membase = { git = "https://github.com/unibaseio/membase.git" }
+membase = { git = "https://github.com/unibaseio/membase1.0-sdk.git" }
 
 [project.scripts]
 aip-agent = "agent:main"
