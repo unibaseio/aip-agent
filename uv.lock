@@ -175,7 +175,7 @@ requires-dist = [
     { name = "instructor", specifier = ">=1.7.0" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "mcp", specifier = ">=1.2.1" },
-    { name = "membase", git = "https://github.com/unibaseio/membase.git" },
+    { name = "membase", git = "https://github.com/unibaseio/membase1.0-sdk.git" },
     { name = "names", specifier = ">=0.3.0" },
     { name = "opentelemetry-distro", specifier = ">=0.50b0" },
     { name = "opentelemetry-exporter-otlp-proto-http", specifier = ">=1.29.0" },
@@ -1943,7 +1943,7 @@ wheels = [
 [[package]]
 name = "membase"
 version = "0.1.8"
-source = { git = "https://github.com/unibaseio/membase.git#5c956a53100a72b68f6ecfc51deb454522eb88de" }
+source = { git = "https://github.com/unibaseio/membase1.0-sdk.git#5c956a53100a72b68f6ecfc51deb454522eb88de" }
 dependencies = [
     { name = "chromadb" },
     { name = "loguru" },
